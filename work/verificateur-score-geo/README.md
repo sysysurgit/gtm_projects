@@ -1,18 +1,28 @@
 # Vérificateur de Score GEO
 
-On entre une URL, l'outil audite sa visibilité dans les réponses des moteurs IA (ChatGPT, Perplexity, Claude) et sort un score /100 avec un détail par catégorie, plus un badge copiable pour le partager.
+On entre une URL — une page ou un site entier — l'outil audite sa visibilité dans les réponses des moteurs IA (ChatGPT, Perplexity, Claude) et sort un score /100 avec un détail par catégorie, plus un badge copiable pour le partager.
 
 **Score (idée)** : 79/100 (Facilité 55 · Viralité 90 · Utilité 80 · Différenciation 80)
 
+## Deux modes
+
+- **Une page** — analyse immédiate d'une URL unique.
+- **Site entier** — découvre les pages du site via `sitemap.xml`/`robots.txt` (repli sur les liens de la page d'accueil si pas de sitemap), plafonne à 20 pages, puis analyse chaque page indépendamment et agrège en score de site (moyenne, moyennes par catégorie, pages les plus faibles à améliorer en priorité). Le crawl est orchestré côté client (chaque page = un appel séparé à `/api/analyze`) pour rester dans les limites de durée des fonctions serverless.
+
 ## Comment le score est calculé
 
-- **Structure du contenu (/20)** — H1 unique, meta description, longueur du contenu.
-- **Données structurées (/25)** — JSON-LD présent, schema FAQPage, autres types utiles (Organization, Article, Product...).
-- **Clarté des réponses (/20)** — sous-titres formulés en question, listes structurées.
-- **Autorité & citabilité (/15)** — date de publication, auteur identifié, liens sortants vers des sources.
-- **Clarté d'entité (/20, optionnel)** — évaluation qualitative par Claude : un moteur de réponse IA pourrait-il citer précisément de quoi parle la page ? Nécessite `ANTHROPIC_API_KEY`.
+Pondération sur 100 points, répartie ainsi (voir le panneau « Méthodologie & sources » dans l'app pour le détail) :
 
-Sans clé API, les 4 premières catégories tournent quand même (score plafonné sous 100) — la clé n'est nécessaire que pour la partie IA.
+- **Structure du contenu (/10)** — H1 unique, meta description, longueur du contenu.
+- **Données structurées (/15)** — JSON-LD présent, schema FAQPage, autres types utiles (Organization, Article, Product...). Source : documentation Google Search Central sur les données structurées.
+- **Citations, statistiques & sources (/25)** — liens sortants vers des sources externes, données chiffrées, citations/verbatims. C'est la catégorie la plus lourde : selon l'étude *« GEO: Generative Engine Optimization »* (Aggarwal et al., 2023, arXiv:2311.09735), citer des sources et ajouter des statistiques est le levier avec le plus fort impact sur la visibilité dans les réponses générées — contrairement au bourrage de mots-clés, qui n'a quasi aucun effet.
+- **Clarté des réponses (/15)** — sous-titres formulés en question, listes structurées.
+- **Fraîcheur & auteur (/10)** — date de publication, auteur identifié. Source : guide E-E-A-T de Google.
+- **Clarté d'entité (/25, optionnel)** — évaluation qualitative par Claude : un moteur de réponse IA pourrait-il citer précisément de quoi parle la page ? Nécessite `ANTHROPIC_API_KEY`.
+
+Sans clé API, les 5 premières catégories tournent quand même (score plafonné à 75/100) — la clé n'est nécessaire que pour la partie IA.
+
+Limite assumée : c'est une approximation heuristique basée sur la littérature publiée, pas une mesure garantie — aucun outil externe ne peut connaître la citabilité réelle d'une page dans un moteur IA donné sans accès à ses journaux internes.
 
 ## Getting Started
 
@@ -26,8 +36,10 @@ Ouvrir [http://localhost:3000](http://localhost:3000).
 
 ## Stack
 
-Next.js (App Router) + TypeScript + Tailwind CSS. Analyse HTML côté serveur via `cheerio`, appel optionnel à l'API Claude (`@anthropic-ai/sdk`) pour la clarté d'entité.
+Next.js (App Router) + TypeScript + Tailwind CSS. Analyse HTML côté serveur via `cheerio`, appel optionnel à l'API Claude (`@anthropic-ai/sdk`) pour la clarté d'entité. Découverte de pages via `robots.txt` + `sitemap.xml` (parsing XML avec `cheerio` en mode xmlMode).
 
 ## Sécurité
 
-La route `/api/analyze` fait un `fetch` server-side sur une URL fournie par l'utilisateur (risque SSRF classique). Protections en place : whitelist de protocoles (`http`/`https`), rejet des hostnames privés/loopback, résolution DNS + vérification de l'IP résolue avant la requête, timeout de 10s, taille de réponse plafonnée. Ce n'est pas un blindage complet (pas de protection contre le DNS rebinding entre la vérification et le fetch) — à durcir avant un déploiement à fort trafic public.
+Les routes `/api/analyze` et `/api/discover` font des `fetch` server-side sur des URLs fournies par l'utilisateur (risque SSRF classique). Protections en place : whitelist de protocoles (`http`/`https`), rejet des hostnames privés/loopback, résolution DNS + vérification de l'IP résolue avant la requête, timeout de 10s (8s pour le crawl), taille de réponse plafonnée. Ce n'est pas un blindage complet (pas de protection contre le DNS rebinding entre la vérification et le fetch) — à durcir avant un déploiement à fort trafic public.
+
+Aucune limitation de débit n'est en place sur les deux routes : un usage public à fort trafic consommerait rapidement le crédit API Anthropic configuré côté serveur — à ajouter avant une mise en avant large (ex. Upstash Redis).
