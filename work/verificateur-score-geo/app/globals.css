@@ -1,26 +1,109 @@
 @import "tailwindcss";
 
+/*
+ * Direction artistique : "console de signal" — le produit détecte à quel
+ * point une page est repérable par un moteur de réponse IA, donc l'UI
+ * emprunte au vocabulaire d'un instrument de mesure (accent "signal" teal,
+ * chiffres en mono façon lecture numérique, meters à crans) plutôt qu'au
+ * gris Tailwind par défaut. Les tokens ci-dessous sont réutilisés à
+ * l'identique dans la démo HTML autonome du projet pour une identité
+ * cohérente entre les deux surfaces.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --paper: #f5f7f5;
+  --plane: #eef1ee;
+  --surface: #ffffff;
+  --ink: #101a18;
+  --ink-secondary: #4c5854;
+  --ink-muted: #7c8985;
+  --border: rgba(16, 26, 24, 0.12);
+  --border-soft: rgba(16, 26, 24, 0.07);
+  --signal: #0e8c82;
+  --signal-ink: #ffffff;
+  --signal-tint: rgba(14, 140, 130, 0.1);
+  --good: #0ca30c;
+  --warning: #b8790a;
+  --critical: #d03b3b;
+  --good-tint: rgba(12, 163, 12, 0.12);
+  --warning-tint: rgba(250, 178, 25, 0.16);
+  --critical-tint: rgba(208, 59, 59, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --paper: #0c1312;
+    --plane: #091010;
+    --surface: #121b19;
+    --ink: #eaf3f0;
+    --ink-secondary: #aebdb8;
+    --ink-muted: #7c8985;
+    --border: rgba(234, 243, 240, 0.13);
+    --border-soft: rgba(234, 243, 240, 0.07);
+    --signal: #2fb8ac;
+    --signal-ink: #06231f;
+    --signal-tint: rgba(47, 184, 172, 0.14);
+    --good: #35c235;
+    --warning: #fab219;
+    --critical: #ef6b6b;
+    --good-tint: rgba(53, 194, 53, 0.14);
+    --warning-tint: rgba(250, 178, 25, 0.14);
+    --critical-tint: rgba(239, 107, 107, 0.14);
   }
 }
 
+@theme inline {
+  --color-paper: var(--paper);
+  --color-plane: var(--plane);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-signal-tint: var(--signal-tint);
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-critical: var(--critical);
+  --color-good-tint: var(--good-tint);
+  --color-warning-tint: var(--warning-tint);
+  --color-critical-tint: var(--critical-tint);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--plane);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@keyframes signal-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+}
+
+.signal-dot {
+  animation: signal-pulse 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-dot {
+    animation: none;
+  }
+}
+
+/* Meter à crans façon instrument de mesure — voir ResultCard dans page.tsx */
+.meter-track {
+  background:
+    repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 5%),
+    var(--border-soft);
 }

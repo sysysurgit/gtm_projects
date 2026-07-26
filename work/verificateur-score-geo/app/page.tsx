@@ -58,16 +58,42 @@ interface PageCrawlResult {
   error?: string;
 }
 
-function scoreColor(ratio: number): string {
-  if (ratio >= 0.75) return "bg-emerald-500";
-  if (ratio >= 0.5) return "bg-amber-500";
-  return "bg-red-500";
+type Tone = "good" | "warning" | "critical";
+
+function toneFromRatio(ratio: number): Tone {
+  if (ratio >= 0.75) return "good";
+  if (ratio >= 0.5) return "warning";
+  return "critical";
 }
 
-function totalScoreColor(score: number): string {
-  if (score >= 75) return "text-emerald-600 dark:text-emerald-400";
-  if (score >= 50) return "text-amber-600 dark:text-amber-400";
-  return "text-red-600 dark:text-red-400";
+function statusWord(ratio: number): string {
+  if (ratio >= 0.75) return "Signal fort";
+  if (ratio >= 0.5) return "Signal moyen";
+  return "Signal faible";
+}
+
+const TONE_TEXT: Record<Tone, string> = { good: "text-good", warning: "text-warning", critical: "text-critical" };
+const TONE_BG: Record<Tone, string> = { good: "bg-good", warning: "bg-warning", critical: "bg-critical" };
+const TONE_TINT: Record<Tone, string> = { good: "bg-good-tint", warning: "bg-warning-tint", critical: "bg-critical-tint" };
+
+function CategoryTag({ category }: { category: PageCategory }) {
+  return (
+    <span className="shrink-0 rounded bg-border-soft px-1.5 py-0.5 font-mono text-[10px] font-medium tracking-wide text-ink-muted uppercase">
+      {CATEGORY_LABELS[category]}
+    </span>
+  );
+}
+
+function StatusPill({ ratio }: { ratio: number }) {
+  const tone = toneFromRatio(ratio);
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[11px] tracking-wide uppercase ${TONE_TEXT[tone]} ${TONE_TINT[tone]}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${TONE_BG[tone]}`} />
+      {statusWord(ratio)}
+    </span>
+  );
 }
 
 // Étapes réelles de l'analyse (fetch + parsing + appel IA côté serveur).
@@ -97,43 +123,42 @@ async function runWithConcurrency<T>(items: T[], limit: number, worker: (item: T
 }
 
 function ResultCard({ result }: { result: GeoScoreResult }) {
+  const ratio = result.totalScore / 100;
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col items-center gap-1.5 text-center">
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">{result.hostname}</span>
-        {result.pageTitle && (
-          <span className="max-w-md text-sm font-medium text-zinc-700 dark:text-zinc-300">{result.pageTitle}</span>
-        )}
-        <span className={`text-4xl font-bold ${totalScoreColor(result.totalScore)}`}>
+      <div className="flex flex-col items-center gap-2 text-center">
+        <span className="text-sm text-ink-muted">{result.hostname}</span>
+        {result.pageTitle && <span className="max-w-md text-sm font-medium text-ink-secondary">{result.pageTitle}</span>}
+        <span className={`font-mono text-4xl font-bold tabular-nums ${TONE_TEXT[toneFromRatio(ratio)]}`}>
           {result.totalScore}
-          <span className="text-lg text-zinc-400 dark:text-zinc-600">/100</span>
+          <span className="text-lg text-ink-muted">/100</span>
         </span>
+        <StatusPill ratio={ratio} />
         {!result.aiEvaluated && (
-          <span className="text-xs text-amber-600 dark:text-amber-400">
-            Analyse IA non activée pour cette page — score plafonné.
-          </span>
+          <span className="text-xs text-warning">Analyse IA non activée pour cette page — score plafonné.</span>
         )}
       </div>
       <div className="flex flex-col gap-4">
         {result.categories.map((cat) => {
-          const ratio = cat.max > 0 ? cat.score / cat.max : 0;
+          const catRatio = cat.max > 0 ? cat.score / cat.max : 0;
+          const tone = toneFromRatio(catRatio);
           return (
             <div key={cat.key} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-zinc-800 dark:text-zinc-200">{cat.label}</span>
-                <span className="text-zinc-500 dark:text-zinc-400">
+                <span className="flex items-center gap-2 font-medium text-ink">
+                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONE_BG[tone]}`} />
+                  {cat.label}
+                </span>
+                <span className="font-mono text-ink-muted tabular-nums">
                   {cat.score}/{cat.max}
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                <div
-                  className={`h-full rounded-full ${scoreColor(ratio)}`}
-                  style={{ width: `${Math.round(ratio * 100)}%` }}
-                />
+              <div className="meter-track h-2 w-full overflow-hidden rounded-full">
+                <div className={`h-full rounded-full ${TONE_BG[tone]}`} style={{ width: `${Math.round(catRatio * 100)}%` }} />
               </div>
-              <ul className="mt-1 flex flex-col gap-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <ul className="mt-1 flex flex-col gap-0.5 text-xs text-ink-muted">
                 {cat.details.map((d, i) => (
-                  <li key={i}>• {d}</li>
+                  <li key={i}>– {d}</li>
                 ))}
               </ul>
             </div>
@@ -312,13 +337,15 @@ export default function Home() {
   const weakestPages = [...doneResults].sort((a, b) => a.result.totalScore - b.result.totalScore).slice(0, 3);
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-zinc-50 px-4 py-16 font-sans dark:bg-black sm:px-8">
+    <div className="flex flex-1 flex-col items-center bg-plane px-4 py-16 font-sans sm:px-8">
       <main className="flex w-full max-w-2xl flex-col gap-8">
-        <header className="flex flex-col gap-3 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Vérificateur de Score GEO
-          </h1>
-          <p className="mx-auto max-w-lg text-balance text-zinc-600 dark:text-zinc-400">
+        <header className="flex flex-col items-center gap-3 text-center">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-signal/35 bg-signal-tint px-2.5 py-1 font-mono text-[11px] tracking-wide text-signal uppercase">
+            <span className="signal-dot h-1.5 w-1.5 rounded-full bg-signal" />
+            Audit de visibilité IA
+          </span>
+          <h1 className="text-3xl font-semibold tracking-tight text-balance text-ink">Vérificateur de Score GEO</h1>
+          <p className="mx-auto max-w-lg text-balance text-ink-secondary">
             Analysez la visibilité d&apos;une page — ou d&apos;un site entier — dans les réponses des moteurs IA
             (ChatGPT, Perplexity, Claude) : structure, données structurées, clarté des réponses et citabilité.
           </p>
@@ -330,9 +357,7 @@ export default function Home() {
             onClick={() => !busy && setMode("page")}
             disabled={busy}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-              mode === "page"
-                ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-                : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+              mode === "page" ? "bg-signal text-signal-ink" : "border border-border text-ink-secondary hover:bg-surface"
             }`}
           >
             Une page
@@ -342,9 +367,7 @@ export default function Home() {
             onClick={() => !busy && setMode("site")}
             disabled={busy}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-              mode === "site"
-                ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-                : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+              mode === "site" ? "bg-signal text-signal-ink" : "border border-border text-ink-secondary hover:bg-surface"
             }`}
           >
             Site entier
@@ -359,31 +382,33 @@ export default function Home() {
             value={url}
             disabled={busy}
             onChange={(e) => setUrl(e.target.value)}
-            className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none ring-zinc-900 focus:ring-2 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:ring-zinc-100"
+            className="flex-1 rounded-lg border border-border bg-surface px-4 py-3 font-mono text-sm text-ink outline-none focus:ring-2 focus:ring-signal disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={busy || !url.trim()}
-            className="rounded-lg bg-zinc-900 px-6 py-3 font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className="rounded-lg bg-signal px-6 py-3 font-medium text-signal-ink transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Analyse en cours..." : crawling ? "Audit en cours..." : mode === "page" ? "Analyser" : "Lancer l'audit"}
           </button>
         </form>
 
         {mode === "site" && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Découvre les pages via <code>sitemap.xml</code> (repli sur les liens de la page d&apos;accueil si absent),
-            respecte <code>robots.txt</code>, et plafonne à 20 pages par audit pour rester raisonnable en temps et en
-            coût — chaque page déclenche une analyse indépendante.
+          <p className="text-xs text-ink-muted">
+            Découvre les pages via <code className="rounded bg-border-soft px-1 py-0.5 font-mono">sitemap.xml</code>{" "}
+            (repli sur les liens de la page d&apos;accueil si absent), respecte{" "}
+            <code className="rounded bg-border-soft px-1 py-0.5 font-mono">robots.txt</code>, et sélectionne un
+            échantillon représentatif de 20 pages (accueil, pricing, produit, ressources...) pour rester raisonnable
+            en temps et en coût — chaque page déclenche une analyse indépendante.
           </p>
         )}
 
-        <details className="rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600 open:pb-4 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-          <summary className="cursor-pointer font-medium text-zinc-700 dark:text-zinc-300">Méthodologie & sources</summary>
+        <details className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-ink-secondary open:pb-4">
+          <summary className="cursor-pointer font-medium text-ink">Méthodologie & sources</summary>
           <div className="mt-3 flex flex-col gap-2 text-xs leading-relaxed">
             <p>
               La pondération s&apos;appuie sur trois sources publiques : l&apos;étude{" "}
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="font-medium text-ink">
                 « GEO: Generative Engine Optimization » (Aggarwal et al., 2023, arXiv:2311.09735)
               </span>
               , dont le résultat le plus robuste — citer des sources et ajouter des statistiques/citations augmente
@@ -397,8 +422,8 @@ export default function Home() {
               internes.
             </p>
             <p>
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Sélection des 20 pages (mode « Site entier »)</span> :
-              chaque URL découverte est classée par motif d&apos;URL (Accueil, Pricing, Produit, Ressources, À propos,
+              <span className="font-medium text-ink">Sélection des 20 pages (mode « Site entier »)</span> : chaque
+              URL découverte est classée par motif d&apos;URL (Accueil, Pricing, Produit, Ressources, À propos,
               Carrières, Contact, Légal, Autre — aucun appel IA, juste une lecture du chemin) puis choisie par quota
               par catégorie (accueil, pricing, produit, ressources, à propos, carrières, contact) pour obtenir un
               échantillon représentatif de la structure du site plutôt qu&apos;un tri arbitraire — par exemple les 20
@@ -413,32 +438,24 @@ export default function Home() {
         </details>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-            {error}
-          </div>
+          <div className="rounded-lg border border-critical/30 bg-critical-tint px-4 py-3 text-sm text-critical">{error}</div>
         )}
 
         {loading && (
-          <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-6">
             <div className="flex items-center gap-3">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-zinc-900 dark:bg-zinc-50" />
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Analyse en cours…</span>
+              <span className="signal-dot h-2.5 w-2.5 rounded-full bg-signal" />
+              <span className="text-sm font-medium text-ink">Analyse en cours…</span>
             </div>
             <ul className="flex flex-col gap-2">
               {LOADING_STEPS.map((step, i) => (
                 <li
                   key={step}
-                  className={`flex items-center gap-2.5 text-sm transition-colors duration-300 ${
-                    i < stepIndex
-                      ? "text-zinc-400 dark:text-zinc-600"
-                      : i === stepIndex
-                        ? "font-medium text-zinc-900 dark:text-zinc-50"
-                        : "text-zinc-300 dark:text-zinc-700"
+                  className={`flex items-center gap-2.5 font-mono text-xs transition-colors duration-300 ${
+                    i < stepIndex ? "text-ink-muted" : i === stepIndex ? "font-medium text-ink" : "text-ink-muted/50"
                   }`}
                 >
-                  <span className="w-4 shrink-0 text-center">
-                    {i < stepIndex ? "✓" : i === stepIndex ? "…" : ""}
-                  </span>
+                  <span className="w-4 shrink-0 text-center">{i < stepIndex ? "✓" : i === stepIndex ? "…" : ""}</span>
                   {step}
                 </li>
               ))}
@@ -447,11 +464,11 @@ export default function Home() {
         )}
 
         {mode === "page" && result && !loading && (
-          <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-6">
             <ResultCard result={result} />
             <button
               onClick={handleCopyBadge}
-              className="self-center rounded-full border border-zinc-300 px-4 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="self-center rounded-full border border-border px-4 py-1.5 text-sm text-ink-secondary transition-colors hover:border-signal hover:text-signal"
             >
               {copied ? "Copié !" : "Copier le badge à partager"}
             </button>
@@ -459,9 +476,9 @@ export default function Home() {
         )}
 
         {mode === "site" && (discovery || pages.length > 0) && (
-          <div className="flex flex-col gap-6 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col gap-6 rounded-xl border border-border bg-surface p-6">
             {discovery && (
-              <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-center font-mono text-xs text-ink-muted">
                 {discovery.totalFoundIsApproximate ? `${discovery.totalFound}+` : discovery.totalFound} page(s) trouvée(s) via{" "}
                 {discovery.source === "sitemap" ? "le sitemap" : "les liens de la page d'accueil (pas de sitemap trouvé)"}
                 {discovery.capped ? ` — ${pages.length} analysées (plafond de 20)` : ""} · {completedCount}/{pages.length} traitées
@@ -469,18 +486,19 @@ export default function Home() {
             )}
 
             {siteAverage !== null && (
-              <div className="flex flex-col items-center gap-2 border-b border-zinc-200 pb-6 text-center dark:border-zinc-800">
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">{discovery?.hostname}</span>
-                <span className={`text-6xl font-bold ${totalScoreColor(siteAverage)}`}>
+              <div className="flex flex-col items-center gap-2 border-b border-border-soft pb-6 text-center">
+                <span className="text-sm text-ink-muted">{discovery?.hostname}</span>
+                <span className={`font-mono text-6xl font-bold tabular-nums ${TONE_TEXT[toneFromRatio(siteAverage / 100)]}`}>
                   {siteAverage}
-                  <span className="text-2xl text-zinc-400 dark:text-zinc-600">/100</span>
+                  <span className="text-2xl text-ink-muted">/100</span>
                 </span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                <StatusPill ratio={siteAverage / 100} />
+                <span className="text-xs text-ink-muted">
                   Moyenne sur {doneResults.length} page(s) analysée(s){erroredPages.length > 0 ? ` · ${erroredPages.length} en échec` : ""}
                 </span>
                 <button
                   onClick={handleCopySiteBadge}
-                  className="mt-2 rounded-full border border-zinc-300 px-4 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="mt-2 rounded-full border border-border px-4 py-1.5 text-sm text-ink-secondary transition-colors hover:border-signal hover:text-signal"
                 >
                   {siteCopied ? "Copié !" : "Copier le badge à partager"}
                 </button>
@@ -489,20 +507,21 @@ export default function Home() {
 
             {aggregatedCategories.length > 0 && (
               <div className="flex flex-col gap-4">
-                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Moyennes du site par catégorie</h2>
+                <h2 className="text-sm font-medium text-ink">Moyennes du site par catégorie</h2>
                 {aggregatedCategories.map((cat) => {
                   const ratio = cat.max > 0 ? cat.score / cat.max : 0;
+                  const tone = toneFromRatio(ratio);
                   return (
                     <div key={cat.key} className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-zinc-800 dark:text-zinc-200">{cat.label}</span>
-                        <span className="text-zinc-500 dark:text-zinc-400">{Math.round(ratio * 100)}%</span>
+                        <span className="flex items-center gap-2 font-medium text-ink">
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONE_BG[tone]}`} />
+                          {cat.label}
+                        </span>
+                        <span className="font-mono text-ink-muted tabular-nums">{Math.round(ratio * 100)}%</span>
                       </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                        <div
-                          className={`h-full rounded-full ${scoreColor(ratio)}`}
-                          style={{ width: `${Math.round(ratio * 100)}%` }}
-                        />
+                      <div className="meter-track h-2 w-full overflow-hidden rounded-full">
+                        <div className={`h-full rounded-full ${TONE_BG[tone]}`} style={{ width: `${Math.round(ratio * 100)}%` }} />
                       </div>
                     </div>
                   );
@@ -511,18 +530,16 @@ export default function Home() {
             )}
 
             {weakestPages.length > 0 && (
-              <div className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
-                <h2 className="text-sm font-medium text-amber-800 dark:text-amber-300">Pages à améliorer en priorité</h2>
-                <ul className="flex flex-col gap-1 text-sm text-amber-700 dark:text-amber-400">
+              <div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning-tint p-4">
+                <h2 className="text-sm font-medium text-warning">Pages à améliorer en priorité</h2>
+                <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
                   {weakestPages.map((p) => (
                     <li key={p.url} className="flex items-center justify-between gap-3">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                          {CATEGORY_LABELS[p.category]}
-                        </span>
+                        <CategoryTag category={p.category} />
                         <span className="truncate">{p.url}</span>
                       </span>
-                      <span className="shrink-0 font-medium">{p.result.totalScore}/100</span>
+                      <span className="shrink-0 font-mono font-medium tabular-nums">{p.result.totalScore}/100</span>
                     </li>
                   ))}
                 </ul>
@@ -530,36 +547,32 @@ export default function Home() {
             )}
 
             <div className="flex flex-col gap-2">
-              <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Détail par page</h2>
-              <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+              <h2 className="text-sm font-medium text-ink">Détail par page</h2>
+              <ul className="flex flex-col divide-y divide-border-soft">
                 {pages.map((p) => (
                   <li key={p.url} className="py-2.5">
                     {p.status === "done" && p.result ? (
                       <details className="group">
                         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm">
                           <span className="flex min-w-0 items-center gap-2">
-                            <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                              {CATEGORY_LABELS[p.category]}
-                            </span>
-                            <span className="truncate text-zinc-700 dark:text-zinc-300">{p.url}</span>
+                            <CategoryTag category={p.category} />
+                            <span className="truncate text-ink-secondary">{p.url}</span>
                           </span>
-                          <span className={`shrink-0 font-medium ${totalScoreColor(p.result.totalScore)}`}>
+                          <span className={`shrink-0 font-mono font-medium tabular-nums ${TONE_TEXT[toneFromRatio(p.result.totalScore / 100)]}`}>
                             {p.result.totalScore}/100
                           </span>
                         </summary>
-                        <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                        <div className="mt-4 border-t border-border-soft pt-4">
                           <ResultCard result={p.result} />
                         </div>
                       </details>
                     ) : (
                       <div className="flex items-center justify-between gap-3 text-sm">
                         <span className="flex min-w-0 items-center gap-2">
-                          <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                            {CATEGORY_LABELS[p.category]}
-                          </span>
-                          <span className="truncate text-zinc-500 dark:text-zinc-400">{p.url}</span>
+                          <CategoryTag category={p.category} />
+                          <span className="truncate text-ink-muted">{p.url}</span>
                         </span>
-                        <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-600">
+                        <span className="shrink-0 font-mono text-xs text-ink-muted">
                           {p.status === "pending" && "en attente…"}
                           {p.status === "loading" && "analyse en cours…"}
                           {p.status === "error" && (p.error ?? "échec")}
