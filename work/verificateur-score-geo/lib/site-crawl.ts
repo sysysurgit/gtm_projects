@@ -10,10 +10,29 @@ const FETCH_TIMEOUT_MS = 8000;
 // plus élevé (voir `totalFoundIsApproximate` dans le résultat).
 export const DISCOVERY_SAFETY_CAP = 500;
 
+export type PageCategory = "home" | "pricing" | "product" | "resources" | "about" | "careers" | "contact" | "legal" | "other";
+
+export const CATEGORY_LABELS: Record<PageCategory, string> = {
+  home: "Accueil",
+  pricing: "Pricing",
+  product: "Produit",
+  resources: "Ressources",
+  about: "À propos",
+  careers: "Carrières",
+  contact: "Contact",
+  legal: "Légal",
+  other: "Autre",
+};
+
+export interface SelectedPage {
+  url: string;
+  category: PageCategory;
+}
+
 export interface DiscoveryResult {
   rootUrl: string;
   hostname: string;
-  urls: string[];
+  pages: SelectedPage[];
   source: "sitemap" | "homepage-links";
   totalFound: number;
   totalFoundIsApproximate: boolean;
@@ -165,11 +184,147 @@ async function discoverViaHomepageLinks(
 }
 
 /**
+ * Classification par mot-clé d'URL (aucun appel réseau/IA — reste rapide et
+ * gratuit même sur un site à plusieurs centaines de pages). Chaque mot-clé est
+ * comparé à un token entier du chemin (segments séparés par "/", "-" ou "_"),
+ * jamais en sous-chaîne libre : ça évite par exemple qu'un article de blog
+ * "/news/electricity-price-increases" ou "/news/hiring-plans" se retrouve
+ * classé "pricing" juste parce qu'il contient "price"/"plans" au milieu d'un
+ * slug — d'où l'absence volontaire de ces deux mots trop génériques/ambigus
+ * dans la liste ci-dessous (contrairement à "pricing"/"tarifs", univoques).
+ * Ordre de test : catégories les plus spécifiques d'abord, "other" en repli.
+ */
+const CATEGORY_KEYWORDS: Partial<Record<PageCategory, string[]>> = {
+  pricing: ["pricing", "tarif", "tarifs"],
+  product: ["product", "products", "produit", "produits", "solution", "solutions"],
+  resources: [
+    "blog", "docs", "doc", "documentation", "guide", "guides", "resource", "resources",
+    "ressource", "ressources", "learn", "article", "articles", "faq", "help", "academy",
+    "case-studies", "case-study", "etudes-de-cas",
+  ],
+  careers: ["careers", "career", "jobs", "job", "recrutement", "carriere", "carrieres"],
+  about: ["about", "company", "equipe", "team", "qui-sommes-nous", "a-propos", "notre-histoire"],
+  contact: ["contact"],
+  legal: ["legal", "privacy", "terms", "cgu", "cgv", "mentions-legales", "cookie", "cookies", "confidentialite"],
+};
+
+const CATEGORY_TEST_ORDER: PageCategory[] = ["pricing", "product", "resources", "careers", "about", "contact", "legal"];
+
+/** Le mot-clé (simple ou composé de tirets) doit apparaître comme token entier dans le segment, pas en sous-chaîne. */
+function segmentMatchesKeyword(segment: string, keyword: string): boolean {
+  return segment === keyword || segment.startsWith(`${keyword}-`) || segment.endsWith(`-${keyword}`) || segment.includes(`-${keyword}-`);
+}
+
+function classifyUrl(u: URL): PageCategory {
+  if (u.pathname === "/" || u.pathname === "") return "home";
+  const segments = u.pathname
+    .toLowerCase()
+    .split("/")
+    .filter(Boolean);
+
+  for (const category of CATEGORY_TEST_ORDER) {
+    const keywords = CATEGORY_KEYWORDS[category] ?? [];
+    if (segments.some((segment) => keywords.some((kw) => segmentMatchesKeyword(segment, kw)))) {
+      return category;
+    }
+  }
+  return "other";
+}
+
+// Quota par catégorie sur les MAX_PAGES sélectionnées, pour garantir un
+// échantillon représentatif des grandes familles de pages d'un site plutôt
+// qu'un tri arbitraire (ex : les 20 premiers articles de blog par ordre
+// alphabétique). "legal" est volontairement à 0 : pages peu pertinentes pour
+// le GEO (boilerplate rarement optimisé), on ne les pioche qu'en tout dernier
+// recours s'il ne reste vraiment rien d'autre pour remplir le quota.
+const CATEGORY_QUOTAS: Partial<Record<PageCategory, number>> = {
+  home: 1,
+  pricing: 2,
+  product: 4,
+  resources: 5,
+  about: 1,
+  careers: 1,
+  contact: 1,
+  legal: 0,
+};
+
+// Ordre de remplissage des places restantes une fois les quotas satisfaits :
+// "other" en priorité (souvent les pages de contenu individuelles — articles,
+// fiches produit détaillées — les plus rentables à auditer), puis les
+// catégories nommées par ordre décroissant d'intérêt, "legal" en tout dernier.
+const FILL_ORDER: PageCategory[] = ["other", "resources", "product", "pricing", "about", "careers", "contact", "home", "legal"];
+
+function pathLength(rawUrl: string): number {
+  try {
+    return new URL(rawUrl).pathname.length;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+/**
+ * Sélectionne un échantillon représentatif de `limit` pages parmi les URLs
+ * découvertes : classification par motif d'URL, puis répartition par quota
+ * par catégorie (accueil, pricing, produit, ressources...), les places
+ * restantes étant comblées en priorisant les pages de contenu ("other") et en
+ * préférant, au sein d'une catégorie, les chemins les plus courts (proxy pour
+ * "page plus proche de la racine du site = plus probablement importante").
+ */
+export function selectImportantPages(urls: string[], limit: number): SelectedPage[] {
+  const buckets = new Map<PageCategory, string[]>();
+  for (const raw of urls) {
+    let u: URL;
+    try {
+      u = new URL(raw);
+    } catch {
+      continue;
+    }
+    const category = classifyUrl(u);
+    const list = buckets.get(category);
+    if (list) list.push(raw);
+    else buckets.set(category, [raw]);
+  }
+  for (const list of buckets.values()) {
+    list.sort((a, b) => pathLength(a) - pathLength(b) || a.localeCompare(b));
+  }
+
+  const selected: SelectedPage[] = [];
+  const used = new Set<string>();
+  const takenPerCategory = new Map<PageCategory, number>();
+
+  // Passe 1 : respecter les quotas par catégorie.
+  for (const [category, quota] of Object.entries(CATEGORY_QUOTAS) as [PageCategory, number][]) {
+    if (quota <= 0 || selected.length >= limit) continue;
+    for (const u of buckets.get(category) ?? []) {
+      if (selected.length >= limit) break;
+      if ((takenPerCategory.get(category) ?? 0) >= quota) break;
+      selected.push({ url: u, category });
+      used.add(u);
+      takenPerCategory.set(category, (takenPerCategory.get(category) ?? 0) + 1);
+    }
+  }
+
+  // Passe 2 : combler les places restantes, "other" et contenu en priorité.
+  for (const category of FILL_ORDER) {
+    if (selected.length >= limit) break;
+    for (const u of buckets.get(category) ?? []) {
+      if (selected.length >= limit) break;
+      if (used.has(u)) continue;
+      selected.push({ url: u, category });
+      used.add(u);
+    }
+  }
+
+  return selected;
+}
+
+/**
  * Découvre les pages d'un site à auditer : d'abord via robots.txt + sitemap.xml
  * (source la plus fiable et la plus rapide à couvrir), avec repli sur les liens
  * internes de la page d'accueil si aucun sitemap n'est trouvé. Respecte les
- * règles Disallow du robots.txt et plafonne à MAX_PAGES pour borner le coût et
- * le temps d'un audit (chaque page déclenche ensuite un appel à /api/analyze).
+ * règles Disallow du robots.txt, puis sélectionne un échantillon représentatif
+ * de MAX_PAGES pages (voir `selectImportantPages`) pour borner le coût et le
+ * temps d'un audit (chaque page déclenche ensuite un appel à /api/analyze).
  */
 export async function discoverSitePages(url: URL): Promise<DiscoveryResult> {
   const hostname = url.hostname;
@@ -191,15 +346,10 @@ export async function discoverSitePages(url: URL): Promise<DiscoveryResult> {
   const capped = totalFound > MAX_PAGES;
   const totalFoundIsApproximate = totalFound >= DISCOVERY_SAFETY_CAP;
 
-  const homepageStr = new URL(origin).toString();
-  const ordered = urls.includes(homepageStr)
-    ? [homepageStr, ...urls.filter((u) => u !== homepageStr)]
-    : urls;
-
   return {
     rootUrl: origin,
     hostname,
-    urls: ordered.slice(0, MAX_PAGES),
+    pages: selectImportantPages(urls, MAX_PAGES),
     source,
     totalFound,
     totalFoundIsApproximate,

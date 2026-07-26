@@ -7,7 +7,16 @@ On entre une URL — une page ou un site entier — l'outil audite sa visibilit�
 ## Deux modes
 
 - **Une page** — analyse immédiate d'une URL unique.
-- **Site entier** — découvre les pages du site via `sitemap.xml`/`robots.txt` (repli sur les liens de la page d'accueil si pas de sitemap), plafonne à 20 pages, puis analyse chaque page indépendamment et agrège en score de site (moyenne, moyennes par catégorie, pages les plus faibles à améliorer en priorité). Le crawl est orchestré côté client (chaque page = un appel séparé à `/api/analyze`) pour rester dans les limites de durée des fonctions serverless.
+- **Site entier** — découvre les pages du site via `sitemap.xml`/`robots.txt` (repli sur les liens de la page d'accueil si pas de sitemap), sélectionne un échantillon représentatif de 20 pages (voir ci-dessous), puis analyse chaque page indépendamment et agrège en score de site (moyenne, moyennes par catégorie, pages les plus faibles à améliorer en priorité). Le crawl est orchestré côté client (chaque page = un appel séparé à `/api/analyze`) pour rester dans les limites de durée des fonctions serverless.
+
+### Sélection des 20 pages
+
+Un site peut avoir des centaines de pages ; prendre les 20 premières trouvées dans le sitemap donnerait un échantillon biaisé (souvent une avalanche d'articles de blog). À la place :
+
+1. Chaque URL découverte est classée par mot-clé d'URL en une catégorie : Accueil, Pricing, Produit, Ressources, À propos, Carrières, Contact, Légal, Autre — aucun appel réseau ni IA, juste une lecture du chemin. Le matching se fait sur des tokens entiers de chemin (segments séparés par `/`, `-`, `_`), jamais en sous-chaîne libre, pour éviter par exemple qu'un article `/news/electricity-price-increases` soit classé "pricing" à cause du mot "price" isolé dans le slug.
+2. Un quota par catégorie (accueil : 1, pricing : 2, produit : 4, ressources : 5, à propos : 1, carrières : 1, contact : 1, légal : 0 par défaut) garantit un échantillon représentatif de la structure du site.
+3. Les places restantes sont comblées en priorité par la catégorie "Autre" (souvent les pages de contenu individuelles — fiches produit, articles — les plus rentables à auditer), les pages légales/boilerplate n'étant piochées qu'en tout dernier recours.
+4. Au sein d'une catégorie, les chemins les plus courts sont préférés (proxy pour "plus proche de la racine = plus probablement important").
 
 ## Comment le score est calculé
 

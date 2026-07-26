@@ -21,10 +21,29 @@ interface GeoScoreResult {
   categories: ScoreCategory[];
 }
 
+type PageCategory = "home" | "pricing" | "product" | "resources" | "about" | "careers" | "contact" | "legal" | "other";
+
+const CATEGORY_LABELS: Record<PageCategory, string> = {
+  home: "Accueil",
+  pricing: "Pricing",
+  product: "Produit",
+  resources: "Ressources",
+  about: "À propos",
+  careers: "Carrières",
+  contact: "Contact",
+  legal: "Légal",
+  other: "Autre",
+};
+
+interface SelectedPage {
+  url: string;
+  category: PageCategory;
+}
+
 interface DiscoveryResult {
   rootUrl: string;
   hostname: string;
-  urls: string[];
+  pages: SelectedPage[];
   source: "sitemap" | "homepage-links";
   totalFound: number;
   totalFoundIsApproximate: boolean;
@@ -33,6 +52,7 @@ interface DiscoveryResult {
 
 interface PageCrawlResult {
   url: string;
+  category: PageCategory;
   status: "pending" | "loading" | "done" | "error";
   result?: GeoScoreResult;
   error?: string;
@@ -221,9 +241,13 @@ export default function Home() {
       }
       const discoveryResult = data as DiscoveryResult;
       setDiscovery(discoveryResult);
-      setPages(discoveryResult.urls.map((u) => ({ url: u, status: "pending" as const })));
+      setPages(discoveryResult.pages.map((p) => ({ url: p.url, category: p.category, status: "pending" as const })));
 
-      await runWithConcurrency(discoveryResult.urls, 3, analyzeOnePage);
+      await runWithConcurrency(
+        discoveryResult.pages.map((p) => p.url),
+        3,
+        analyzeOnePage,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue.");
     } finally {
@@ -372,6 +396,19 @@ export default function Home() {
               ne peut connaître la citabilité réelle d&apos;une page dans un moteur IA donné sans accès à ses journaux
               internes.
             </p>
+            <p>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">Sélection des 20 pages (mode « Site entier »)</span> :
+              chaque URL découverte est classée par motif d&apos;URL (Accueil, Pricing, Produit, Ressources, À propos,
+              Carrières, Contact, Légal, Autre — aucun appel IA, juste une lecture du chemin) puis choisie par quota
+              par catégorie (accueil, pricing, produit, ressources, à propos, carrières, contact) pour obtenir un
+              échantillon représentatif de la structure du site plutôt qu&apos;un tri arbitraire — par exemple les 20
+              premiers articles de blog par ordre alphabétique, qui donnerait une image biaisée du site. Les places
+              restantes sont comblées en priorité par des pages de contenu individuelles (catégorie « Autre » —
+              souvent les fiches produit ou articles les plus rentables à auditer), et les pages légales/boilerplate
+              (mentions légales, confidentialité...) ne sont piochées qu&apos;en tout dernier recours. Au sein d&apos;une
+              catégorie, les chemins les plus courts sont préférés (proxy pour « plus proche de la racine du site =
+              plus probablement important »).
+            </p>
           </div>
         </details>
 
@@ -479,7 +516,12 @@ export default function Home() {
                 <ul className="flex flex-col gap-1 text-sm text-amber-700 dark:text-amber-400">
                   {weakestPages.map((p) => (
                     <li key={p.url} className="flex items-center justify-between gap-3">
-                      <span className="truncate">{p.url}</span>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                          {CATEGORY_LABELS[p.category]}
+                        </span>
+                        <span className="truncate">{p.url}</span>
+                      </span>
                       <span className="shrink-0 font-medium">{p.result.totalScore}/100</span>
                     </li>
                   ))}
@@ -495,7 +537,12 @@ export default function Home() {
                     {p.status === "done" && p.result ? (
                       <details className="group">
                         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm">
-                          <span className="truncate text-zinc-700 dark:text-zinc-300">{p.url}</span>
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                              {CATEGORY_LABELS[p.category]}
+                            </span>
+                            <span className="truncate text-zinc-700 dark:text-zinc-300">{p.url}</span>
+                          </span>
                           <span className={`shrink-0 font-medium ${totalScoreColor(p.result.totalScore)}`}>
                             {p.result.totalScore}/100
                           </span>
@@ -506,7 +553,12 @@ export default function Home() {
                       </details>
                     ) : (
                       <div className="flex items-center justify-between gap-3 text-sm">
-                        <span className="truncate text-zinc-500 dark:text-zinc-400">{p.url}</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                            {CATEGORY_LABELS[p.category]}
+                          </span>
+                          <span className="truncate text-zinc-500 dark:text-zinc-400">{p.url}</span>
+                        </span>
                         <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-600">
                           {p.status === "pending" && "en attente…"}
                           {p.status === "loading" && "analyse en cours…"}
