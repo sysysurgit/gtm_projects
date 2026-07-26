@@ -8,6 +8,10 @@
 *.crt
 credentials/
 secrets/
+key/
+keys/
+*key*.txt
+*token*.txt
 
 # ── Scratch / temporary workspace ───────────────────────
 temporary/*
