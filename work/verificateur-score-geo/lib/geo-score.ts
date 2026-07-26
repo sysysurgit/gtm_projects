@@ -459,7 +459,8 @@ export async function analyzeGeoScore(url: URL, apiKey?: string): Promise<GeoSco
     try {
       categories.push(await scoreEntityClarity(apiKey, pageTitle ?? "", metaDescription ?? "", bodyText));
       aiEvaluated = true;
-    } catch {
+    } catch (err) {
+      console.error("scoreEntityClarity failed:", err);
       categories.push({
         key: "entity-clarity",
         label: "Clarté d'entité (analyse IA)",
