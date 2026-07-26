@@ -33,6 +33,15 @@ Sans clé API, les 5 premières catégories tournent quand même (score plafonn�
 
 Limite assumée : c'est une approximation heuristique basée sur la littérature publiée, pas une mesure garantie — aucun outil externe ne peut connaître la citabilité réelle d'une page dans un moteur IA donné sans accès à ses journaux internes.
 
+## Plan d'action
+
+Chaque sous-vérification qui ne rapporte pas la totalité de ses points émet aussi une recommandation structurée (`{ points, action }`), pas seulement un diagnostic textuel. L'app agrège ces recommandations en un vrai plan d'action, triées par impact :
+
+- **Mode « Une page »** : les recommandations de la page, triées par points décroissants, avec le score visé si elles sont toutes appliquées.
+- **Mode « Site entier »** : les recommandations identiques sont regroupées entre pages (même catégorie + même action) et triées par impact total (points × nombre de pages concernées) — la catégorie « Clarté d'entité » (IA) est exclue de cet agrégat car son texte est spécifique à chaque page (déjà visible dans le détail par page).
+
+Pour la clarté d'entité (IA), Claude est aussi invité à formuler une suggestion d'amélioration concrète en plus du score, réutilisée comme recommandation quand le score n'est pas déjà maximal.
+
 ## Getting Started
 
 ```bash

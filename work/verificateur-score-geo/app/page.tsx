@@ -2,12 +2,18 @@
 
 import { useState, type FormEvent } from "react";
 
+interface Recommendation {
+  points: number;
+  action: string;
+}
+
 interface ScoreCategory {
   key: string;
   label: string;
   score: number;
   max: number;
   details: string[];
+  recommendations: Recommendation[];
 }
 
 interface GeoScoreResult {
@@ -122,6 +128,97 @@ async function runWithConcurrency<T>(items: T[], limit: number, worker: (item: T
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, runner));
 }
 
+function potentialScore(categories: ScoreCategory[], currentScore: number): number {
+  const gain = categories.reduce((sum, c) => sum + c.recommendations.reduce((s, r) => s + r.points, 0), 0);
+  return Math.min(100, currentScore + gain);
+}
+
+/** Plan d'action d'une page : recommandations triées par impact, avec le score visé si on les applique. */
+function ActionPlan({ categories, currentScore }: { categories: ScoreCategory[]; currentScore: number }) {
+  const items = categories
+    .flatMap((c) => c.recommendations.map((r) => ({ ...r, categoryLabel: c.label })))
+    .sort((a, b) => b.points - a.points);
+  if (items.length === 0) return null;
+  const target = potentialScore(categories, currentScore);
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-signal-tint p-4 text-left">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-medium text-signal">Plan d&apos;action</h3>
+        <span className="font-mono text-xs text-signal">
+          Score visé : <span className="font-bold tabular-nums">{target}/100</span>
+        </span>
+      </div>
+      <ol className="flex flex-col gap-2 text-sm text-ink-secondary">
+        {items.map((item, i) => (
+          <li key={i} className="flex items-start gap-2.5">
+            <span className="mt-0.5 shrink-0 rounded bg-surface px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums text-signal">
+              +{item.points}
+            </span>
+            <span>
+              <span className="font-medium text-ink">{item.categoryLabel}</span> — {item.action}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/**
+ * Plan d'action agrégé sur tout le site : les recommandations identiques
+ * (mêmes mots-clés heuristiques déterministes) sont regroupées entre pages et
+ * triées par impact total (points × nombre de pages concernées) — la
+ * clarté d'entité (IA) est exclue de l'agrégat car son texte est spécifique à
+ * chaque page (déjà visible dans le détail par page).
+ */
+function SiteActionPlan({ doneResults }: { doneResults: (PageCrawlResult & { result: GeoScoreResult })[] }) {
+  const map = new Map<string, { action: string; points: number; categoryLabel: string; pagesAffected: number }>();
+  for (const p of doneResults) {
+    for (const c of p.result.categories) {
+      if (c.key === "entity-clarity") continue;
+      for (const rec of c.recommendations) {
+        const id = `${c.key}::${rec.action}`;
+        const existing = map.get(id);
+        if (existing) existing.pagesAffected += 1;
+        else map.set(id, { action: rec.action, points: rec.points, categoryLabel: c.label, pagesAffected: 1 });
+      }
+    }
+  }
+  const items = Array.from(map.values()).sort((a, b) => b.points * b.pagesAffected - a.points * a.pagesAffected);
+  if (items.length === 0 || doneResults.length === 0) return null;
+
+  const potentialAvg = Math.round(
+    doneResults.reduce((sum, p) => sum + potentialScore(p.result.categories, p.result.totalScore), 0) / doneResults.length,
+  );
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-signal-tint p-4 text-left">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-medium text-signal">Plan d&apos;action du site</h3>
+        <span className="font-mono text-xs text-signal">
+          Score moyen visé : <span className="font-bold tabular-nums">{potentialAvg}/100</span>
+        </span>
+      </div>
+      <ol className="flex flex-col gap-2 text-sm text-ink-secondary">
+        {items.map((item, i) => (
+          <li key={i} className="flex items-start gap-2.5">
+            <span className="mt-0.5 shrink-0 rounded bg-surface px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums text-signal">
+              +{item.points}
+            </span>
+            <span>
+              <span className="font-medium text-ink">{item.categoryLabel}</span> — {item.action}{" "}
+              <span className="text-ink-muted">
+                ({item.pagesAffected}/{doneResults.length} pages)
+              </span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function ResultCard({ result }: { result: GeoScoreResult }) {
   const ratio = result.totalScore / 100;
   return (
@@ -138,6 +235,7 @@ function ResultCard({ result }: { result: GeoScoreResult }) {
           <span className="text-xs text-warning">Analyse IA non activée pour cette page — score plafonné.</span>
         )}
       </div>
+      <ActionPlan categories={result.categories} currentScore={result.totalScore} />
       <div className="flex flex-col gap-4">
         {result.categories.map((cat) => {
           const catRatio = cat.max > 0 ? cat.score / cat.max : 0;
@@ -504,6 +602,8 @@ export default function Home() {
                 </button>
               </div>
             )}
+
+            <SiteActionPlan doneResults={doneResults} />
 
             {aggregatedCategories.length > 0 && (
               <div className="flex flex-col gap-4">

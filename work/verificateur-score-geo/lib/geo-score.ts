@@ -3,12 +3,18 @@ import { isIP } from "node:net";
 import * as cheerio from "cheerio";
 import Anthropic from "@anthropic-ai/sdk";
 
+export interface Recommendation {
+  points: number;
+  action: string;
+}
+
 export interface ScoreCategory {
   key: string;
   label: string;
   score: number;
   max: number;
   details: string[];
+  recommendations: Recommendation[];
 }
 
 export interface GeoScoreResult {
@@ -51,6 +57,10 @@ export interface GeoScoreResult {
  * externe ne peut mesurer avec certitude la citabilité réelle dans un moteur
  * IA donné sans accès à ses journaux internes — ces poids reflètent des
  * tendances publiées, pas une garantie de résultat pour une page précise.
+ *
+ * Chaque sous-vérification qui ne rapporte pas la totalité de ses points émet
+ * aussi une `Recommendation` (points récupérables + action concrète) — c'est
+ * ce qui alimente le plan d'action affiché dans l'app, pas seulement le score.
  */
 export const SCORE_WEIGHTS = {
   structure: 10,
@@ -176,6 +186,7 @@ async function fetchHtml(url: URL): Promise<string> {
 
 function scoreStructure($: cheerio.CheerioAPI): ScoreCategory {
   const details: string[] = [];
+  const recommendations: Recommendation[] = [];
   let score = 0;
   const max = SCORE_WEIGHTS.structure;
 
@@ -185,8 +196,10 @@ function scoreStructure($: cheerio.CheerioAPI): ScoreCategory {
     details.push("Un seul H1 détecté — bonne clarté de structure.");
   } else if (h1Count === 0) {
     details.push("Aucun H1 détecté.");
+    recommendations.push({ points: 4, action: "Ajouter un titre H1 unique et descriptif en haut de la page." });
   } else {
     details.push(`${h1Count} balises H1 détectées — un seul H1 par page est préférable.`);
+    recommendations.push({ points: 4, action: `Ne garder qu'un seul H1 par page (actuellement ${h1Count}).` });
   }
 
   const metaDescription = $('meta[name="description"]').attr("content")?.trim() ?? "";
@@ -196,8 +209,10 @@ function scoreStructure($: cheerio.CheerioAPI): ScoreCategory {
   } else if (metaDescription.length > 0) {
     score += 1;
     details.push("Meta description présente mais mal dimensionnée (idéal : 50-160 caractères).");
+    recommendations.push({ points: 2, action: "Ajuster la longueur de la meta description à 50-160 caractères." });
   } else {
     details.push("Aucune meta description détectée.");
+    recommendations.push({ points: 3, action: "Ajouter une meta description de 50 à 160 caractères résumant la page." });
   }
 
   const bodyText = $("body").text().replace(/\s+/g, " ").trim();
@@ -207,13 +222,15 @@ function scoreStructure($: cheerio.CheerioAPI): ScoreCategory {
     details.push(`Contenu textuel suffisant (~${wordCount} mots).`);
   } else {
     details.push(`Contenu textuel limité (~${wordCount} mots) — signal nécessaire mais peu différenciant seul.`);
+    recommendations.push({ points: 3, action: `Étoffer le contenu à au moins 300 mots (actuellement ~${wordCount}).` });
   }
 
-  return { key: "structure", label: "Structure du contenu", score, max, details };
+  return { key: "structure", label: "Structure du contenu", score, max, details, recommendations };
 }
 
 function scoreSchema($: cheerio.CheerioAPI): ScoreCategory {
   const details: string[] = [];
+  const recommendations: Recommendation[] = [];
   let score = 0;
   const max = SCORE_WEIGHTS.schema;
 
@@ -234,6 +251,7 @@ function scoreSchema($: cheerio.CheerioAPI): ScoreCategory {
     details.push(`${jsonLdBlocks.length} bloc(s) de données structurées JSON-LD détecté(s).`);
   } else {
     details.push("Aucune donnée structurée JSON-LD détectée.");
+    recommendations.push({ points: 6, action: "Ajouter des données structurées JSON-LD (schema.org) à la page." });
   }
 
   const types = new Set<string>();
@@ -248,6 +266,10 @@ function scoreSchema($: cheerio.CheerioAPI): ScoreCategory {
     details.push("Schema FAQPage détecté — favorable aux moteurs de réponse IA (Google Search Central).");
   } else {
     details.push("Pas de schema FAQPage détecté.");
+    recommendations.push({
+      points: 6,
+      action: "Ajouter un schema FAQPage si la page contient des questions/réponses — très favorable aux moteurs IA.",
+    });
   }
 
   const usefulTypes = ["Organization", "Article", "Product", "BreadcrumbList", "WebPage", "NewsArticle"];
@@ -257,9 +279,10 @@ function scoreSchema($: cheerio.CheerioAPI): ScoreCategory {
     details.push(`Types de schema complémentaires détectés : ${matched.join(", ")}.`);
   } else {
     details.push("Aucun type de schema complémentaire (Organization, Article, Product...) détecté.");
+    recommendations.push({ points: 3, action: "Ajouter un schema complémentaire pertinent (Organization, Article, Product...)." });
   }
 
-  return { key: "schema", label: "Données structurées", score, max, details };
+  return { key: "schema", label: "Données structurées", score, max, details, recommendations };
 }
 
 const STAT_PATTERN = /\d+(?:[.,]\d+)?\s?(?:%|pourcents?)|\b\d{2,}(?:[.,]\d+)?\b/g;
@@ -267,6 +290,7 @@ const QUOTE_PATTERN = /«\s?[^»]{15,}\s?»|"[^"]{15,}"/;
 
 function scoreCitations($: cheerio.CheerioAPI, baseHost: string): ScoreCategory {
   const details: string[] = [];
+  const recommendations: Recommendation[] = [];
   let score = 0;
   const max = SCORE_WEIGHTS.citations;
 
@@ -287,8 +311,10 @@ function scoreCitations($: cheerio.CheerioAPI, baseHost: string): ScoreCategory 
   } else if (externalLinks === 1) {
     score += 5;
     details.push("Un seul lien sortant détecté.");
+    recommendations.push({ points: 5, action: "Ajouter au moins un second lien sortant vers une source externe fiable." });
   } else {
     details.push("Aucun lien sortant vers une source externe détecté.");
+    recommendations.push({ points: 10, action: "Ajouter au moins 2 liens sortants vers des sources externes fiables." });
   }
 
   const bodyText = $("body").text().replace(/\s+/g, " ").trim();
@@ -299,8 +325,10 @@ function scoreCitations($: cheerio.CheerioAPI, baseHost: string): ScoreCategory 
   } else if (statMatches.length > 0) {
     score += 5;
     details.push(`${statMatches.length} donnée(s) chiffrée(s) détectée(s) — encore limité.`);
+    recommendations.push({ points: 5, action: "Ajouter davantage de données chiffrées concrètes (au moins 3 occurrences)." });
   } else {
     details.push("Aucune statistique ou donnée chiffrée détectée.");
+    recommendations.push({ points: 10, action: "Intégrer des statistiques ou données chiffrées concrètes dans le contenu." });
   }
 
   const hasQuote = $("blockquote").length > 0 || QUOTE_PATTERN.test(bodyText);
@@ -309,13 +337,18 @@ function scoreCitations($: cheerio.CheerioAPI, baseHost: string): ScoreCategory 
     details.push("Citation ou verbatim détecté(e).");
   } else {
     details.push("Aucune citation ou verbatim détecté(e).");
+    recommendations.push({
+      points: 5,
+      action: "Ajouter une citation ou un verbatim (expert, client, étude) pour renforcer la crédibilité.",
+    });
   }
 
-  return { key: "citations", label: "Citations, statistiques & sources", score, max, details };
+  return { key: "citations", label: "Citations, statistiques & sources", score, max, details, recommendations };
 }
 
 function scoreDirectAnswers($: cheerio.CheerioAPI): ScoreCategory {
   const details: string[] = [];
+  const recommendations: Recommendation[] = [];
   let score = 0;
   const max = SCORE_WEIGHTS.directAnswers;
 
@@ -329,8 +362,13 @@ function scoreDirectAnswers($: cheerio.CheerioAPI): ScoreCategory {
   } else if (questionHeadings.length === 1) {
     score += 4;
     details.push("Un sous-titre formulé en question détecté.");
+    recommendations.push({ points: 5, action: "Ajouter un second sous-titre formulé en question." });
   } else {
     details.push("Aucun sous-titre formulé en question (ex : « Comment... », « Qu'est-ce que... »).");
+    recommendations.push({
+      points: 9,
+      action: "Reformuler au moins deux sous-titres en questions (ex : « Comment... », « Qu'est-ce que... »).",
+    });
   }
 
   const listCount = $("ul, ol").length;
@@ -340,15 +378,18 @@ function scoreDirectAnswers($: cheerio.CheerioAPI): ScoreCategory {
   } else if (listCount === 1) {
     score += 3;
     details.push("Une liste structurée détectée.");
+    recommendations.push({ points: 3, action: "Ajouter une seconde liste structurée (à puces ou numérotée)." });
   } else {
     details.push("Aucune liste structurée détectée.");
+    recommendations.push({ points: 6, action: "Structurer le contenu avec au moins deux listes à puces ou numérotées." });
   }
 
-  return { key: "direct-answers", label: "Clarté des réponses", score, max, details };
+  return { key: "direct-answers", label: "Clarté des réponses", score, max, details, recommendations };
 }
 
 function scoreFreshnessAuthor($: cheerio.CheerioAPI): ScoreCategory {
   const details: string[] = [];
+  const recommendations: Recommendation[] = [];
   let score = 0;
   const max = SCORE_WEIGHTS.freshnessAuthor;
 
@@ -361,6 +402,10 @@ function scoreFreshnessAuthor($: cheerio.CheerioAPI): ScoreCategory {
     details.push("Date de publication ou de mise à jour détectée.");
   } else {
     details.push("Aucune date de publication détectée.");
+    recommendations.push({
+      points: 5,
+      action: "Afficher une date de publication/mise à jour visible (balise <time> ou meta article:published_time).",
+    });
   }
 
   const hasAuthor =
@@ -372,9 +417,13 @@ function scoreFreshnessAuthor($: cheerio.CheerioAPI): ScoreCategory {
     details.push("Auteur identifié sur la page (signal E-E-A-T).");
   } else {
     details.push("Aucun auteur identifié.");
+    recommendations.push({
+      points: 5,
+      action: "Identifier clairement l'auteur de la page (meta author, rel=author, ou bloc auteur visible).",
+    });
   }
 
-  return { key: "freshness-author", label: "Fraîcheur & auteur", score, max, details };
+  return { key: "freshness-author", label: "Fraîcheur & auteur", score, max, details, recommendations };
 }
 
 async function scoreEntityClarity(
@@ -399,8 +448,9 @@ async function scoreEntityClarity(
           properties: {
             score: { type: "integer" },
             summary: { type: "string" },
+            improvement: { type: "string" },
           },
-          required: ["score", "summary"],
+          required: ["score", "summary", "improvement"],
           additionalProperties: false,
         },
       },
@@ -417,7 +467,7 @@ Extrait du contenu :
 ${excerpt}
 """
 
-Donne un score entier de 0 à ${max} (${max} = entité extrêmement claire et citable sans ambiguïté, 0 = entité totalement floue ou absente) et une phrase d'explication en français.`,
+Donne : un score entier de 0 à ${max} (${max} = entité extrêmement claire et citable sans ambiguïté, 0 = entité totalement floue ou absente) ; une phrase d'explication en français ; et, si le score n'est pas déjà maximal, une phrase d'amélioration concrète et actionnable (sinon une chaîne vide).`,
       },
     ],
   });
@@ -426,8 +476,13 @@ Donne un score entier de 0 à ${max} (${max} = entité extrêmement claire et ci
   if (!textBlock || textBlock.type !== "text") {
     throw new Error("Réponse IA invalide.");
   }
-  const parsed = JSON.parse(textBlock.text) as { score: number; summary: string };
+  const parsed = JSON.parse(textBlock.text) as { score: number; summary: string; improvement: string };
   const clamped = Math.max(0, Math.min(max, Math.round(parsed.score)));
+
+  const recommendations: Recommendation[] = [];
+  if (clamped < max && parsed.improvement.trim()) {
+    recommendations.push({ points: max - clamped, action: parsed.improvement.trim() });
+  }
 
   return {
     key: "entity-clarity",
@@ -435,6 +490,7 @@ Donne un score entier de 0 à ${max} (${max} = entité extrêmement claire et ci
     score: clamped,
     max,
     details: [parsed.summary],
+    recommendations,
   };
 }
 
@@ -467,6 +523,7 @@ export async function analyzeGeoScore(url: URL, apiKey?: string): Promise<GeoSco
         score: 0,
         max: SCORE_WEIGHTS.entityClarity,
         details: ["L'analyse IA a échoué — ce sous-score n'est pas pris en compte."],
+        recommendations: [],
       });
     }
   } else {
@@ -476,6 +533,7 @@ export async function analyzeGeoScore(url: URL, apiKey?: string): Promise<GeoSco
       score: 0,
       max: SCORE_WEIGHTS.entityClarity,
       details: ["Analyse IA non disponible (clé ANTHROPIC_API_KEY absente du serveur)."],
+      recommendations: [],
     });
   }
 
