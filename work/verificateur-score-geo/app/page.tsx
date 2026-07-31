@@ -303,7 +303,7 @@ function ResultCard({ result }: { result: GeoScoreResult }) {
       <div className="flex flex-col items-center gap-2 text-center">
         <span className="text-sm text-ink-muted">{result.hostname}</span>
         {result.pageTitle && <span className="max-w-md text-sm font-medium text-ink-secondary">{result.pageTitle}</span>}
-        <span className={`font-mono text-4xl font-bold tabular-nums ${TONE_TEXT[toneFromRatio(ratio)]}`}>
+        <span className={`font-display text-4xl font-black tabular-nums ${TONE_TEXT[toneFromRatio(ratio)]}`}>
           {result.totalScore}
           <span className="text-lg text-ink-muted">/100</span>
         </span>
@@ -499,80 +499,87 @@ export default function Home() {
   const weakestPages = [...doneResults].sort((a, b) => a.result.totalScore - b.result.totalScore).slice(0, 3);
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-plane px-4 py-16 font-sans sm:px-8">
-      <div className="fixed top-4 left-4 z-10 text-[11px] leading-[0.95] font-bold text-ink italic sm:top-6 sm:left-6">
-        <div>SYSY&apos;S</div>
-        <div>GTM</div>
-        <div>PROJECTS</div>
-      </div>
-      <main className="flex w-full max-w-2xl flex-col gap-8">
-        <header className="flex flex-col items-center gap-3 text-center">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-signal/35 bg-signal-tint px-2.5 py-1 font-mono text-[11px] tracking-wide text-signal uppercase">
-            <span className="signal-dot h-1.5 w-1.5 rounded-full bg-signal" />
-            Audit de visibilité IA
-          </span>
-          <h1 className="text-3xl font-semibold tracking-tight text-balance text-ink">Vérificateur de Score GEO</h1>
-          <p className="mx-auto max-w-lg text-balance text-ink-secondary">
-            Analysez la visibilité d&apos;une page — ou d&apos;un site entier — dans les réponses des moteurs IA
-            (ChatGPT, Perplexity, Claude) : structure, données structurées, clarté des réponses et citabilité.
-          </p>
-        </header>
-
-        <div className="flex justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => !busy && setMode("site")}
-            disabled={busy}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-              mode === "site" ? "bg-signal text-signal-ink" : "border border-border text-ink-secondary hover:bg-surface"
-            }`}
-          >
-            Site entier
-          </button>
-          <button
-            type="button"
-            onClick={() => !busy && setMode("page")}
-            disabled={busy}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-              mode === "page" ? "bg-signal text-signal-ink" : "border border-border text-ink-secondary hover:bg-surface"
-            }`}
-          >
-            Une page
-          </button>
+    <div className="flex flex-1 flex-col font-sans">
+      <div className="relative flex flex-col items-center bg-hero px-4 pt-16 pb-20 text-hero-ink sm:px-8">
+        <div className="absolute top-4 left-4 text-[11px] leading-[0.95] font-bold text-hero-ink italic sm:top-6 sm:left-6">
+          <div>SYSY&apos;S</div>
+          <div>GTM</div>
+          <div>PROJECTS</div>
         </div>
+        <div className="flex w-full max-w-2xl flex-col gap-8">
+          <header className="flex flex-col items-center gap-3 text-center">
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-hero-ink/40 bg-hero-ink/10 px-2.5 py-1 font-mono text-[11px] tracking-wide text-hero-ink uppercase">
+              <span className="signal-dot h-1.5 w-1.5 rounded-full bg-hero-ink" />
+              Audit de visibilité IA
+            </span>
+            <h1 className="font-display text-4xl font-black tracking-tight text-balance uppercase sm:text-5xl">
+              Vérificateur de Score GEO
+            </h1>
+            <p className="mx-auto max-w-lg text-balance text-hero-ink/80">
+              Analysez la visibilité d&apos;une page — ou d&apos;un site entier — dans les réponses des moteurs IA
+              (ChatGPT, Perplexity, Claude) : structure, données structurées, clarté des réponses et citabilité.
+            </p>
+          </header>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
-          <input
-            type="text"
-            inputMode="url"
-            placeholder={mode === "page" ? "https://votre-site.com/article" : "https://votre-site.com"}
-            value={url}
-            disabled={busy}
-            onChange={(e) => setUrl(e.target.value)}
-            className="flex-1 rounded-lg border-2 border-signal bg-surface px-4 py-3 font-mono text-sm text-ink outline-none focus:ring-2 focus:ring-signal disabled:opacity-60"
-          />
-          <button
-            type="submit"
-            disabled={busy || !url.trim()}
-            className="rounded-lg bg-signal px-6 py-3 font-medium text-signal-ink transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "Analyse en cours..." : crawling ? "Audit en cours..." : mode === "page" ? "Analyser" : "Lancer l'audit"}
-          </button>
-        </form>
+          <div className="flex justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => !busy && setMode("site")}
+              disabled={busy}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                mode === "site" ? "bg-hero-ink text-hero" : "border border-hero-ink/40 text-hero-ink hover:bg-hero-ink/10"
+              }`}
+            >
+              Site entier
+            </button>
+            <button
+              type="button"
+              onClick={() => !busy && setMode("page")}
+              disabled={busy}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                mode === "page" ? "bg-hero-ink text-hero" : "border border-hero-ink/40 text-hero-ink hover:bg-hero-ink/10"
+              }`}
+            >
+              Une page
+            </button>
+          </div>
 
-        {mode === "site" && (
-          <p className="text-xs text-ink-secondary">
-            Découvre les pages via <code className="rounded bg-border-soft px-1 py-0.5 font-mono">sitemap.xml</code>{" "}
-            (repli sur les liens de la page d&apos;accueil si absent), respecte{" "}
-            <code className="rounded bg-border-soft px-1 py-0.5 font-mono">robots.txt</code>, et sélectionne un
-            échantillon représentatif de 20 pages (accueil, pricing, produit, ressources...) pour rester raisonnable
-            en temps et en coût — chaque page déclenche une analyse indépendante. Les variantes de langue
-            (<code className="rounded bg-border-soft px-1 py-0.5 font-mono">/fr</code>,{" "}
-            <code className="rounded bg-border-soft px-1 py-0.5 font-mono">/en</code>...) et les pages de
-            compte ou légales sont automatiquement écartées de la sélection.
-          </p>
-        )}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              inputMode="url"
+              placeholder={mode === "page" ? "https://votre-site.com/article" : "https://votre-site.com"}
+              value={url}
+              disabled={busy}
+              onChange={(e) => setUrl(e.target.value)}
+              className="flex-1 rounded-lg border-2 border-signal bg-surface px-4 py-3 font-mono text-sm text-ink outline-none focus:ring-2 focus:ring-signal disabled:opacity-60"
+            />
+            <button
+              type="submit"
+              disabled={busy || !url.trim()}
+              className="rounded-lg bg-hero-ink px-6 py-3 font-medium text-hero transition-[filter] hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Analyse en cours..." : crawling ? "Audit en cours..." : mode === "page" ? "Analyser" : "Lancer l'audit"}
+            </button>
+          </form>
 
+          {mode === "site" && (
+            <p className="text-xs text-hero-ink/75">
+              Découvre les pages via <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">sitemap.xml</code>{" "}
+              (repli sur les liens de la page d&apos;accueil si absent), respecte{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">robots.txt</code>, et sélectionne un
+              échantillon représentatif de 20 pages (accueil, pricing, produit, ressources...) pour rester raisonnable
+              en temps et en coût — chaque page déclenche une analyse indépendante. Les variantes de langue
+              (<code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/fr</code>,{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/en</code>...) et les pages de
+              compte ou légales sont automatiquement écartées de la sélection.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <main className="flex flex-1 flex-col items-center bg-plane px-4 py-12 sm:px-8">
+        <div className="flex w-full max-w-2xl flex-col gap-8">
         <details className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-ink-secondary open:pb-4">
           <summary className="cursor-pointer font-medium text-ink">Méthodologie & sources</summary>
           <div className="mt-3 flex flex-col gap-2 text-xs leading-relaxed">
@@ -681,7 +688,7 @@ export default function Home() {
             {siteAverage !== null && (
               <div className="flex flex-col items-center gap-2 border-b border-border-soft pb-6 text-center">
                 <span className="text-sm text-ink-muted">{discovery?.hostname}</span>
-                <span className={`font-mono text-6xl font-bold tabular-nums ${TONE_TEXT[toneFromRatio(siteAverage / 100)]}`}>
+                <span className={`font-display text-6xl font-black tabular-nums ${TONE_TEXT[toneFromRatio(siteAverage / 100)]}`}>
                   {siteAverage}
                   <span className="text-2xl text-ink-muted">/100</span>
                 </span>
@@ -789,6 +796,7 @@ export default function Home() {
             )}
           </div>
         )}
+        </div>
       </main>
     </div>
   );

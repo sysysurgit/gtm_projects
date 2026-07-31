@@ -1,23 +1,25 @@
 @import "tailwindcss";
 
 /*
- * Direction artistique : "carte de visite classy" — fond blanc crème façon
- * papier, texte en bleu Majorelle (rgb(28, 0, 254)), typographie Helvetica
- * Neue en gras. Bordures en bleu Majorelle (notamment sur les champs de
- * saisie) plutôt qu'un gris neutre, pour que la structure de la page se lise
- * comme un tracé imprimé sur le papier plutôt que comme des blocs de couleur.
+ * Direction artistique : bande d'accueil pleine largeur en bleu Majorelle
+ * (rgb(28, 0, 254)) avec texte blanc et grand titre en serif Bodoni Moda
+ * (façon affiche/carte de visite premium), puis un corps blanc avec cartes
+ * gris-lavande et texte en bleu Majorelle. Les libellés techniques (badges,
+ * tags, chiffres de mesure) restent en Space Mono capitales espacées ; le
+ * corps de texte courant reste en Helvetica Neue.
  */
 :root {
-  --paper: #f6f1e3;
-  --plane: #f6f1e3;
-  --surface: #fffcf3;
+  --hero: #1c00fe;
+  --hero-ink: #ffffff;
+  --paper: #ffffff;
+  --plane: #ffffff;
+  --surface: #e7e4f2;
   --ink: #1c00fe;
   --ink-secondary: #4b3fc4;
   --ink-muted: #7c74b0;
   --border: rgba(28, 0, 254, 0.35);
   --border-soft: rgba(28, 0, 254, 0.14);
   --signal: #1c00fe;
-  --signal-ink: #fdfbf3;
   --signal-tint: rgba(28, 0, 254, 0.07);
   --good: #0ca30c;
   --warning: #b8790a;
@@ -28,6 +30,8 @@
 }
 
 @theme inline {
+  --color-hero: var(--hero);
+  --color-hero-ink: var(--hero-ink);
   --color-paper: var(--paper);
   --color-plane: var(--plane);
   --color-surface: var(--surface);
@@ -37,7 +41,6 @@
   --color-border: var(--border);
   --color-border-soft: var(--border-soft);
   --color-signal: var(--signal);
-  --color-signal-ink: var(--signal-ink);
   --color-signal-tint: var(--signal-tint);
   --color-good: var(--good);
   --color-warning: var(--warning);
@@ -46,7 +49,8 @@
   --color-warning-tint: var(--warning-tint);
   --color-critical-tint: var(--critical-tint);
   --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-space-mono), "Space Mono", monospace;
+  --font-display: var(--font-bodoni), Georgia, serif;
 }
 
 body {
