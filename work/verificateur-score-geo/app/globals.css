@@ -1,18 +1,19 @@
 @import "tailwindcss";
 
 /*
- * Direction artistique : bande d'accueil pleine largeur en bleu Majorelle
- * (rgb(28, 0, 254)) avec texte blanc et grand titre en Outfit (géométrique,
- * gras, façon affiche/carte de visite premium), puis un corps blanc avec
- * cartes gris-lavande et texte en bleu Majorelle. Les libellés techniques
+ * Direction artistique : fond bleu Majorelle continu (rgb(28, 0, 254)) sur
+ * toute la page — pas de rupture blanche entre l'accueil et le corps —, texte
+ * blanc et grand titre en Outfit (géométrique, gras, façon affiche/carte de
+ * visite premium). Les résultats/cartes flottent en gris-lavande avec du
+ * texte en bleu Majorelle pour rester lisibles. Les libellés techniques
  * (badges, tags, chiffres de mesure) restent en Space Mono capitales
  * espacées ; le corps de texte courant reste en Helvetica Neue.
  */
 :root {
   --hero: #1c00fe;
   --hero-ink: #ffffff;
-  --paper: #ffffff;
-  --plane: #ffffff;
+  --paper: #1c00fe;
+  --plane: #1c00fe;
   --surface: #e7e4f2;
   --ink: #1c00fe;
   --ink-secondary: #4b3fc4;
@@ -55,7 +56,7 @@
 
 body {
   background: var(--plane);
-  color: var(--ink);
+  color: var(--hero-ink);
   font-family: var(--font-sans), system-ui, sans-serif;
   font-weight: 700;
 }
