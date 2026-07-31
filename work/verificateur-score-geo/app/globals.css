@@ -1,33 +1,30 @@
 @import "tailwindcss";
 
 /*
- * Direction artistique : identité de marque assumée, pas un thème système —
- * fond bleu outremer (bleu Majorelle, rgb(28, 0, 254)) plein et vif, texte en
- * blanc grège plutôt qu'un blanc pur, typographie Helvetica Neue en gras. Un
- * seul thème, volontairement indépendant de prefers-color-scheme : c'est un
- * choix de marque délibéré, pas une valeur par défaut qui doit s'effacer
- * devant le thème système. Les boutons et badges inversent la relation (fond
- * grège plein, texte bleu profond) pour un contraste maximal sur le fond
- * outremer — c'est ce qui "peps".
+ * Direction artistique : "carte de visite classy" — fond blanc crème façon
+ * papier, texte en bleu Majorelle (rgb(28, 0, 254)), typographie Helvetica
+ * Neue en gras. Bordures en bleu Majorelle (notamment sur les champs de
+ * saisie) plutôt qu'un gris neutre, pour que la structure de la page se lise
+ * comme un tracé imprimé sur le papier plutôt que comme des blocs de couleur.
  */
 :root {
-  --paper: #1c00fe;
-  --plane: #1c00fe;
-  --surface: #140072;
-  --ink: #f2ebda;
-  --ink-secondary: #ddd6c3;
-  --ink-muted: #b6aed8;
-  --border: rgba(242, 235, 218, 0.18);
-  --border-soft: rgba(242, 235, 218, 0.08);
-  --signal: #f2ebda;
-  --signal-ink: #12005c;
-  --signal-tint: rgba(242, 235, 218, 0.1);
-  --good: #35c235;
-  --warning: #fab219;
-  --critical: #ef6b6b;
-  --good-tint: rgba(53, 194, 53, 0.16);
+  --paper: #f6f1e3;
+  --plane: #f6f1e3;
+  --surface: #fffcf3;
+  --ink: #1c00fe;
+  --ink-secondary: #4b3fc4;
+  --ink-muted: #7c74b0;
+  --border: rgba(28, 0, 254, 0.35);
+  --border-soft: rgba(28, 0, 254, 0.14);
+  --signal: #1c00fe;
+  --signal-ink: #fdfbf3;
+  --signal-tint: rgba(28, 0, 254, 0.07);
+  --good: #0ca30c;
+  --warning: #b8790a;
+  --critical: #d03b3b;
+  --good-tint: rgba(12, 163, 12, 0.12);
   --warning-tint: rgba(250, 178, 25, 0.16);
-  --critical-tint: rgba(239, 107, 107, 0.16);
+  --critical-tint: rgba(208, 59, 59, 0.12);
 }
 
 @theme inline {

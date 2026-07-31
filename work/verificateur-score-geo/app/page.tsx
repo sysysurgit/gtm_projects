@@ -549,7 +549,7 @@ export default function Home() {
             value={url}
             disabled={busy}
             onChange={(e) => setUrl(e.target.value)}
-            className="flex-1 rounded-lg border border-border bg-surface px-4 py-3 font-mono text-sm text-ink outline-none focus:ring-2 focus:ring-signal disabled:opacity-60"
+            className="flex-1 rounded-lg border-2 border-signal bg-surface px-4 py-3 font-mono text-sm text-ink outline-none focus:ring-2 focus:ring-signal disabled:opacity-60"
           />
           <button
             type="submit"
