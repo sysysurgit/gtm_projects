@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     const [result, agentReadiness] = await Promise.all([
       discoverSitePages(url),
-      checkAgentReadiness(url.origin, url.hostname, process.env.ANTHROPIC_API_KEY),
+      checkAgentReadiness(url.origin, url.hostname, process.env.GEMINI_API_KEY),
     ]);
 
     return NextResponse.json({ ...result, agentReadiness });

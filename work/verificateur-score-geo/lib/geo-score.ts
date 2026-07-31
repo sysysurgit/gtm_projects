@@ -1,7 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import * as cheerio from "cheerio";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI, Type } from "@google/genai";
 
 export interface Recommendation {
   points: number;
@@ -458,33 +458,13 @@ async function scoreEntityClarity(
   metaDescription: string,
   bodyText: string,
 ): Promise<ScoreCategory> {
-  const client = new Anthropic({ apiKey });
+  const client = new GoogleGenAI({ apiKey });
   const excerpt = bodyText.slice(0, 6000);
   const max = SCORE_WEIGHTS.entityClarity;
 
-  const response = await client.messages.create({
-    model: "claude-opus-5",
-    max_tokens: 1024,
-    output_config: {
-      effort: "low",
-      format: {
-        type: "json_schema",
-        schema: {
-          type: "object",
-          properties: {
-            score: { type: "integer" },
-            summary: { type: "string" },
-            improvement: { type: "string" },
-          },
-          required: ["score", "summary", "improvement"],
-          additionalProperties: false,
-        },
-      },
-    },
-    messages: [
-      {
-        role: "user",
-        content: `Tu es un évaluateur GEO (Generative Engine Optimization). Évalue la clarté d'entité de cette page : un moteur de réponse IA (ChatGPT, Perplexity, Claude) pourrait-il citer précisément et sans ambiguïté de quoi parle cette page (marque, produit, service), et la citer comme source fiable, à partir de son seul contenu ?
+  const response = await client.models.generateContent({
+    model: "gemini-3.1-flash-lite",
+    contents: `Tu es un évaluateur GEO (Generative Engine Optimization). Évalue la clarté d'entité de cette page : un moteur de réponse IA (ChatGPT, Perplexity, Claude) pourrait-il citer précisément et sans ambiguïté de quoi parle cette page (marque, produit, service), et la citer comme source fiable, à partir de son seul contenu ?
 
 Titre : ${pageTitle || "(absent)"}
 Meta description : ${metaDescription || "(absente)"}
@@ -494,15 +474,25 @@ ${excerpt}
 """
 
 Donne : un score entier de 0 à ${max} (${max} = entité extrêmement claire et citable sans ambiguïté, 0 = entité totalement floue ou absente) ; une phrase d'explication en français ; et, si le score n'est pas déjà maximal, une phrase d'amélioration concrète et actionnable (sinon une chaîne vide).`,
+    config: {
+      maxOutputTokens: 1024,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          score: { type: Type.INTEGER },
+          summary: { type: Type.STRING },
+          improvement: { type: Type.STRING },
+        },
+        required: ["score", "summary", "improvement"],
       },
-    ],
+    },
   });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
+  if (!response.text) {
     throw new Error("Réponse IA invalide.");
   }
-  const parsed = JSON.parse(textBlock.text) as { score: number; summary: string; improvement: string };
+  const parsed = JSON.parse(response.text) as { score: number; summary: string; improvement: string };
   const clamped = Math.max(0, Math.min(max, Math.round(parsed.score)));
 
   const recommendations: Recommendation[] = [];
@@ -558,7 +548,7 @@ export async function analyzeGeoScore(url: URL, apiKey?: string): Promise<GeoSco
       label: "Clarté d'entité (analyse IA)",
       score: 0,
       max: SCORE_WEIGHTS.entityClarity,
-      details: ["Analyse IA non disponible (clé ANTHROPIC_API_KEY absente du serveur)."],
+      details: ["Analyse IA non disponible (clé GEMINI_API_KEY absente du serveur)."],
       recommendations: [],
     });
   }

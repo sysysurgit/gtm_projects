@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import type { Recommendation, ScoreCategory } from "./geo-score";
 import { parseRobotsTxt } from "./site-crawl";
 
@@ -110,15 +110,10 @@ async function generateLlmsTxtDraft(
 ): Promise<string | null> {
   if (!pageTitle && !metaDescription && !bodyExcerpt) return null;
   try {
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: "claude-opus-5",
-      max_tokens: 1500,
-      output_config: { effort: "low" },
-      messages: [
-        {
-          role: "user",
-          content: `Rédige un brouillon de fichier llms.txt (format défini par https://llmstxt.org) pour le site "${hostname}", à partir des informations ci-dessous.
+    const client = new GoogleGenAI({ apiKey });
+    const response = await client.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: `Rédige un brouillon de fichier llms.txt (format défini par https://llmstxt.org) pour le site "${hostname}", à partir des informations ci-dessous.
 
 Respecte strictement ce format : un titre H1 avec le nom du produit/entreprise, un court blockquote (">") de résumé en une phrase, puis des sections en H2 avec des listes à puces (par exemple : ce qu'est le produit, fonctionnalités principales, tarification si mentionnée, à qui ça s'adresse, ressources officielles).
 
@@ -130,11 +125,9 @@ Extrait du contenu :
 """
 ${bodyExcerpt.slice(0, 6000)}
 """`,
-        },
-      ],
+      config: { maxOutputTokens: 2048 },
     });
-    const textBlock = response.content.find((b) => b.type === "text");
-    return textBlock && textBlock.type === "text" ? textBlock.text.trim() : null;
+    return response.text?.trim() || null;
   } catch (err) {
     console.error("generateLlmsTxtDraft failed:", err);
     return null;

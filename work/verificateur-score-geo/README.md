@@ -32,7 +32,7 @@ Pondération sur 100 points, répartie ainsi (voir le panneau « Méthodologie &
 - **Citations, statistiques & sources (/25)** — liens sortants vers des sources externes, données chiffrées, citations/verbatims. C'est la catégorie la plus lourde : selon l'étude *« GEO: Generative Engine Optimization »* (Aggarwal et al., 2023, arXiv:2311.09735), citer des sources et ajouter des statistiques est le levier avec le plus fort impact sur la visibilité dans les réponses générées — contrairement au bourrage de mots-clés, qui n'a quasi aucun effet.
 - **Clarté des réponses (/15)** — sous-titres formulés en question, listes structurées.
 - **Fraîcheur & auteur (/10)** — date de publication, auteur identifié. Source : guide E-E-A-T de Google.
-- **Clarté d'entité (/25, optionnel)** — évaluation qualitative par Claude : un moteur de réponse IA pourrait-il citer précisément de quoi parle la page ? Nécessite `ANTHROPIC_API_KEY`.
+- **Clarté d'entité (/25, optionnel)** — évaluation qualitative par IA (Gemini) : un moteur de réponse IA pourrait-il citer précisément de quoi parle la page ? Nécessite `GEMINI_API_KEY`.
 
 Sans clé API, les 5 premières catégories tournent quand même (score plafonné à 75/100) — la clé n'est nécessaire que pour la partie IA.
 
@@ -44,7 +44,7 @@ En plus du score GEO (est-ce que le contenu est *citable* dans une réponse gén
 
 Six vérifications, sur 100 points au total (`lib/agent-readiness.ts`) :
 
-- **`/llms.txt` (/30)** — présence d'un fichier suivant le format [llmstxt.org](https://llmstxt.org/) (titre H1, résumé, sections). Si absent et qu'une clé API est configurée, un **brouillon est généré automatiquement** par Claude à partir du contenu réel de la page d'accueil (titre, meta description, texte visible) — jamais de chiffres inventés, à relire avant publication.
+- **`/llms.txt` (/30)** — présence d'un fichier suivant le format [llmstxt.org](https://llmstxt.org/) (titre H1, résumé, sections). Si absent et qu'une clé API est configurée, un **brouillon est généré automatiquement** par IA (Gemini) à partir du contenu réel de la page d'accueil (titre, meta description, texte visible) — jamais de chiffres inventés, à relire avant publication.
 - **Bots IA & Content-Signal (/25)** — `robots.txt` autorise-t-il explicitement les robots IA connus (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, anthropic-ai...) plutôt que de tout bloquer ; présence d'une directive `Content-Signal` (spec en discussion sur [contentsignals.org](https://contentsignals.org/)).
 - **Sitemap (/15)** — un sitemap accessible : soit `/sitemap.xml`, soit l'emplacement effectivement déclaré via une ligne `Sitemap:` dans `robots.txt` (beaucoup de sites, ex. Webflow, le nomment autrement — `/sitemap_index.xml` par exemple — un simple `GET /sitemap.xml` donnerait donc un faux négatif).
 - **En-têtes Link (/15)** — en-tête HTTP `Link` (RFC 8288) pointant vers `llms.txt` et/ou `sitemap.xml`, pour qu'un agent les découvre sans parser le HTML.
@@ -57,14 +57,14 @@ Comme pour le score GEO, chaque vérification manquée émet une recommandation 
 
 Chaque sous-vérification qui ne rapporte pas la totalité de ses points émet aussi une recommandation structurée (`{ points, action }`), pas seulement un diagnostic textuel. L'app agrège ces recommandations en un vrai plan d'action, triées par points décroissants, avec le score visé si elles sont toutes appliquées — un plan pour le score GEO de la page (ou, en mode « Site entier », de la page ouverte dans le détail par page), et un second, dédié, pour l'accessibilité aux agents IA (propriété du site, un seul plan par audit).
 
-Pour la clarté d'entité (IA), Claude est aussi invité à formuler une suggestion d'amélioration concrète en plus du score, réutilisée comme recommandation quand le score n'est pas déjà maximal.
+Pour la clarté d'entité (IA), le modèle est aussi invité à formuler une suggestion d'amélioration concrète en plus du score, réutilisée comme recommandation quand le score n'est pas déjà maximal.
 
 Le plan d'action arrive en dernier (après le détail des vérifications, pas avant), avec un bouton « Copier le plan d'action » pour exporter la liste en texte brut — pratique pour la coller directement dans un agent de code (Claude Code, Cursor...).
 
 ## Getting Started
 
 ```bash
-cp .env.example .env.local   # puis renseigner ANTHROPIC_API_KEY (optionnel)
+cp .env.example .env.local   # puis renseigner GEMINI_API_KEY (optionnel, gratuit sur aistudio.google.com)
 npm install
 npm run dev
 ```
@@ -73,10 +73,10 @@ Ouvrir [http://localhost:3000](http://localhost:3000).
 
 ## Stack
 
-Next.js (App Router) + TypeScript + Tailwind CSS. Analyse HTML côté serveur via `cheerio`, appel optionnel à l'API Claude (`@anthropic-ai/sdk`) pour la clarté d'entité. Découverte de pages via `robots.txt` + `sitemap.xml` (parsing XML avec `cheerio` en mode xmlMode).
+Next.js (App Router) + TypeScript + Tailwind CSS. Analyse HTML côté serveur via `cheerio`, appel optionnel à l'API Gemini (`@google/genai`, modèle `gemini-3.1-flash-lite` — préféré à `gemini-3.5-flash` : quota gratuit par minute beaucoup plus généreux et disponible en pratique, ce dernier étant tout juste sorti et donc en forte demande/quota restreint) pour la clarté d'entité et le brouillon de llms.txt. Découverte de pages via `robots.txt` + `sitemap.xml` (parsing XML avec `cheerio` en mode xmlMode).
 
 ## Sécurité
 
 Les routes `/api/analyze` et `/api/discover` font des `fetch` server-side sur des URLs fournies par l'utilisateur (risque SSRF classique). Protections en place : whitelist de protocoles (`http`/`https`), rejet des hostnames privés/loopback, résolution DNS + vérification de l'IP résolue avant la requête, timeout de 10s (8s pour le crawl), taille de réponse plafonnée. Ce n'est pas un blindage complet (pas de protection contre le DNS rebinding entre la vérification et le fetch) — à durcir avant un déploiement à fort trafic public.
 
-Aucune limitation de débit n'est en place sur les deux routes : un usage public à fort trafic consommerait rapidement le crédit API Anthropic configuré côté serveur — à ajouter avant une mise en avant large (ex. Upstash Redis).
+Aucune limitation de débit n'est en place sur les deux routes : un usage public à fort trafic consommerait rapidement le quota API Gemini configuré côté serveur — à ajouter avant une mise en avant large (ex. Upstash Redis).
