@@ -46,7 +46,7 @@ Six vérifications, sur 100 points au total (`lib/agent-readiness.ts`) :
 
 - **`/llms.txt` (/30)** — présence d'un fichier suivant le format [llmstxt.org](https://llmstxt.org/) (titre H1, résumé, sections). Si absent et qu'une clé API est configurée, un **brouillon est généré automatiquement** par Claude à partir du contenu réel de la page d'accueil (titre, meta description, texte visible) — jamais de chiffres inventés, à relire avant publication.
 - **Bots IA & Content-Signal (/25)** — `robots.txt` autorise-t-il explicitement les robots IA connus (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, anthropic-ai...) plutôt que de tout bloquer ; présence d'une directive `Content-Signal` (spec en discussion sur [contentsignals.org](https://contentsignals.org/)).
-- **Sitemap (/15)** — `/sitemap.xml` accessible.
+- **Sitemap (/15)** — un sitemap accessible : soit `/sitemap.xml`, soit l'emplacement effectivement déclaré via une ligne `Sitemap:` dans `robots.txt` (beaucoup de sites, ex. Webflow, le nomment autrement — `/sitemap_index.xml` par exemple — un simple `GET /sitemap.xml` donnerait donc un faux négatif).
 - **En-têtes Link (/15)** — en-tête HTTP `Link` (RFC 8288) pointant vers `llms.txt` et/ou `sitemap.xml`, pour qu'un agent les découvre sans parser le HTML.
 - **Markdown for Agents (/10)** — négociation de contenu : la page sert-elle une version Markdown quand `Accept: text/markdown` est envoyé ?
 - **WebMCP (/5)** — détection heuristique de `navigator.modelContext` dans le HTML statique (signal best-effort — un script chargé dynamiquement peut ne pas apparaître).
@@ -55,10 +55,7 @@ Comme pour le score GEO, chaque vérification manquée émet une recommandation 
 
 ## Plan d'action
 
-Chaque sous-vérification qui ne rapporte pas la totalité de ses points émet aussi une recommandation structurée (`{ points, action }`), pas seulement un diagnostic textuel. L'app agrège ces recommandations en un vrai plan d'action, triées par impact :
-
-- **Mode « Une page »** : les recommandations de la page, triées par points décroissants, avec le score visé si elles sont toutes appliquées.
-- **Mode « Site entier »** : les recommandations identiques sont regroupées entre pages (même catégorie + même action) et triées par impact total (points × nombre de pages concernées) — la catégorie « Clarté d'entité » (IA) est exclue de cet agrégat car son texte est spécifique à chaque page (déjà visible dans le détail par page).
+Chaque sous-vérification qui ne rapporte pas la totalité de ses points émet aussi une recommandation structurée (`{ points, action }`), pas seulement un diagnostic textuel. L'app agrège ces recommandations en un vrai plan d'action, triées par points décroissants, avec le score visé si elles sont toutes appliquées — un plan pour le score GEO de la page (ou, en mode « Site entier », de la page ouverte dans le détail par page), et un second, dédié, pour l'accessibilité aux agents IA (propriété du site, un seul plan par audit).
 
 Pour la clarté d'entité (IA), Claude est aussi invité à formuler une suggestion d'amélioration concrète en plus du score, réutilisée comme recommandation quand le score n'est pas déjà maximal.
 

@@ -209,88 +209,6 @@ function ActionPlan({
   );
 }
 
-/**
- * Plan d'action agrégé sur tout le site : les recommandations identiques
- * (mêmes mots-clés heuristiques déterministes) sont regroupées entre pages et
- * triées par impact total (points × nombre de pages concernées) — la
- * clarté d'entité (IA) est exclue de l'agrégat car son texte est spécifique à
- * chaque page (déjà visible dans le détail par page).
- */
-function SiteActionPlan({ doneResults, hostname }: { doneResults: (PageCrawlResult & { result: GeoScoreResult })[]; hostname: string }) {
-  const [copied, setCopied] = useState(false);
-  const map = new Map<string, { action: string; points: number; categoryLabel: string; pagesAffected: number }>();
-  for (const p of doneResults) {
-    for (const c of p.result.categories) {
-      if (c.key === "entity-clarity") continue;
-      for (const rec of c.recommendations) {
-        const id = `${c.key}::${rec.action}`;
-        const existing = map.get(id);
-        if (existing) existing.pagesAffected += 1;
-        else map.set(id, { action: rec.action, points: rec.points, categoryLabel: c.label, pagesAffected: 1 });
-      }
-    }
-  }
-  const items = Array.from(map.values()).sort((a, b) => b.points * b.pagesAffected - a.points * a.pagesAffected);
-  if (items.length === 0 || doneResults.length === 0) return null;
-
-  const currentAvg = Math.round(doneResults.reduce((sum, p) => sum + p.result.totalScore, 0) / doneResults.length);
-  const potentialAvg = Math.round(
-    doneResults.reduce((sum, p) => sum + potentialScore(p.result.categories, p.result.totalScore), 0) / doneResults.length,
-  );
-
-  function handleCopy() {
-    const lines = [
-      `Plan d'action GEO — site ${hostname} (score moyen actuel : ${currentAvg}/100, visé : ${potentialAvg}/100, sur ${doneResults.length} pages)`,
-      "",
-      ...items.map(
-        (item, i) => `${i + 1}. [+${item.points}] ${item.categoryLabel} — ${item.action} (${item.pagesAffected}/${doneResults.length} pages)`,
-      ),
-      "",
-      "Généré avec le Vérificateur de Score GEO.",
-    ];
-    navigator.clipboard.writeText(lines.join("\n")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-signal-tint p-4 text-left">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-medium text-signal">Plan d&apos;action du site</h3>
-        <span className="font-mono text-xs text-signal">
-          Score moyen visé : <span className="font-bold tabular-nums">{potentialAvg}/100</span>
-        </span>
-      </div>
-      <p className="text-xs text-ink-secondary">
-        Classé par impact total (points × pages concernées) — commencez par le haut de la liste.
-      </p>
-      <ol className="flex flex-col gap-2 text-sm text-ink-secondary">
-        {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2.5">
-            <span className="mt-0.5 shrink-0 rounded bg-surface px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums text-signal">
-              +{item.points}
-            </span>
-            <span>
-              <span className="font-medium text-ink">{item.categoryLabel}</span> — {item.action}{" "}
-              <span className="text-ink-muted">
-                ({item.pagesAffected}/{doneResults.length} pages)
-              </span>
-            </span>
-          </li>
-        ))}
-      </ol>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-surface"
-      >
-        {copied ? "Copié !" : "Copier le plan d'action"}
-      </button>
-    </div>
-  );
-}
-
 function CategoryBar({ category }: { category: ScoreCategory }) {
   const ratio = category.max > 0 ? category.score / category.max : 0;
   const tone = toneFromRatio(ratio);
@@ -881,8 +799,6 @@ export default function Home() {
                 title="Plan d'action — agents IA"
               />
             )}
-
-            <SiteActionPlan doneResults={doneResults} hostname={discovery?.hostname ?? ""} />
           </div>
         )}
       </main>

@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Recommendation, ScoreCategory } from "./geo-score";
+import { parseRobotsTxt } from "./site-crawl";
 
 /**
  * Accessibilité aux agents IA — un score /100 distinct du score GEO de
@@ -69,23 +70,36 @@ function robotsBlocksEverything(text: string, userAgent: string): boolean {
   return re.test(text);
 }
 
-async function checkRobots(origin: string): Promise<{ aiBotsAllowed: boolean; hasContentSignal: boolean }> {
+async function checkRobots(
+  origin: string,
+): Promise<{ aiBotsAllowed: boolean; hasContentSignal: boolean; sitemapDeclarations: string[] }> {
   const res = await fetchSafe(`${origin}/robots.txt`);
   if (!res || !res.ok) {
     // Pas de robots.txt du tout = rien n'est explicitement bloqué, mais on ne
     // peut pas non plus le créditer d'une politique explicite favorable.
-    return { aiBotsAllowed: true, hasContentSignal: false };
+    return { aiBotsAllowed: true, hasContentSignal: false, sitemapDeclarations: [] };
   }
   const text = await res.text();
   const hasContentSignal = /content-signal\s*:/i.test(text);
   const globallyBlocked = robotsBlocksEverything(text, "\\*");
   const explicitlyBlockedBot = KNOWN_AI_BOTS.some((bot) => robotsBlocksEverything(text, bot));
-  return { aiBotsAllowed: !globallyBlocked && !explicitlyBlockedBot, hasContentSignal };
+  const { sitemaps } = parseRobotsTxt(text);
+  return { aiBotsAllowed: !globallyBlocked && !explicitlyBlockedBot, hasContentSignal, sitemapDeclarations: sitemaps };
 }
 
-async function checkSitemap(origin: string): Promise<boolean> {
-  const res = await fetchSafe(`${origin}/sitemap.xml`);
-  return !!res && res.ok;
+/**
+ * Beaucoup de sites ne nomment pas leur sitemap "/sitemap.xml" (ex : Webflow
+ * génère "/sitemap_index.xml") — la seule source fiable de son emplacement
+ * réel est la ou les lignes "Sitemap:" de robots.txt. On ne retombe sur le
+ * chemin par défaut "/sitemap.xml" que si robots.txt n'en déclare aucun.
+ */
+async function checkSitemap(origin: string, declaredSitemaps: string[]): Promise<{ found: boolean; url: string | null }> {
+  const candidates = declaredSitemaps.length > 0 ? declaredSitemaps : [`${origin}/sitemap.xml`];
+  for (const candidate of candidates) {
+    const res = await fetchSafe(candidate);
+    if (res && res.ok) return { found: true, url: candidate };
+  }
+  return { found: false, url: null };
 }
 
 async function generateLlmsTxtDraft(
@@ -146,10 +160,12 @@ function buildCheck(
  * contenu de la page d'accueil.
  */
 export async function checkAgentReadiness(origin: string, hostname: string, apiKey?: string): Promise<AgentReadinessResult> {
-  const [llms, robots, sitemapOk, homepageRes, markdownRes] = await Promise.all([
+  // robots.txt est vérifié en premier car checkSitemap dépend de ses éventuelles
+  // déclarations "Sitemap:" (voir checkSitemap).
+  const robots = await checkRobots(origin);
+  const [llms, sitemap, homepageRes, markdownRes] = await Promise.all([
     checkLlmsTxt(origin),
-    checkRobots(origin),
-    checkSitemap(origin),
+    checkSitemap(origin, robots.sitemapDeclarations),
     fetchSafe(origin),
     fetchSafe(origin, { headers: { Accept: "text/markdown" } }),
   ]);
@@ -206,10 +222,15 @@ export async function checkAgentReadiness(origin: string, hostname: string, apiK
   }
 
   checks.push(
-    sitemapOk
-      ? buildCheck("sitemap", "Sitemap", WEIGHTS.sitemap, WEIGHTS.sitemap, ["/sitemap.xml détecté."], [])
-      : buildCheck("sitemap", "Sitemap", 0, WEIGHTS.sitemap, ["Aucun /sitemap.xml détecté."], [
-          { points: WEIGHTS.sitemap, action: "Publier un /sitemap.xml et le déclarer dans robots.txt." },
+    sitemap.found
+      ? buildCheck("sitemap", "Sitemap", WEIGHTS.sitemap, WEIGHTS.sitemap, [`Sitemap détecté (${sitemap.url}).`], [])
+      : buildCheck("sitemap", "Sitemap", 0, WEIGHTS.sitemap, [
+          "Aucun sitemap détecté (ni /sitemap.xml, ni de ligne « Sitemap: » exploitable dans robots.txt).",
+        ], [
+          {
+            points: WEIGHTS.sitemap,
+            action: "Publier un sitemap.xml à jour et déclarer son emplacement via une ligne « Sitemap: » dans robots.txt.",
+          },
         ]),
   );
 

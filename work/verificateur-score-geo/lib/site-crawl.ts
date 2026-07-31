@@ -39,7 +39,7 @@ export interface DiscoveryResult {
   capped: boolean;
 }
 
-async function fetchText(url: string): Promise<string | null> {
+async function fetchTextWithFinalUrl(url: string): Promise<{ text: string; finalUrl: string } | null> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -49,7 +49,7 @@ async function fetchText(url: string): Promise<string | null> {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; VerificateurScoreGEO/1.0)" },
     });
     if (!res.ok) return null;
-    return await res.text();
+    return { text: await res.text(), finalUrl: res.url };
   } catch {
     return null;
   } finally {
@@ -57,13 +57,18 @@ async function fetchText(url: string): Promise<string | null> {
   }
 }
 
-interface RobotsRules {
+async function fetchText(url: string): Promise<string | null> {
+  const result = await fetchTextWithFinalUrl(url);
+  return result ? result.text : null;
+}
+
+export interface RobotsRules {
   disallow: string[];
   sitemaps: string[];
 }
 
 /** Parse minimal : règles Disallow du bloc "User-agent: *" + lignes Sitemap. */
-function parseRobotsTxt(text: string): RobotsRules {
+export function parseRobotsTxt(text: string): RobotsRules {
   const disallow: string[] = [];
   const sitemaps: string[] = [];
   let inWildcardBlock = false;
@@ -250,13 +255,22 @@ function isLanguageSegment(segment: string): boolean {
   return true;
 }
 
-/** Chemin "canonique" pour la déduplication : sans préfixe de langue éventuel. */
+function hasLanguagePrefix(pathname: string): boolean {
+  const segments = pathname.split("/").filter(Boolean);
+  return segments.length > 0 && isLanguageSegment(segments[0]);
+}
+
+/**
+ * Chemin "canonique" pour la déduplication : sans préfixe de langue éventuel,
+ * et toujours reconstruit sans slash final — sinon "/pricing/" (slash final)
+ * et "/fr/pricing/" (qui se réduit à "/pricing" une fois le préfixe retiré,
+ * sans slash final) produiraient deux clés différentes et ne seraient jamais
+ * reconnus comme la même page.
+ */
 function canonicalPathForDedup(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);
-  if (segments.length > 0 && isLanguageSegment(segments[0])) {
-    return "/" + segments.slice(1).join("/");
-  }
-  return pathname || "/";
+  const relevant = hasLanguagePrefix(pathname) ? segments.slice(1) : segments;
+  return relevant.length > 0 ? "/" + relevant.join("/") : "/";
 }
 
 /**
@@ -282,8 +296,8 @@ function deduplicateByLanguage(urls: string[]): string[] {
       order.push(canonical);
       continue;
     }
-    const existingHasPrefix = new URL(existing).pathname !== canonical;
-    const currentHasPrefix = u.pathname !== canonical;
+    const existingHasPrefix = hasLanguagePrefix(new URL(existing).pathname);
+    const currentHasPrefix = hasLanguagePrefix(u.pathname);
     if (existingHasPrefix && !currentHasPrefix) {
       chosen.set(canonical, raw); // remplace par la version sans préfixe de langue
     }
@@ -413,16 +427,23 @@ export async function discoverSitePages(url: URL): Promise<DiscoveryResult> {
   const hostname = url.hostname;
   const origin = url.origin;
 
-  const robotsText = await fetchText(`${origin}/robots.txt`);
-  const robots = robotsText ? parseRobotsTxt(robotsText) : { disallow: [], sitemaps: [] };
+  const robotsFetch = await fetchTextWithFinalUrl(`${origin}/robots.txt`);
+  const robots = robotsFetch ? parseRobotsTxt(robotsFetch.text) : { disallow: [], sitemaps: [] };
+  // Hostname canonique effectif après redirection éventuelle (ex : www.site.com
+  // -> site.com). Les URLs déclarées dans le sitemap sont comparées à celui-ci,
+  // pas au hostname brut saisi par l'utilisateur — sinon un simple redirect
+  // www <-> apex ferait passer toutes les pages du sitemap pour "hors domaine"
+  // et ferait basculer, à tort, sur le repli (beaucoup plus faible) par liens
+  // de la page d'accueil.
+  const effectiveHostname = robotsFetch ? new URL(robotsFetch.finalUrl).hostname : hostname;
 
   const sitemapCandidates = robots.sitemaps.length > 0 ? robots.sitemaps : [`${origin}/sitemap.xml`];
-  let urls = await discoverViaSitemap(sitemapCandidates, hostname, robots.disallow);
+  let urls = await discoverViaSitemap(sitemapCandidates, effectiveHostname, robots.disallow);
   let source: "sitemap" | "homepage-links" = "sitemap";
 
   if (urls.length === 0) {
     source = "homepage-links";
-    urls = await discoverViaHomepageLinks(new URL(origin), hostname, robots.disallow);
+    urls = await discoverViaHomepageLinks(new URL(origin), effectiveHostname, robots.disallow);
   }
 
   const totalFoundIsApproximate = urls.length >= DISCOVERY_SAFETY_CAP;
