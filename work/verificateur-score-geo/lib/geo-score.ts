@@ -110,11 +110,37 @@ function isPrivateIp(ip: string): boolean {
   return false;
 }
 
-export function validateUrl(input: string): URL {
-  let url: URL;
+function tryParseUrl(input: string): URL | null {
   try {
-    url = new URL(input);
+    return new URL(input);
   } catch {
+    return null;
+  }
+}
+
+/**
+ * Répare les fautes de saisie d'URL les plus courantes en repartant d'une
+ * base propre : retire un préfixe "http"/"https" mal formé (sans "://", avec
+ * un seul "/", ou collé directement au domaine — ex : "httpwww.exemple.com",
+ * "http:/exemple.com", "https//exemple.com") puis force un "https://" propre
+ * devant le reste. N'est appelée qu'en repli, quand l'entrée telle quelle
+ * n'est déjà pas une URL valide — une saisie déjà bien formée (y compris en
+ * "http://" explicite) n'est jamais modifiée.
+ */
+function normalizeLikelyUrl(input: string): string {
+  const withoutBrokenProtocol = input.replace(/^https?[:/]*\s*/i, "");
+  const rest = withoutBrokenProtocol || input;
+  return `https://${rest}`;
+}
+
+export function validateUrl(input: string): URL {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    throw new Error("URL invalide.");
+  }
+
+  const url = tryParseUrl(trimmed) ?? tryParseUrl(normalizeLikelyUrl(trimmed));
+  if (!url) {
     throw new Error("URL invalide.");
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") {
