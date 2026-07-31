@@ -2,11 +2,11 @@
 
 /*
  * Direction artistique : bande d'accueil pleine largeur en bleu Majorelle
- * (rgb(28, 0, 254)) avec texte blanc et grand titre en serif Bodoni Moda
- * (façon affiche/carte de visite premium), puis un corps blanc avec cartes
- * gris-lavande et texte en bleu Majorelle. Les libellés techniques (badges,
- * tags, chiffres de mesure) restent en Space Mono capitales espacées ; le
- * corps de texte courant reste en Helvetica Neue.
+ * (rgb(28, 0, 254)) avec texte blanc et grand titre en Outfit (géométrique,
+ * gras, façon affiche/carte de visite premium), puis un corps blanc avec
+ * cartes gris-lavande et texte en bleu Majorelle. Les libellés techniques
+ * (badges, tags, chiffres de mesure) restent en Space Mono capitales
+ * espacées ; le corps de texte courant reste en Helvetica Neue.
  */
 :root {
   --hero: #1c00fe;
@@ -50,7 +50,7 @@
   --color-critical-tint: var(--critical-tint);
   --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono: var(--font-space-mono), "Space Mono", monospace;
-  --font-display: var(--font-bodoni), Georgia, serif;
+  --font-display: var(--font-outfit), "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 body {

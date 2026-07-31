@@ -501,7 +501,7 @@ export default function Home() {
   return (
     <div className="flex flex-1 flex-col font-sans">
       <div className="relative flex flex-col items-center bg-hero px-4 pt-16 pb-20 text-hero-ink sm:px-8">
-        <div className="absolute top-4 left-4 text-[11px] leading-[0.95] font-bold text-hero-ink italic sm:top-6 sm:left-6">
+        <div className="absolute top-4 left-4 rounded border border-hero-ink px-2 py-1.5 text-[11px] leading-[0.95] font-bold text-hero-ink italic sm:top-6 sm:left-6">
           <div>SYSY&apos;S</div>
           <div>GTM</div>
           <div>PROJECTS</div>
@@ -580,7 +580,7 @@ export default function Home() {
 
       <main className="flex flex-1 flex-col items-center bg-plane px-4 py-12 sm:px-8">
         <div className="flex w-full max-w-2xl flex-col gap-8">
-        <details className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-ink-secondary open:pb-4">
+        <details className="rounded-lg border border-border px-4 py-3 text-sm text-ink-secondary open:pb-4">
           <summary className="cursor-pointer font-medium text-ink">Méthodologie & sources</summary>
           <div className="mt-3 flex flex-col gap-2 text-xs leading-relaxed">
             <p>

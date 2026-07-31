@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, Space_Mono } from "next/font/google";
+import { Outfit, Space_Mono } from "next/font/google";
 import "./globals.css";
 
-const bodoniModa = Bodoni_Moda({
-  variable: "--font-bodoni",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
-  weight: ["700", "900"],
+  weight: ["700", "800", "900"],
 });
 
 const spaceMono = Space_Mono({
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${bodoniModa.variable} ${spaceMono.variable} h-full antialiased`}>
+    <html lang="fr" className={`${outfit.variable} ${spaceMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
