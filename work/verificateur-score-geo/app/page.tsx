@@ -500,10 +500,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 flex-col items-center bg-plane px-4 py-16 font-sans sm:px-8">
-      <div
-        className="fixed top-4 left-4 z-10 text-[11px] leading-[0.95] font-bold text-ink italic sm:top-6 sm:left-6"
-        style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
-      >
+      <div className="fixed top-4 left-4 z-10 text-[11px] leading-[0.95] font-bold text-ink italic sm:top-6 sm:left-6">
         <div>SYSY&apos;S</div>
         <div>GTM</div>
         <div>PROJECTS</div>
@@ -628,16 +625,7 @@ export default function Home() {
               contenu Markdown, et support WebMCP. Si aucun{" "}
               <code className="rounded bg-border-soft px-1 py-0.5 font-mono">llms.txt</code> n&apos;est trouvé, un
               brouillon est généré automatiquement par IA à partir du contenu réel de la page d&apos;accueil (à
-              relire avant publication). Grille de vérification inspirée de{" "}
-              <a
-                href="https://isitagentready.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="text-signal underline"
-              >
-                isitagentready.com
-              </a>
-              .
+              relire avant publication).
             </p>
           </div>
         </details>

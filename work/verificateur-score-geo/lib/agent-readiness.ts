@@ -13,11 +13,10 @@ import { parseRobotsTxt } from "./site-crawl";
  * entier (ce serait redondant : robots.txt/llms.txt sont identiques pour
  * toutes les pages d'un même site).
  *
- * Pondération : 6 vérifications qui reprennent les points de la checklist
- * "agent-readiness" popularisée par isitagentready.com (Cloudflare) —
- * llms.txt et l'ouverture de robots.txt aux robots IA sont les deux leviers
- * à plus fort impact (un contenu excellent ne sert à rien si le robot qui
- * doit le lire est bloqué), d'où leur poids dominant.
+ * Pondération : 6 vérifications de la checklist "agent-readiness" — llms.txt
+ * et l'ouverture de robots.txt aux robots IA sont les deux leviers à plus
+ * fort impact (un contenu excellent ne sert à rien si le robot qui doit le
+ * lire est bloqué), d'où leur poids dominant.
  */
 const WEIGHTS = {
   llmsTxt: 30,

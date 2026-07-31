@@ -40,7 +40,7 @@ Limite assumée : c'est une approximation heuristique basée sur la littérature
 
 ## Accessibilité aux agents IA
 
-En plus du score GEO (est-ce que le contenu est *citable* dans une réponse générée), l'outil vérifie si le site est directement *exploitable* par un agent IA autonome — une question différente, inspirée de [isitagentready.com](https://isitagentready.com/) (le scanner d'agent-readiness de Cloudflare). C'est une propriété du site, pas de la page : calculée une seule fois par audit (via `/api/discover` en mode "Site entier", via `/api/analyze` en mode "Une page"), jamais recalculée par page pendant un crawl de site (`skipAgentReadiness: true` sur les appels par page).
+En plus du score GEO (est-ce que le contenu est *citable* dans une réponse générée), l'outil vérifie si le site est directement *exploitable* par un agent IA autonome — une question différente. C'est une propriété du site, pas de la page : calculée une seule fois par audit (via `/api/discover` en mode "Site entier", via `/api/analyze` en mode "Une page"), jamais recalculée par page pendant un crawl de site (`skipAgentReadiness: true` sur les appels par page).
 
 Six vérifications, sur 100 points au total (`lib/agent-readiness.ts`) :
 
@@ -59,7 +59,7 @@ Chaque sous-vérification qui ne rapporte pas la totalité de ses points émet a
 
 Pour la clarté d'entité (IA), Claude est aussi invité à formuler une suggestion d'amélioration concrète en plus du score, réutilisée comme recommandation quand le score n'est pas déjà maximal.
 
-Positionnement et présentation inspirés d'[isitagentready.com](https://isitagentready.com/) : le plan d'action arrive en dernier (après le détail des vérifications, pas avant), avec un bouton « Copier le plan d'action » pour exporter la liste en texte brut — pratique pour la coller directement dans un agent de code (Claude Code, Cursor...).
+Le plan d'action arrive en dernier (après le détail des vérifications, pas avant), avec un bouton « Copier le plan d'action » pour exporter la liste en texte brut — pratique pour la coller directement dans un agent de code (Claude Code, Cursor...).
 
 ## Getting Started
 

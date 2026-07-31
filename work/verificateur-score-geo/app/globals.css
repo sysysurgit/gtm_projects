@@ -2,24 +2,25 @@
 
 /*
  * Direction artistique : identité de marque assumée, pas un thème système —
- * fond bleu outremer (bleu Majorelle, #6050dc) plein et vif, texte en blanc
- * grège plutôt qu'un blanc pur. Un seul thème, volontairement indépendant de
- * prefers-color-scheme : c'est un choix de marque délibéré, pas une valeur
- * par défaut qui doit s'effacer devant le thème système. Les boutons et
- * badges inversent la relation (fond grège plein, texte bleu profond) pour
- * un contraste maximal sur le fond outremer — c'est ce qui "peps".
+ * fond bleu outremer (bleu Majorelle, rgb(28, 0, 254)) plein et vif, texte en
+ * blanc grège plutôt qu'un blanc pur, typographie Helvetica Neue en gras. Un
+ * seul thème, volontairement indépendant de prefers-color-scheme : c'est un
+ * choix de marque délibéré, pas une valeur par défaut qui doit s'effacer
+ * devant le thème système. Les boutons et badges inversent la relation (fond
+ * grège plein, texte bleu profond) pour un contraste maximal sur le fond
+ * outremer — c'est ce qui "peps".
  */
 :root {
-  --paper: #6050dc;
-  --plane: #6050dc;
-  --surface: #251c74;
+  --paper: #1c00fe;
+  --plane: #1c00fe;
+  --surface: #140072;
   --ink: #f2ebda;
   --ink-secondary: #ddd6c3;
   --ink-muted: #b6aed8;
   --border: rgba(242, 235, 218, 0.18);
   --border-soft: rgba(242, 235, 218, 0.08);
   --signal: #f2ebda;
-  --signal-ink: #211964;
+  --signal-ink: #12005c;
   --signal-tint: rgba(242, 235, 218, 0.1);
   --good: #35c235;
   --warning: #fab219;
@@ -47,14 +48,15 @@
   --color-good-tint: var(--good-tint);
   --color-warning-tint: var(--warning-tint);
   --color-critical-tint: var(--critical-tint);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 body {
   background: var(--plane);
   color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 700;
 }
 
 @keyframes signal-pulse {
