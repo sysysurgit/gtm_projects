@@ -3,24 +3,26 @@
 /*
  * Direction artistique : "console de signal" — le produit détecte à quel
  * point une page est repérable par un moteur de réponse IA, donc l'UI
- * emprunte au vocabulaire d'un instrument de mesure (accent "signal" teal,
- * chiffres en mono façon lecture numérique, meters à crans) plutôt qu'au
- * gris Tailwind par défaut. Les tokens ci-dessous sont réutilisés à
- * l'identique dans la démo HTML autonome du projet pour une identité
- * cohérente entre les deux surfaces.
+ * emprunte au vocabulaire d'un instrument de mesure (accent "signal" bleu
+ * ultramarine, chiffres en mono façon lecture numérique, meters à crans)
+ * plutôt qu'au gris Tailwind par défaut. Le texte porté par l'accent
+ * (boutons, badges) est un blanc grège plutôt qu'un blanc pur, repris comme
+ * couleur de lecture par défaut en mode sombre. Les tokens ci-dessous sont
+ * réutilisés à l'identique dans la démo HTML autonome du projet pour une
+ * identité cohérente entre les deux surfaces.
  */
 :root {
-  --paper: #f5f7f5;
-  --plane: #eef1ee;
+  --paper: #f5f6fa;
+  --plane: #eef0f7;
   --surface: #ffffff;
-  --ink: #101a18;
-  --ink-secondary: #4c5854;
-  --ink-muted: #7c8985;
-  --border: rgba(16, 26, 24, 0.12);
-  --border-soft: rgba(16, 26, 24, 0.07);
-  --signal: #0e8c82;
-  --signal-ink: #ffffff;
-  --signal-tint: rgba(14, 140, 130, 0.1);
+  --ink: #13162a;
+  --ink-secondary: #4b5169;
+  --ink-muted: #7d84a3;
+  --border: rgba(19, 22, 42, 0.12);
+  --border-soft: rgba(19, 22, 42, 0.07);
+  --signal: #2733c2;
+  --signal-ink: #f4ede0;
+  --signal-tint: rgba(39, 51, 194, 0.09);
   --good: #0ca30c;
   --warning: #b8790a;
   --critical: #d03b3b;
@@ -31,17 +33,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #0c1312;
-    --plane: #091010;
-    --surface: #121b19;
-    --ink: #eaf3f0;
-    --ink-secondary: #aebdb8;
-    --ink-muted: #7c8985;
-    --border: rgba(234, 243, 240, 0.13);
-    --border-soft: rgba(234, 243, 240, 0.07);
-    --signal: #2fb8ac;
-    --signal-ink: #06231f;
-    --signal-tint: rgba(47, 184, 172, 0.14);
+    --paper: #0a0c16;
+    --plane: #070911;
+    --surface: #12151f;
+    --ink: #efe7d7;
+    --ink-secondary: #c2b9a5;
+    --ink-muted: #8f8878;
+    --border: rgba(239, 231, 215, 0.13);
+    --border-soft: rgba(239, 231, 215, 0.07);
+    --signal: #6672f5;
+    --signal-ink: #10122a;
+    --signal-tint: rgba(102, 114, 245, 0.16);
     --good: #35c235;
     --warning: #fab219;
     --critical: #ef6b6b;

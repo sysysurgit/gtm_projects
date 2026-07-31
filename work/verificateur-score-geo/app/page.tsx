@@ -16,6 +16,13 @@ interface ScoreCategory {
   recommendations: Recommendation[];
 }
 
+interface AgentReadinessResult {
+  hostname: string;
+  score: number;
+  checks: ScoreCategory[];
+  llmsTxtDraft: string | null;
+}
+
 interface GeoScoreResult {
   url: string;
   hostname: string;
@@ -25,6 +32,7 @@ interface GeoScoreResult {
   totalScore: number;
   aiEvaluated: boolean;
   categories: ScoreCategory[];
+  agentReadiness: AgentReadinessResult | null;
 }
 
 type PageCategory = "home" | "pricing" | "product" | "resources" | "about" | "careers" | "contact" | "legal" | "other";
@@ -54,6 +62,7 @@ interface DiscoveryResult {
   totalFound: number;
   totalFoundIsApproximate: boolean;
   capped: boolean;
+  agentReadiness: AgentReadinessResult;
 }
 
 interface PageCrawlResult {
@@ -134,7 +143,17 @@ function potentialScore(categories: ScoreCategory[], currentScore: number): numb
 }
 
 /** Plan d'action d'une page : recommandations triées par impact, avec le score visé si on les applique. */
-function ActionPlan({ categories, currentScore, hostname }: { categories: ScoreCategory[]; currentScore: number; hostname: string }) {
+function ActionPlan({
+  categories,
+  currentScore,
+  hostname,
+  title = "Plan d'action GEO",
+}: {
+  categories: ScoreCategory[];
+  currentScore: number;
+  hostname: string;
+  title?: string;
+}) {
   const [copied, setCopied] = useState(false);
   const items = categories
     .flatMap((c) => c.recommendations.map((r) => ({ ...r, categoryLabel: c.label })))
@@ -144,7 +163,7 @@ function ActionPlan({ categories, currentScore, hostname }: { categories: ScoreC
 
   function handleCopy() {
     const lines = [
-      `Plan d'action GEO — ${hostname} (score actuel : ${currentScore}/100, visé : ${target}/100)`,
+      `${title} — ${hostname} (score actuel : ${currentScore}/100, visé : ${target}/100)`,
       "",
       ...items.map((item, i) => `${i + 1}. [+${item.points}] ${item.categoryLabel} — ${item.action}`),
       "",
@@ -159,7 +178,7 @@ function ActionPlan({ categories, currentScore, hostname }: { categories: ScoreC
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-signal-tint p-4 text-left">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-medium text-signal">Plan d&apos;action</h3>
+        <h3 className="text-sm font-medium text-signal">{title}</h3>
         <span className="font-mono text-xs text-signal">
           Score visé : <span className="font-bold tabular-nums">{target}/100</span>
         </span>
@@ -272,6 +291,93 @@ function SiteActionPlan({ doneResults, hostname }: { doneResults: (PageCrawlResu
   );
 }
 
+function CategoryBar({ category }: { category: ScoreCategory }) {
+  const ratio = category.max > 0 ? category.score / category.max : 0;
+  const tone = toneFromRatio(ratio);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <span className="flex items-center gap-2 font-medium text-ink">
+          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONE_BG[tone]}`} />
+          {category.label}
+        </span>
+        <span className="font-mono text-ink-muted tabular-nums">
+          {category.score}/{category.max}
+        </span>
+      </div>
+      <div className="meter-track h-2 w-full overflow-hidden rounded-full">
+        <div className={`h-full rounded-full ${TONE_BG[tone]}`} style={{ width: `${Math.round(ratio * 100)}%` }} />
+      </div>
+      {category.details.length > 0 && (
+        <ul className="mt-1 flex flex-col gap-0.5 text-xs text-ink-muted">
+          {category.details.map((d, i) => (
+            <li key={i}>– {d}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** Brouillon de llms.txt généré par IA quand le site n'en a pas — à relire avant publication. */
+function LlmsTxtDraft({ draft }: { draft: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(draft).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <details className="rounded-lg border border-signal/30 bg-signal-tint px-4 py-3 text-left text-sm">
+      <summary className="cursor-pointer font-medium text-signal">Brouillon de llms.txt généré par IA</summary>
+      <div className="mt-3 flex flex-col gap-3">
+        <p className="text-xs text-ink-secondary">
+          Généré à partir du contenu réel de la page d&apos;accueil — à relire avant publication (aucun chiffre n&apos;est
+          inventé, mais la formulation doit être validée).
+        </p>
+        <pre className="overflow-x-auto rounded-md border border-border bg-surface p-3 font-mono text-xs whitespace-pre-wrap text-ink-secondary">
+          {draft}
+        </pre>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-surface"
+        >
+          {copied ? "Copié !" : "Copier le llms.txt"}
+        </button>
+      </div>
+    </details>
+  );
+}
+
+/** Score d'accessibilité aux agents IA (llms.txt, robots.txt, sitemap, en-têtes Link, Markdown, WebMCP) — propriété du site, affichée une fois. */
+function AgentReadinessSection({ readiness }: { readiness: AgentReadinessResult }) {
+  const ratio = readiness.score / 100;
+  return (
+    <div className="flex flex-col gap-4 border-t border-border-soft pt-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-ink">Accessibilité aux agents IA</h2>
+        <span className={`font-mono text-sm font-bold tabular-nums ${TONE_TEXT[toneFromRatio(ratio)]}`}>
+          {readiness.score}/100
+        </span>
+      </div>
+      <p className="text-xs text-ink-muted">
+        Le site est-il directement exploitable par des agents IA autonomes (pas seulement citable dans une réponse) :
+        llms.txt, robots.txt, sitemap.xml, en-têtes Link, Markdown pour agents, WebMCP.
+      </p>
+      <div className="flex flex-col gap-4">
+        {readiness.checks.map((cat) => (
+          <CategoryBar key={cat.key} category={cat} />
+        ))}
+      </div>
+      {readiness.llmsTxtDraft && <LlmsTxtDraft draft={readiness.llmsTxtDraft} />}
+    </div>
+  );
+}
+
 function ResultCard({ result }: { result: GeoScoreResult }) {
   const ratio = result.totalScore / 100;
   return (
@@ -289,32 +395,19 @@ function ResultCard({ result }: { result: GeoScoreResult }) {
         )}
       </div>
       <div className="flex flex-col gap-4">
-        {result.categories.map((cat) => {
-          const catRatio = cat.max > 0 ? cat.score / cat.max : 0;
-          const tone = toneFromRatio(catRatio);
-          return (
-            <div key={cat.key} className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 font-medium text-ink">
-                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONE_BG[tone]}`} />
-                  {cat.label}
-                </span>
-                <span className="font-mono text-ink-muted tabular-nums">
-                  {cat.score}/{cat.max}
-                </span>
-              </div>
-              <div className="meter-track h-2 w-full overflow-hidden rounded-full">
-                <div className={`h-full rounded-full ${TONE_BG[tone]}`} style={{ width: `${Math.round(catRatio * 100)}%` }} />
-              </div>
-              <ul className="mt-1 flex flex-col gap-0.5 text-xs text-ink-muted">
-                {cat.details.map((d, i) => (
-                  <li key={i}>– {d}</li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
+        {result.categories.map((cat) => (
+          <CategoryBar key={cat.key} category={cat} />
+        ))}
       </div>
+      {result.agentReadiness && <AgentReadinessSection readiness={result.agentReadiness} />}
+      {result.agentReadiness && (
+        <ActionPlan
+          categories={result.agentReadiness.checks}
+          currentScore={result.agentReadiness.score}
+          hostname={result.hostname}
+          title="Plan d'action — agents IA"
+        />
+      )}
       <ActionPlan categories={result.categories} currentScore={result.totalScore} hostname={result.hostname} />
     </div>
   );
@@ -350,7 +443,7 @@ export default function Home() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: pageUrl }),
+        body: JSON.stringify({ url: pageUrl, skipAgentReadiness: true }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "Erreur inconnue.");
@@ -558,7 +651,10 @@ export default function Home() {
             (repli sur les liens de la page d&apos;accueil si absent), respecte{" "}
             <code className="rounded bg-border-soft px-1 py-0.5 font-mono">robots.txt</code>, et sélectionne un
             échantillon représentatif de 20 pages (accueil, pricing, produit, ressources...) pour rester raisonnable
-            en temps et en coût — chaque page déclenche une analyse indépendante.
+            en temps et en coût — chaque page déclenche une analyse indépendante. Les variantes de langue
+            (<code className="rounded bg-border-soft px-1 py-0.5 font-mono">/fr</code>,{" "}
+            <code className="rounded bg-border-soft px-1 py-0.5 font-mono">/en</code>...) et les pages de
+            compte ou légales sont automatiquement écartées de la sélection.
           </p>
         )}
 
@@ -592,6 +688,38 @@ export default function Home() {
               (mentions légales, confidentialité...) ne sont piochées qu&apos;en tout dernier recours. Au sein d&apos;une
               catégorie, les chemins les plus courts sont préférés (proxy pour « plus proche de la racine du site =
               plus probablement important »).
+            </p>
+            <p>
+              <span className="font-medium text-ink">Déduplication & exclusions</span> : deux URLs qui ne diffèrent
+              que par un préfixe de langue (ex.{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">/fr/pricing</code> et{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">/pricing</code>) sont fusionnées — seule
+              la version sans préfixe est conservée, pour ne pas occuper deux places de l&apos;échantillon avec la
+              même page. Les pages de compte, connexion, mentions légales, confidentialité, etc. sont exclues
+              d&apos;office : elles ne concernent ni le produit ni le contenu éditorial du site.
+            </p>
+            <p>
+              <span className="font-medium text-ink">Accessibilité aux agents IA</span> : en complément du score
+              GEO (visibilité dans une réponse générée), l&apos;outil vérifie si le site est directement exploitable
+              par un agent IA autonome — présence d&apos;un{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">llms.txt</code>, autorisation des
+              robots IA (GPTBot, ClaudeBot, PerplexityBot, Google-Extended...) et directive Content-Signal dans{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">robots.txt</code>,{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">sitemap.xml</code>, en-têtes{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">Link</code> (RFC 8288), négociation de
+              contenu Markdown, et support WebMCP. Si aucun{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">llms.txt</code> n&apos;est trouvé, un
+              brouillon est généré automatiquement par IA à partir du contenu réel de la page d&apos;accueil (à
+              relire avant publication). Grille de vérification inspirée de{" "}
+              <a
+                href="https://isitagentready.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-signal underline"
+              >
+                isitagentready.com
+              </a>
+              .
             </p>
           </div>
         </details>
@@ -688,6 +816,8 @@ export default function Home() {
               </div>
             )}
 
+            {discovery?.agentReadiness && <AgentReadinessSection readiness={discovery.agentReadiness} />}
+
             {weakestPages.length > 0 && (
               <div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning-tint p-4">
                 <h2 className="text-sm font-medium text-warning">Pages à améliorer en priorité</h2>
@@ -742,6 +872,15 @@ export default function Home() {
                 ))}
               </ul>
             </div>
+
+            {discovery?.agentReadiness && (
+              <ActionPlan
+                categories={discovery.agentReadiness.checks}
+                currentScore={discovery.agentReadiness.score}
+                hostname={discovery.hostname}
+                title="Plan d'action — agents IA"
+              />
+            )}
 
             <SiteActionPlan doneResults={doneResults} hostname={discovery?.hostname ?? ""} />
           </div>

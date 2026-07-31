@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertHostnameIsPublic, validateUrl } from "@/lib/geo-score";
 import { discoverSitePages } from "@/lib/site-crawl";
+import { checkAgentReadiness } from "@/lib/agent-readiness";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -18,8 +19,13 @@ export async function POST(request: Request) {
   try {
     const url = validateUrl(rawUrl.trim());
     await assertHostnameIsPublic(url.hostname);
-    const result = await discoverSitePages(url);
-    return NextResponse.json(result);
+
+    const [result, agentReadiness] = await Promise.all([
+      discoverSitePages(url),
+      checkAgentReadiness(url.origin, url.hostname, process.env.ANTHROPIC_API_KEY),
+    ]);
+
+    return NextResponse.json({ ...result, agentReadiness });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Une erreur inattendue est survenue.";
     return NextResponse.json({ error: message }, { status: 400 });

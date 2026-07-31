@@ -18,6 +18,11 @@ Un site peut avoir des centaines de pages ; prendre les 20 premières trouvées 
 3. Les places restantes sont comblées en priorité par la catégorie "Autre" (souvent les pages de contenu individuelles — fiches produit, articles — les plus rentables à auditer), les pages légales/boilerplate n'étant piochées qu'en tout dernier recours.
 4. Au sein d'une catégorie, les chemins les plus courts sont préférés (proxy pour "plus proche de la racine = plus probablement important").
 
+Deux passes supplémentaires nettoient la liste avant sélection :
+
+- **Déduplication par langue** : `/pricing` et `/fr/pricing` sont la même page pour un moteur de réponse — un préfixe de langue (`/fr`, `/en`, `/de`...) ne rend pas une page "plus importante". Les URLs qui ne diffèrent que par ce préfixe sont fusionnées, en gardant la version sans préfixe, pour ne pas gaspiller deux places de l'échantillon de 20 sur le même contenu.
+- **Exclusion des pages de compte/légales** : connexion, inscription, mot de passe oublié, MFA/2FA, mentions légales, confidentialité, CGU... sont écartées d'office. Elles ne concernent ni le produit ni le contenu éditorial du site, donc les auditer n'apporte rien au diagnostic GEO.
+
 ## Comment le score est calculé
 
 Pondération sur 100 points, répartie ainsi (voir le panneau « Méthodologie & sources » dans l'app pour le détail) :
@@ -32,6 +37,21 @@ Pondération sur 100 points, répartie ainsi (voir le panneau « Méthodologie &
 Sans clé API, les 5 premières catégories tournent quand même (score plafonné à 75/100) — la clé n'est nécessaire que pour la partie IA.
 
 Limite assumée : c'est une approximation heuristique basée sur la littérature publiée, pas une mesure garantie — aucun outil externe ne peut connaître la citabilité réelle d'une page dans un moteur IA donné sans accès à ses journaux internes.
+
+## Accessibilité aux agents IA
+
+En plus du score GEO (est-ce que le contenu est *citable* dans une réponse générée), l'outil vérifie si le site est directement *exploitable* par un agent IA autonome — une question différente, inspirée de [isitagentready.com](https://isitagentready.com/) (le scanner d'agent-readiness de Cloudflare). C'est une propriété du site, pas de la page : calculée une seule fois par audit (via `/api/discover` en mode "Site entier", via `/api/analyze` en mode "Une page"), jamais recalculée par page pendant un crawl de site (`skipAgentReadiness: true` sur les appels par page).
+
+Six vérifications, sur 100 points au total (`lib/agent-readiness.ts`) :
+
+- **`/llms.txt` (/30)** — présence d'un fichier suivant le format [llmstxt.org](https://llmstxt.org/) (titre H1, résumé, sections). Si absent et qu'une clé API est configurée, un **brouillon est généré automatiquement** par Claude à partir du contenu réel de la page d'accueil (titre, meta description, texte visible) — jamais de chiffres inventés, à relire avant publication.
+- **Bots IA & Content-Signal (/25)** — `robots.txt` autorise-t-il explicitement les robots IA connus (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, anthropic-ai...) plutôt que de tout bloquer ; présence d'une directive `Content-Signal` (spec en discussion sur [contentsignals.org](https://contentsignals.org/)).
+- **Sitemap (/15)** — `/sitemap.xml` accessible.
+- **En-têtes Link (/15)** — en-tête HTTP `Link` (RFC 8288) pointant vers `llms.txt` et/ou `sitemap.xml`, pour qu'un agent les découvre sans parser le HTML.
+- **Markdown for Agents (/10)** — négociation de contenu : la page sert-elle une version Markdown quand `Accept: text/markdown` est envoyé ?
+- **WebMCP (/5)** — détection heuristique de `navigator.modelContext` dans le HTML statique (signal best-effort — un script chargé dynamiquement peut ne pas apparaître).
+
+Comme pour le score GEO, chaque vérification manquée émet une recommandation structurée, agrégée dans son propre plan d'action ("Plan d'action — agents IA"), affiché avant le plan d'action GEO car ce sont typiquement les gains les plus rapides (publier un `llms.txt` et ouvrir `robots.txt` aux bots IA à eux seuls représentent l'essentiel du score).
 
 ## Plan d'action
 

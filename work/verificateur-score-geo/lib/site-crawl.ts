@@ -231,6 +231,89 @@ function classifyUrl(u: URL): PageCategory {
   return "other";
 }
 
+// Codes de langue reconnus en préfixe de chemin (ISO 639-1, + variantes
+// régionales du type "fr-fr" / "pt-br"). Utilisé uniquement pour dédupliquer
+// les variantes de langue d'une même page ("/pricing" et "/fr/pricing" sont
+// la même page) — un segment qui n'est pas dans cette liste n'est jamais
+// traité comme un préfixe de langue, pour éviter les faux positifs sur un
+// slug qui ressemblerait à un code (ex: une page produit "/no-code").
+const LANGUAGE_CODES = new Set([
+  "fr", "en", "de", "es", "it", "pt", "nl", "pl", "sv", "da", "no", "fi", "ja",
+  "zh", "ko", "ru", "ar", "he", "tr", "cs", "el", "hu", "ro", "uk", "vi", "th",
+  "id", "sk", "bg", "hr", "lt", "lv", "et", "sl", "sr",
+]);
+
+function isLanguageSegment(segment: string): boolean {
+  const [lang, region] = segment.toLowerCase().split("-");
+  if (!LANGUAGE_CODES.has(lang)) return false;
+  if (region && !/^[a-z]{2}$/.test(region)) return false;
+  return true;
+}
+
+/** Chemin "canonique" pour la déduplication : sans préfixe de langue éventuel. */
+function canonicalPathForDedup(pathname: string): string {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length > 0 && isLanguageSegment(segments[0])) {
+    return "/" + segments.slice(1).join("/");
+  }
+  return pathname || "/";
+}
+
+/**
+ * Regroupe les variantes de langue d'une même page ("/pricing" et
+ * "/fr/pricing") sous une seule entrée, en préférant la version sans préfixe
+ * de langue (considérée comme la version par défaut) quand les deux existent.
+ */
+function deduplicateByLanguage(urls: string[]): string[] {
+  const chosen = new Map<string, string>(); // chemin canonique -> URL choisie
+  const order: string[] = [];
+
+  for (const raw of urls) {
+    let u: URL;
+    try {
+      u = new URL(raw);
+    } catch {
+      continue;
+    }
+    const canonical = canonicalPathForDedup(u.pathname);
+    const existing = chosen.get(canonical);
+    if (!existing) {
+      chosen.set(canonical, raw);
+      order.push(canonical);
+      continue;
+    }
+    const existingHasPrefix = new URL(existing).pathname !== canonical;
+    const currentHasPrefix = u.pathname !== canonical;
+    if (existingHasPrefix && !currentHasPrefix) {
+      chosen.set(canonical, raw); // remplace par la version sans préfixe de langue
+    }
+  }
+
+  return order.map((c) => chosen.get(c)!);
+}
+
+// Pages de compte, d'authentification ou purement légales/boilerplate : hors
+// scope d'un audit GEO (ni contenu produit, ni contenu éditorial). Filtrées
+// entièrement de la sélection plutôt que simplement déclassées, pour ne
+// jamais gaspiller une des 20 places sur une page de mentions légales ou de
+// double authentification.
+const EXCLUDED_KEYWORDS = [
+  // Légal / boilerplate
+  "privacy", "privacy-policy", "privacy_policy", "terms", "terms-of-service",
+  "tos", "cgu", "cgv", "mentions-legales", "cookie", "cookies", "cookie-policy",
+  "confidentialite", "legal", "gdpr", "dpa",
+  // Compte / authentification / sécurité applicative
+  "login", "signin", "sign-in", "signup", "sign-up", "register", "logout",
+  "log-out", "account", "my-account", "settings", "password",
+  "forgot-password", "reset-password", "verify", "verify-email",
+  "unsubscribe", "sso", "saml", "mfa", "2fa", "two-factor", "session",
+];
+
+function isExcludedPath(pathname: string): boolean {
+  const segments = pathname.toLowerCase().split("/").filter(Boolean);
+  return segments.some((segment) => EXCLUDED_KEYWORDS.some((kw) => segmentMatchesKeyword(segment, kw)));
+}
+
 // Quota par catégorie sur les MAX_PAGES sélectionnées, pour garantir un
 // échantillon représentatif des grandes familles de pages d'un site plutôt
 // qu'un tri arbitraire (ex : les 20 premiers articles de blog par ordre
@@ -342,14 +425,24 @@ export async function discoverSitePages(url: URL): Promise<DiscoveryResult> {
     urls = await discoverViaHomepageLinks(new URL(origin), hostname, robots.disallow);
   }
 
-  const totalFound = urls.length;
+  const totalFoundIsApproximate = urls.length >= DISCOVERY_SAFETY_CAP;
+
+  const deduped = deduplicateByLanguage(urls);
+  const candidates = deduped.filter((u) => {
+    try {
+      return !isExcludedPath(new URL(u).pathname);
+    } catch {
+      return false;
+    }
+  });
+
+  const totalFound = candidates.length;
   const capped = totalFound > MAX_PAGES;
-  const totalFoundIsApproximate = totalFound >= DISCOVERY_SAFETY_CAP;
 
   return {
     rootUrl: origin,
     hostname,
-    pages: selectImportantPages(urls, MAX_PAGES),
+    pages: selectImportantPages(candidates, MAX_PAGES),
     source,
     totalFound,
     totalFoundIsApproximate,
