@@ -134,12 +134,27 @@ function potentialScore(categories: ScoreCategory[], currentScore: number): numb
 }
 
 /** Plan d'action d'une page : recommandations triées par impact, avec le score visé si on les applique. */
-function ActionPlan({ categories, currentScore }: { categories: ScoreCategory[]; currentScore: number }) {
+function ActionPlan({ categories, currentScore, hostname }: { categories: ScoreCategory[]; currentScore: number; hostname: string }) {
+  const [copied, setCopied] = useState(false);
   const items = categories
     .flatMap((c) => c.recommendations.map((r) => ({ ...r, categoryLabel: c.label })))
     .sort((a, b) => b.points - a.points);
   if (items.length === 0) return null;
   const target = potentialScore(categories, currentScore);
+
+  function handleCopy() {
+    const lines = [
+      `Plan d'action GEO — ${hostname} (score actuel : ${currentScore}/100, visé : ${target}/100)`,
+      "",
+      ...items.map((item, i) => `${i + 1}. [+${item.points}] ${item.categoryLabel} — ${item.action}`),
+      "",
+      "Généré avec le Vérificateur de Score GEO.",
+    ];
+    navigator.clipboard.writeText(lines.join("\n")).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-signal-tint p-4 text-left">
@@ -149,6 +164,9 @@ function ActionPlan({ categories, currentScore }: { categories: ScoreCategory[];
           Score visé : <span className="font-bold tabular-nums">{target}/100</span>
         </span>
       </div>
+      <p className="text-xs text-ink-secondary">
+        Classé par impact — commencez par le haut de la liste pour les gains les plus rapides.
+      </p>
       <ol className="flex flex-col gap-2 text-sm text-ink-secondary">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5">
@@ -161,6 +179,13 @@ function ActionPlan({ categories, currentScore }: { categories: ScoreCategory[];
           </li>
         ))}
       </ol>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-surface"
+      >
+        {copied ? "Copié !" : "Copier le plan d'action"}
+      </button>
     </div>
   );
 }
@@ -172,7 +197,8 @@ function ActionPlan({ categories, currentScore }: { categories: ScoreCategory[];
  * clarté d'entité (IA) est exclue de l'agrégat car son texte est spécifique à
  * chaque page (déjà visible dans le détail par page).
  */
-function SiteActionPlan({ doneResults }: { doneResults: (PageCrawlResult & { result: GeoScoreResult })[] }) {
+function SiteActionPlan({ doneResults, hostname }: { doneResults: (PageCrawlResult & { result: GeoScoreResult })[]; hostname: string }) {
+  const [copied, setCopied] = useState(false);
   const map = new Map<string, { action: string; points: number; categoryLabel: string; pagesAffected: number }>();
   for (const p of doneResults) {
     for (const c of p.result.categories) {
@@ -188,9 +214,26 @@ function SiteActionPlan({ doneResults }: { doneResults: (PageCrawlResult & { res
   const items = Array.from(map.values()).sort((a, b) => b.points * b.pagesAffected - a.points * a.pagesAffected);
   if (items.length === 0 || doneResults.length === 0) return null;
 
+  const currentAvg = Math.round(doneResults.reduce((sum, p) => sum + p.result.totalScore, 0) / doneResults.length);
   const potentialAvg = Math.round(
     doneResults.reduce((sum, p) => sum + potentialScore(p.result.categories, p.result.totalScore), 0) / doneResults.length,
   );
+
+  function handleCopy() {
+    const lines = [
+      `Plan d'action GEO — site ${hostname} (score moyen actuel : ${currentAvg}/100, visé : ${potentialAvg}/100, sur ${doneResults.length} pages)`,
+      "",
+      ...items.map(
+        (item, i) => `${i + 1}. [+${item.points}] ${item.categoryLabel} — ${item.action} (${item.pagesAffected}/${doneResults.length} pages)`,
+      ),
+      "",
+      "Généré avec le Vérificateur de Score GEO.",
+    ];
+    navigator.clipboard.writeText(lines.join("\n")).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-signal-tint p-4 text-left">
@@ -200,6 +243,9 @@ function SiteActionPlan({ doneResults }: { doneResults: (PageCrawlResult & { res
           Score moyen visé : <span className="font-bold tabular-nums">{potentialAvg}/100</span>
         </span>
       </div>
+      <p className="text-xs text-ink-secondary">
+        Classé par impact total (points × pages concernées) — commencez par le haut de la liste.
+      </p>
       <ol className="flex flex-col gap-2 text-sm text-ink-secondary">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5">
@@ -215,6 +261,13 @@ function SiteActionPlan({ doneResults }: { doneResults: (PageCrawlResult & { res
           </li>
         ))}
       </ol>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-surface"
+      >
+        {copied ? "Copié !" : "Copier le plan d'action"}
+      </button>
     </div>
   );
 }
@@ -235,7 +288,6 @@ function ResultCard({ result }: { result: GeoScoreResult }) {
           <span className="text-xs text-warning">Analyse IA non activée pour cette page — score plafonné.</span>
         )}
       </div>
-      <ActionPlan categories={result.categories} currentScore={result.totalScore} />
       <div className="flex flex-col gap-4">
         {result.categories.map((cat) => {
           const catRatio = cat.max > 0 ? cat.score / cat.max : 0;
@@ -263,12 +315,13 @@ function ResultCard({ result }: { result: GeoScoreResult }) {
           );
         })}
       </div>
+      <ActionPlan categories={result.categories} currentScore={result.totalScore} hostname={result.hostname} />
     </div>
   );
 }
 
 export default function Home() {
-  const [mode, setMode] = useState<"page" | "site">("page");
+  const [mode, setMode] = useState<"page" | "site">("site");
   const [url, setUrl] = useState("");
 
   // Mode "Une page"
@@ -436,6 +489,14 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 flex-col items-center bg-plane px-4 py-16 font-sans sm:px-8">
+      <div
+        className="fixed top-4 left-4 z-10 text-[11px] leading-[0.95] font-bold text-ink italic sm:top-6 sm:left-6"
+        style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
+      >
+        <div>SYSY&apos;S</div>
+        <div>GTM</div>
+        <div>PROJECTS</div>
+      </div>
       <main className="flex w-full max-w-2xl flex-col gap-8">
         <header className="flex flex-col items-center gap-3 text-center">
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-signal/35 bg-signal-tint px-2.5 py-1 font-mono text-[11px] tracking-wide text-signal uppercase">
@@ -452,16 +513,6 @@ export default function Home() {
         <div className="flex justify-center gap-2">
           <button
             type="button"
-            onClick={() => !busy && setMode("page")}
-            disabled={busy}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-              mode === "page" ? "bg-signal text-signal-ink" : "border border-border text-ink-secondary hover:bg-surface"
-            }`}
-          >
-            Une page
-          </button>
-          <button
-            type="button"
             onClick={() => !busy && setMode("site")}
             disabled={busy}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
@@ -469,6 +520,16 @@ export default function Home() {
             }`}
           >
             Site entier
+          </button>
+          <button
+            type="button"
+            onClick={() => !busy && setMode("page")}
+            disabled={busy}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+              mode === "page" ? "bg-signal text-signal-ink" : "border border-border text-ink-secondary hover:bg-surface"
+            }`}
+          >
+            Une page
           </button>
         </div>
 
@@ -603,8 +664,6 @@ export default function Home() {
               </div>
             )}
 
-            <SiteActionPlan doneResults={doneResults} />
-
             {aggregatedCategories.length > 0 && (
               <div className="flex flex-col gap-4">
                 <h2 className="text-sm font-medium text-ink">Moyennes du site par catégorie</h2>
@@ -683,6 +742,8 @@ export default function Home() {
                 ))}
               </ul>
             </div>
+
+            <SiteActionPlan doneResults={doneResults} hostname={discovery?.hostname ?? ""} />
           </div>
         )}
       </main>

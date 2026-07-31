@@ -6,8 +6,8 @@ On entre une URL — une page ou un site entier — l'outil audite sa visibilit�
 
 ## Deux modes
 
+- **Site entier** (par défaut) — découvre les pages du site via `sitemap.xml`/`robots.txt` (repli sur les liens de la page d'accueil si pas de sitemap), sélectionne un échantillon représentatif de 20 pages (voir ci-dessous), puis analyse chaque page indépendamment et agrège en score de site (moyenne, moyennes par catégorie, pages les plus faibles à améliorer en priorité). Le crawl est orchestré côté client (chaque page = un appel séparé à `/api/analyze`) pour rester dans les limites de durée des fonctions serverless.
 - **Une page** — analyse immédiate d'une URL unique.
-- **Site entier** — découvre les pages du site via `sitemap.xml`/`robots.txt` (repli sur les liens de la page d'accueil si pas de sitemap), sélectionne un échantillon représentatif de 20 pages (voir ci-dessous), puis analyse chaque page indépendamment et agrège en score de site (moyenne, moyennes par catégorie, pages les plus faibles à améliorer en priorité). Le crawl est orchestré côté client (chaque page = un appel séparé à `/api/analyze`) pour rester dans les limites de durée des fonctions serverless.
 
 ### Sélection des 20 pages
 
@@ -41,6 +41,8 @@ Chaque sous-vérification qui ne rapporte pas la totalité de ses points émet a
 - **Mode « Site entier »** : les recommandations identiques sont regroupées entre pages (même catégorie + même action) et triées par impact total (points × nombre de pages concernées) — la catégorie « Clarté d'entité » (IA) est exclue de cet agrégat car son texte est spécifique à chaque page (déjà visible dans le détail par page).
 
 Pour la clarté d'entité (IA), Claude est aussi invité à formuler une suggestion d'amélioration concrète en plus du score, réutilisée comme recommandation quand le score n'est pas déjà maximal.
+
+Positionnement et présentation inspirés d'[isitagentready.com](https://isitagentready.com/) : le plan d'action arrive en dernier (après le détail des vérifications, pas avant), avec un bouton « Copier le plan d'action » pour exporter la liste en texte brut — pratique pour la coller directement dans un agent de code (Claude Code, Cursor...).
 
 ## Getting Started
 
