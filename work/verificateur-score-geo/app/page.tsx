@@ -99,8 +99,17 @@ function CategoryTag({ category }: { category: PageCategory }) {
   );
 }
 
-function StatusPill({ ratio }: { ratio: number }) {
+/** `variant="hero"` pour un badge posé directement sur le fond bleu (texte blanc, seul le point garde la couleur de statut) ; `variant="card"` (défaut) pour une carte lavande (texte teinté). */
+function StatusPill({ ratio, variant = "card" }: { ratio: number; variant?: "card" | "hero" }) {
   const tone = toneFromRatio(ratio);
+  if (variant === "hero") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-hero-ink/40 bg-hero-ink/10 px-3 py-1 font-mono text-[11px] tracking-wide text-hero-ink uppercase">
+        <span className={`h-1.5 w-1.5 rounded-full ${TONE_BG[tone]}`} />
+        {statusWord(ratio)}
+      </span>
+    );
+  }
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[11px] tracking-wide uppercase ${TONE_TEXT[tone]} ${TONE_TINT[tone]}`}
@@ -176,7 +185,7 @@ function ActionPlan({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-signal-tint p-4 text-left">
+    <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-surface p-4 text-left">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-medium text-signal">{title}</h3>
         <span className="font-mono text-xs text-signal">
@@ -189,7 +198,7 @@ function ActionPlan({
       <ol className="flex flex-col gap-2 text-sm text-ink-secondary">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5">
-            <span className="mt-0.5 shrink-0 rounded bg-surface px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums text-signal">
+            <span className="mt-0.5 shrink-0 rounded bg-signal-tint px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums text-signal">
               +{item.points}
             </span>
             <span>
@@ -201,7 +210,7 @@ function ActionPlan({
       <button
         type="button"
         onClick={handleCopy}
-        className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-surface"
+        className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-signal-tint"
       >
         {copied ? "Copié !" : "Copier le plan d'action"}
       </button>
@@ -249,20 +258,20 @@ function LlmsTxtDraft({ draft }: { draft: string }) {
   }
 
   return (
-    <details className="rounded-lg border border-signal/30 bg-signal-tint px-4 py-3 text-left text-sm">
+    <details className="rounded-lg border border-signal/30 bg-surface px-4 py-3 text-left text-sm">
       <summary className="cursor-pointer font-medium text-signal">Brouillon de llms.txt généré par IA</summary>
       <div className="mt-3 flex flex-col gap-3">
         <p className="text-xs text-ink-secondary">
           Généré à partir du contenu réel de la page d&apos;accueil — à relire avant publication (aucun chiffre n&apos;est
           inventé, mais la formulation doit être validée).
         </p>
-        <pre className="overflow-x-auto rounded-md border border-border bg-surface p-3 font-mono text-xs whitespace-pre-wrap text-ink-secondary">
+        <pre className="overflow-x-auto rounded-md border border-signal/20 bg-signal-tint p-3 font-mono text-xs whitespace-pre-wrap text-ink-secondary">
           {draft}
         </pre>
         <button
           type="button"
           onClick={handleCopy}
-          className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-surface"
+          className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-signal-tint"
         >
           {copied ? "Copié !" : "Copier le llms.txt"}
         </button>
@@ -296,28 +305,60 @@ function AgentReadinessSection({ readiness }: { readiness: AgentReadinessResult 
   );
 }
 
-function ResultCard({ result }: { result: GeoScoreResult }) {
+/**
+ * Bloc hostname/score/statut d'une page — `variant="hero"` pour un affichage
+ * posé directement sur le fond bleu (score et texte en blanc, c'est le
+ * premier élément que l'œil rencontre) ; `variant="card"` (défaut) pour un
+ * affichage compact niché dans une carte lavande (score coloré par tonalité).
+ */
+function ScoreHero({ result, variant = "card" }: { result: GeoScoreResult; variant?: "hero" | "card" }) {
   const ratio = result.totalScore / 100;
+  const isHero = variant === "hero";
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <span className="text-sm text-ink-muted">{result.hostname}</span>
-        {result.pageTitle && <span className="max-w-md text-sm font-medium text-ink-secondary">{result.pageTitle}</span>}
-        <span className={`font-display text-4xl font-black tabular-nums ${TONE_TEXT[toneFromRatio(ratio)]}`}>
-          {result.totalScore}
-          <span className="text-lg text-ink-muted">/100</span>
+    <div className="flex flex-col items-center gap-2 text-center">
+      <span className={`text-sm ${isHero ? "text-hero-ink/70" : "text-ink-muted"}`}>{result.hostname}</span>
+      {result.pageTitle && (
+        <span className={`max-w-md text-sm font-medium ${isHero ? "text-hero-ink/85" : "text-ink-secondary"}`}>
+          {result.pageTitle}
         </span>
-        <StatusPill ratio={ratio} />
-        {!result.aiEvaluated && (
-          <span className="text-xs text-warning">Analyse IA non activée pour cette page — score plafonné.</span>
-        )}
-      </div>
+      )}
+      <span
+        className={`font-display text-4xl font-black tabular-nums ${isHero ? "text-hero-ink" : TONE_TEXT[toneFromRatio(ratio)]}`}
+      >
+        {result.totalScore}
+        <span className={`text-lg ${isHero ? "text-hero-ink/60" : "text-ink-muted"}`}>/100</span>
+      </span>
+      <StatusPill ratio={ratio} variant={isHero ? "hero" : "card"} />
+      {!result.aiEvaluated && (
+        <span className={`inline-flex items-center gap-1.5 text-xs ${isHero ? "text-hero-ink/80" : "text-warning"}`}>
+          {isHero && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />}
+          Analyse IA non activée pour cette page — score plafonné.
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Détail d'une page sous le score : catégories GEO, accessibilité agents IA, plan d'action GEO — toujours niché dans une carte lavande. */
+function ResultDetail({ result }: { result: GeoScoreResult }) {
+  return (
+    <>
       <div className="flex flex-col gap-4">
         {result.categories.map((cat) => (
           <CategoryBar key={cat.key} category={cat} />
         ))}
       </div>
       {result.agentReadiness && <AgentReadinessSection readiness={result.agentReadiness} />}
+      <ActionPlan categories={result.categories} currentScore={result.totalScore} hostname={result.hostname} />
+    </>
+  );
+}
+
+/** Version compacte, tout-en-une-carte : utilisée pour les lignes dépliables du détail par page en mode "Site entier". */
+function ResultCard({ result }: { result: GeoScoreResult }) {
+  return (
+    <div className="flex flex-col gap-5">
+      <ScoreHero result={result} variant="card" />
       {result.agentReadiness && (
         <ActionPlan
           categories={result.agentReadiness.checks}
@@ -326,7 +367,7 @@ function ResultCard({ result }: { result: GeoScoreResult }) {
           title="Plan d'action — agents IA"
         />
       )}
-      <ActionPlan categories={result.categories} currentScore={result.totalScore} hostname={result.hostname} />
+      <ResultDetail result={result} />
     </div>
   );
 }
@@ -498,6 +539,18 @@ export default function Home() {
 
   const weakestPages = [...doneResults].sort((a, b) => a.result.totalScore - b.result.totalScore).slice(0, 3);
 
+  // Détail par page classé du pire score au meilleur ; les pages sans score
+  // (en attente, en cours, en échec) restent groupées après, dans leur ordre
+  // de découverte d'origine.
+  const sortedPages = [...pages].sort((a, b) => {
+    const scoreA = a.status === "done" && a.result ? a.result.totalScore : null;
+    const scoreB = b.status === "done" && b.result ? b.result.totalScore : null;
+    if (scoreA !== null && scoreB !== null) return scoreA - scoreB;
+    if (scoreA !== null) return -1;
+    if (scoreB !== null) return 1;
+    return 0;
+  });
+
   return (
     <div className="flex flex-1 flex-col font-sans">
       <div className="relative flex flex-col items-center bg-hero px-4 pt-16 pb-20 text-hero-ink sm:px-8">
@@ -638,37 +691,53 @@ export default function Home() {
         </details>
 
         {error && (
-          <div className="rounded-lg border border-critical/30 bg-critical-tint px-4 py-3 text-sm text-critical">{error}</div>
+          <div className="rounded-lg border border-critical/40 bg-surface px-4 py-3 text-sm text-critical">{error}</div>
         )}
 
-        {loading && (
-          <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-6">
-            <div className="flex items-center gap-3">
-              <span className="signal-dot h-2.5 w-2.5 rounded-full bg-signal" />
-              <span className="text-sm font-medium text-ink">Analyse en cours…</span>
+        {(loading || (crawling && !discovery)) && (
+          <div className="flex flex-col items-center gap-5 py-8">
+            <div className="flex items-end gap-2.5">
+              <span className="bounce-dot h-3 w-3 rounded-full bg-hero-ink" />
+              <span className="bounce-dot h-3 w-3 rounded-full bg-hero-ink" />
+              <span className="bounce-dot h-3 w-3 rounded-full bg-hero-ink" />
             </div>
-            <ul className="flex flex-col gap-2">
-              {LOADING_STEPS.map((step, i) => (
-                <li
-                  key={step}
-                  className={`flex items-center gap-2.5 font-mono text-xs transition-colors duration-300 ${
-                    i < stepIndex ? "text-ink-muted" : i === stepIndex ? "font-medium text-ink" : "text-ink-muted/50"
-                  }`}
-                >
-                  <span className="w-4 shrink-0 text-center">{i < stepIndex ? "✓" : i === stepIndex ? "…" : ""}</span>
-                  {step}
-                </li>
-              ))}
-            </ul>
+            {loading ? (
+              <ul className="flex flex-col items-center gap-2">
+                {LOADING_STEPS.slice(0, stepIndex + 1).map((step, i) => (
+                  <li
+                    key={step}
+                    className={`pop-in font-mono text-xs transition-colors duration-300 ${
+                      i === stepIndex ? "font-medium text-hero-ink" : "text-hero-ink/45"
+                    }`}
+                  >
+                    {i < stepIndex ? "✓ " : "… "}
+                    {step}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="pop-in font-mono text-xs text-hero-ink/80">Découverte des pages du site…</span>
+            )}
           </div>
         )}
 
         {mode === "page" && result && !loading && (
-          <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-6">
-            <ResultCard result={result} />
+          <div className="flex flex-col gap-6">
+            <ScoreHero result={result} variant="hero" />
+            {result.agentReadiness && (
+              <ActionPlan
+                categories={result.agentReadiness.checks}
+                currentScore={result.agentReadiness.score}
+                hostname={result.hostname}
+                title="Plan d'action — agents IA"
+              />
+            )}
+            <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-6">
+              <ResultDetail result={result} />
+            </div>
             <button
               onClick={handleCopyBadge}
-              className="self-center rounded-full border border-border px-4 py-1.5 text-sm text-ink-secondary transition-colors hover:border-signal hover:text-signal"
+              className="self-center rounded-full border border-hero-ink/50 px-4 py-1.5 text-sm text-hero-ink transition-colors hover:bg-hero-ink/10"
             >
               {copied ? "Copié !" : "Copier le badge à partager"}
             </button>
@@ -676,9 +745,9 @@ export default function Home() {
         )}
 
         {mode === "site" && (discovery || pages.length > 0) && (
-          <div className="flex flex-col gap-6 rounded-xl border border-border bg-surface p-6">
+          <div className="flex flex-col gap-6">
             {discovery && (
-              <p className="text-center font-mono text-xs text-ink-muted">
+              <p className="text-center font-mono text-xs text-hero-ink/70">
                 {discovery.totalFoundIsApproximate ? `${discovery.totalFound}+` : discovery.totalFound} page(s) trouvée(s) via{" "}
                 {discovery.source === "sitemap" ? "le sitemap" : "les liens de la page d'accueil (pas de sitemap trouvé)"}
                 {discovery.capped ? ` — ${pages.length} analysées (plafond de 20)` : ""} · {completedCount}/{pages.length} traitées
@@ -686,105 +755,24 @@ export default function Home() {
             )}
 
             {siteAverage !== null && (
-              <div className="flex flex-col items-center gap-2 border-b border-border-soft pb-6 text-center">
-                <span className="text-sm text-ink-muted">{discovery?.hostname}</span>
-                <span className={`font-display text-6xl font-black tabular-nums ${TONE_TEXT[toneFromRatio(siteAverage / 100)]}`}>
+              <div className="flex flex-col items-center gap-2 text-center">
+                <span className="text-sm text-hero-ink/70">{discovery?.hostname}</span>
+                <span className="font-display text-6xl font-black tabular-nums text-hero-ink">
                   {siteAverage}
-                  <span className="text-2xl text-ink-muted">/100</span>
+                  <span className="text-2xl text-hero-ink/60">/100</span>
                 </span>
-                <StatusPill ratio={siteAverage / 100} />
-                <span className="text-xs text-ink-muted">
+                <StatusPill ratio={siteAverage / 100} variant="hero" />
+                <span className="text-xs text-hero-ink/70">
                   Moyenne sur {doneResults.length} page(s) analysée(s){erroredPages.length > 0 ? ` · ${erroredPages.length} en échec` : ""}
                 </span>
                 <button
                   onClick={handleCopySiteBadge}
-                  className="mt-2 rounded-full border border-border px-4 py-1.5 text-sm text-ink-secondary transition-colors hover:border-signal hover:text-signal"
+                  className="mt-2 rounded-full border border-hero-ink/50 px-4 py-1.5 text-sm text-hero-ink transition-colors hover:bg-hero-ink/10"
                 >
                   {siteCopied ? "Copié !" : "Copier le badge à partager"}
                 </button>
               </div>
             )}
-
-            {aggregatedCategories.length > 0 && (
-              <div className="flex flex-col gap-4">
-                <h2 className="text-sm font-medium text-ink">Moyennes du site par catégorie</h2>
-                {aggregatedCategories.map((cat) => {
-                  const ratio = cat.max > 0 ? cat.score / cat.max : 0;
-                  const tone = toneFromRatio(ratio);
-                  return (
-                    <div key={cat.key} className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 font-medium text-ink">
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONE_BG[tone]}`} />
-                          {cat.label}
-                        </span>
-                        <span className="font-mono text-ink-muted tabular-nums">{Math.round(ratio * 100)}%</span>
-                      </div>
-                      <div className="meter-track h-2 w-full overflow-hidden rounded-full">
-                        <div className={`h-full rounded-full ${TONE_BG[tone]}`} style={{ width: `${Math.round(ratio * 100)}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {discovery?.agentReadiness && <AgentReadinessSection readiness={discovery.agentReadiness} />}
-
-            {weakestPages.length > 0 && (
-              <div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning-tint p-4">
-                <h2 className="text-sm font-medium text-warning">Pages à améliorer en priorité</h2>
-                <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
-                  {weakestPages.map((p) => (
-                    <li key={p.url} className="flex items-center justify-between gap-3">
-                      <span className="flex min-w-0 items-center gap-2">
-                        <CategoryTag category={p.category} />
-                        <span className="truncate">{p.url}</span>
-                      </span>
-                      <span className="shrink-0 font-mono font-medium tabular-nums">{p.result.totalScore}/100</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-2">
-              <h2 className="text-sm font-medium text-ink">Détail par page</h2>
-              <ul className="flex flex-col divide-y divide-border-soft">
-                {pages.map((p) => (
-                  <li key={p.url} className="py-2.5">
-                    {p.status === "done" && p.result ? (
-                      <details className="group">
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm">
-                          <span className="flex min-w-0 items-center gap-2">
-                            <CategoryTag category={p.category} />
-                            <span className="truncate text-ink-secondary">{p.url}</span>
-                          </span>
-                          <span className={`shrink-0 font-mono font-medium tabular-nums ${TONE_TEXT[toneFromRatio(p.result.totalScore / 100)]}`}>
-                            {p.result.totalScore}/100
-                          </span>
-                        </summary>
-                        <div className="mt-4 border-t border-border-soft pt-4">
-                          <ResultCard result={p.result} />
-                        </div>
-                      </details>
-                    ) : (
-                      <div className="flex items-center justify-between gap-3 text-sm">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <CategoryTag category={p.category} />
-                          <span className="truncate text-ink-muted">{p.url}</span>
-                        </span>
-                        <span className="shrink-0 font-mono text-xs text-ink-muted">
-                          {p.status === "pending" && "en attente…"}
-                          {p.status === "loading" && "analyse en cours…"}
-                          {p.status === "error" && (p.error ?? "échec")}
-                        </span>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
 
             {discovery?.agentReadiness && (
               <ActionPlan
@@ -794,6 +782,90 @@ export default function Home() {
                 title="Plan d'action — agents IA"
               />
             )}
+
+            <div className="flex flex-col gap-6 rounded-xl border border-border bg-surface p-6">
+              {aggregatedCategories.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  <h2 className="text-sm font-medium text-ink">Moyennes du site par catégorie</h2>
+                  {aggregatedCategories.map((cat) => {
+                    const ratio = cat.max > 0 ? cat.score / cat.max : 0;
+                    const tone = toneFromRatio(ratio);
+                    return (
+                      <div key={cat.key} className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="flex items-center gap-2 font-medium text-ink">
+                            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONE_BG[tone]}`} />
+                            {cat.label}
+                          </span>
+                          <span className="font-mono text-ink-muted tabular-nums">{Math.round(ratio * 100)}%</span>
+                        </div>
+                        <div className="meter-track h-2 w-full overflow-hidden rounded-full">
+                          <div className={`h-full rounded-full ${TONE_BG[tone]}`} style={{ width: `${Math.round(ratio * 100)}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {discovery?.agentReadiness && <AgentReadinessSection readiness={discovery.agentReadiness} />}
+
+              {weakestPages.length > 0 && (
+                <div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning-tint p-4">
+                  <h2 className="text-sm font-medium text-warning">Pages à améliorer en priorité</h2>
+                  <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
+                    {weakestPages.map((p) => (
+                      <li key={p.url} className="flex items-center justify-between gap-3">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <CategoryTag category={p.category} />
+                          <span className="truncate">{p.url}</span>
+                        </span>
+                        <span className="shrink-0 font-mono font-medium tabular-nums">{p.result.totalScore}/100</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2">
+                <h2 className="text-sm font-medium text-ink">Détail par page</h2>
+                <p className="text-xs text-ink-muted">Classé du plus faible score au plus élevé.</p>
+                <ul className="flex flex-col divide-y divide-border-soft">
+                  {sortedPages.map((p) => (
+                    <li key={p.url} className="py-2.5">
+                      {p.status === "done" && p.result ? (
+                        <details className="group">
+                          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm">
+                            <span className="flex min-w-0 items-center gap-2">
+                              <CategoryTag category={p.category} />
+                              <span className="truncate text-ink-secondary">{p.url}</span>
+                            </span>
+                            <span className={`shrink-0 font-mono font-medium tabular-nums ${TONE_TEXT[toneFromRatio(p.result.totalScore / 100)]}`}>
+                              {p.result.totalScore}/100
+                            </span>
+                          </summary>
+                          <div className="mt-4 border-t border-border-soft pt-4">
+                            <ResultCard result={p.result} />
+                          </div>
+                        </details>
+                      ) : (
+                        <div className="flex items-center justify-between gap-3 text-sm">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <CategoryTag category={p.category} />
+                            <span className="truncate text-ink-muted">{p.url}</span>
+                          </span>
+                          <span className="shrink-0 font-mono text-xs text-ink-muted">
+                            {p.status === "pending" && "en attente…"}
+                            {p.status === "loading" && "analyse en cours…"}
+                            {p.status === "error" && (p.error ?? "échec")}
+                          </span>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         )}
         </div>
