@@ -564,7 +564,7 @@ export default function Home() {
         </form>
 
         {mode === "site" && (
-          <p className="text-xs text-ink-muted">
+          <p className="text-xs text-ink-secondary">
             Découvre les pages via <code className="rounded bg-border-soft px-1 py-0.5 font-mono">sitemap.xml</code>{" "}
             (repli sur les liens de la page d&apos;accueil si absent), respecte{" "}
             <code className="rounded bg-border-soft px-1 py-0.5 font-mono">robots.txt</code>, et sélectionne un

@@ -1,56 +1,32 @@
 @import "tailwindcss";
 
 /*
- * Direction artistique : "console de signal" — le produit détecte à quel
- * point une page est repérable par un moteur de réponse IA, donc l'UI
- * emprunte au vocabulaire d'un instrument de mesure (accent "signal" bleu
- * ultramarine, chiffres en mono façon lecture numérique, meters à crans)
- * plutôt qu'au gris Tailwind par défaut. Le texte porté par l'accent
- * (boutons, badges) est un blanc grège plutôt qu'un blanc pur, repris comme
- * couleur de lecture par défaut en mode sombre. Les tokens ci-dessous sont
- * réutilisés à l'identique dans la démo HTML autonome du projet pour une
- * identité cohérente entre les deux surfaces.
+ * Direction artistique : identité de marque assumée, pas un thème système —
+ * fond bleu outremer (bleu Majorelle, #6050dc) plein et vif, texte en blanc
+ * grège plutôt qu'un blanc pur. Un seul thème, volontairement indépendant de
+ * prefers-color-scheme : c'est un choix de marque délibéré, pas une valeur
+ * par défaut qui doit s'effacer devant le thème système. Les boutons et
+ * badges inversent la relation (fond grège plein, texte bleu profond) pour
+ * un contraste maximal sur le fond outremer — c'est ce qui "peps".
  */
 :root {
-  --paper: #f5f6fa;
-  --plane: #eef0f7;
-  --surface: #ffffff;
-  --ink: #13162a;
-  --ink-secondary: #4b5169;
-  --ink-muted: #7d84a3;
-  --border: rgba(19, 22, 42, 0.12);
-  --border-soft: rgba(19, 22, 42, 0.07);
-  --signal: #2733c2;
-  --signal-ink: #f4ede0;
-  --signal-tint: rgba(39, 51, 194, 0.09);
-  --good: #0ca30c;
-  --warning: #b8790a;
-  --critical: #d03b3b;
-  --good-tint: rgba(12, 163, 12, 0.12);
+  --paper: #6050dc;
+  --plane: #6050dc;
+  --surface: #251c74;
+  --ink: #f2ebda;
+  --ink-secondary: #ddd6c3;
+  --ink-muted: #b6aed8;
+  --border: rgba(242, 235, 218, 0.18);
+  --border-soft: rgba(242, 235, 218, 0.08);
+  --signal: #f2ebda;
+  --signal-ink: #211964;
+  --signal-tint: rgba(242, 235, 218, 0.1);
+  --good: #35c235;
+  --warning: #fab219;
+  --critical: #ef6b6b;
+  --good-tint: rgba(53, 194, 53, 0.16);
   --warning-tint: rgba(250, 178, 25, 0.16);
-  --critical-tint: rgba(208, 59, 59, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0a0c16;
-    --plane: #070911;
-    --surface: #12151f;
-    --ink: #efe7d7;
-    --ink-secondary: #c2b9a5;
-    --ink-muted: #8f8878;
-    --border: rgba(239, 231, 215, 0.13);
-    --border-soft: rgba(239, 231, 215, 0.07);
-    --signal: #6672f5;
-    --signal-ink: #10122a;
-    --signal-tint: rgba(102, 114, 245, 0.16);
-    --good: #35c235;
-    --warning: #fab219;
-    --critical: #ef6b6b;
-    --good-tint: rgba(53, 194, 53, 0.14);
-    --warning-tint: rgba(250, 178, 25, 0.14);
-    --critical-tint: rgba(239, 107, 107, 0.14);
-  }
+  --critical-tint: rgba(239, 107, 107, 0.16);
 }
 
 @theme inline {
