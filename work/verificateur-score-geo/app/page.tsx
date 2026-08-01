@@ -633,63 +633,6 @@ export default function Home() {
 
       <main className="flex flex-1 flex-col items-center bg-plane px-4 py-12 sm:px-8">
         <div className="flex w-full max-w-2xl flex-col gap-8">
-        <details className="rounded-lg border border-hero-ink/40 px-4 py-3 text-sm text-hero-ink/80 open:pb-4">
-          <summary className="cursor-pointer font-medium text-hero-ink">Méthodologie & sources</summary>
-          <div className="mt-3 flex flex-col gap-2 text-xs leading-relaxed">
-            <p>
-              La pondération s&apos;appuie sur trois sources publiques : l&apos;étude{" "}
-              <span className="font-medium text-hero-ink">
-                « GEO: Generative Engine Optimization » (Aggarwal et al., 2023, arXiv:2311.09735)
-              </span>
-              , dont le résultat le plus robuste — citer des sources et ajouter des statistiques/citations augmente
-              nettement la visibilité dans les réponses générées, contrairement au bourrage de mots-clés — pèse pour
-              25/100 dans la catégorie « Citations, statistiques & sources » ; la documentation Google Search Central
-              sur les données structurées (15/100) ; et son guide E-E-A-T pour la fraîcheur et l&apos;auteur (10/100).
-            </p>
-            <p>
-              Limite assumée : c&apos;est une approximation heuristique, pas une mesure garantie — aucun outil externe
-              ne peut connaître la citabilité réelle d&apos;une page dans un moteur IA donné sans accès à ses journaux
-              internes.
-            </p>
-            <p>
-              <span className="font-medium text-hero-ink">Sélection des 20 pages (mode « Site entier »)</span> : chaque
-              URL découverte est classée par motif d&apos;URL (Accueil, Pricing, Produit, Ressources, À propos,
-              Carrières, Contact, Légal, Autre — aucun appel IA, juste une lecture du chemin) puis choisie par quota
-              par catégorie (accueil, pricing, produit, ressources, à propos, carrières, contact) pour obtenir un
-              échantillon représentatif de la structure du site plutôt qu&apos;un tri arbitraire — par exemple les 20
-              premiers articles de blog par ordre alphabétique, qui donnerait une image biaisée du site. Les places
-              restantes sont comblées en priorité par des pages de contenu individuelles (catégorie « Autre » —
-              souvent les fiches produit ou articles les plus rentables à auditer), et les pages légales/boilerplate
-              (mentions légales, confidentialité...) ne sont piochées qu&apos;en tout dernier recours. Au sein d&apos;une
-              catégorie, les chemins les plus courts sont préférés (proxy pour « plus proche de la racine du site =
-              plus probablement important »).
-            </p>
-            <p>
-              <span className="font-medium text-hero-ink">Déduplication & exclusions</span> : deux URLs qui ne diffèrent
-              que par un préfixe de langue (ex.{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/fr/pricing</code> et{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/pricing</code>) sont fusionnées — seule
-              la version sans préfixe est conservée, pour ne pas occuper deux places de l&apos;échantillon avec la
-              même page. Les pages de compte, connexion, mentions légales, confidentialité, etc. sont exclues
-              d&apos;office : elles ne concernent ni le produit ni le contenu éditorial du site.
-            </p>
-            <p>
-              <span className="font-medium text-hero-ink">Accessibilité aux agents IA</span> : en complément du score
-              GEO (visibilité dans une réponse générée), l&apos;outil vérifie si le site est directement exploitable
-              par un agent IA autonome — présence d&apos;un{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">llms.txt</code>, autorisation des
-              robots IA (GPTBot, ClaudeBot, PerplexityBot, Google-Extended...) et directive Content-Signal dans{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">robots.txt</code>,{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">sitemap.xml</code>, en-têtes{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">Link</code> (RFC 8288), négociation de
-              contenu Markdown, et support WebMCP. Si aucun{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">llms.txt</code> n&apos;est trouvé, un
-              brouillon est généré automatiquement par IA à partir du contenu réel de la page d&apos;accueil (à
-              relire avant publication).
-            </p>
-          </div>
-        </details>
-
         {error && (
           <div className="rounded-lg border border-critical/40 bg-surface px-4 py-3 text-sm text-critical">{error}</div>
         )}
@@ -868,6 +811,63 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        <details className="rounded-lg border border-hero-ink/40 px-4 py-3 text-sm text-hero-ink/80 open:pb-4">
+          <summary className="cursor-pointer font-medium text-hero-ink">Méthodologie & sources</summary>
+          <div className="mt-3 flex flex-col gap-2 text-xs leading-relaxed">
+            <p>
+              La pondération s&apos;appuie sur trois sources publiques : l&apos;étude{" "}
+              <span className="font-medium text-hero-ink">
+                « GEO: Generative Engine Optimization » (Aggarwal et al., 2023, arXiv:2311.09735)
+              </span>
+              , dont le résultat le plus robuste — citer des sources et ajouter des statistiques/citations augmente
+              nettement la visibilité dans les réponses générées, contrairement au bourrage de mots-clés — pèse pour
+              25/100 dans la catégorie « Citations, statistiques & sources » ; la documentation Google Search Central
+              sur les données structurées (15/100) ; et son guide E-E-A-T pour la fraîcheur et l&apos;auteur (10/100).
+            </p>
+            <p>
+              Limite assumée : c&apos;est une approximation heuristique, pas une mesure garantie — aucun outil externe
+              ne peut connaître la citabilité réelle d&apos;une page dans un moteur IA donné sans accès à ses journaux
+              internes.
+            </p>
+            <p>
+              <span className="font-medium text-hero-ink">Sélection des 20 pages (mode « Site entier »)</span> : chaque
+              URL découverte est classée par motif d&apos;URL (Accueil, Pricing, Produit, Ressources, À propos,
+              Carrières, Contact, Légal, Autre — aucun appel IA, juste une lecture du chemin) puis choisie par quota
+              par catégorie (accueil, pricing, produit, ressources, à propos, carrières, contact) pour obtenir un
+              échantillon représentatif de la structure du site plutôt qu&apos;un tri arbitraire — par exemple les 20
+              premiers articles de blog par ordre alphabétique, qui donnerait une image biaisée du site. Les places
+              restantes sont comblées en priorité par des pages de contenu individuelles (catégorie « Autre » —
+              souvent les fiches produit ou articles les plus rentables à auditer), et les pages légales/boilerplate
+              (mentions légales, confidentialité...) ne sont piochées qu&apos;en tout dernier recours. Au sein d&apos;une
+              catégorie, les chemins les plus courts sont préférés (proxy pour « plus proche de la racine du site =
+              plus probablement important »).
+            </p>
+            <p>
+              <span className="font-medium text-hero-ink">Déduplication & exclusions</span> : deux URLs qui ne diffèrent
+              que par un préfixe de langue (ex.{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/fr/pricing</code> et{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/pricing</code>) sont fusionnées — seule
+              la version sans préfixe est conservée, pour ne pas occuper deux places de l&apos;échantillon avec la
+              même page. Les pages de compte, connexion, mentions légales, confidentialité, etc. sont exclues
+              d&apos;office : elles ne concernent ni le produit ni le contenu éditorial du site.
+            </p>
+            <p>
+              <span className="font-medium text-hero-ink">Accessibilité aux agents IA</span> : en complément du score
+              GEO (visibilité dans une réponse générée), l&apos;outil vérifie si le site est directement exploitable
+              par un agent IA autonome — présence d&apos;un{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">llms.txt</code>, autorisation des
+              robots IA (GPTBot, ClaudeBot, PerplexityBot, Google-Extended...) et directive Content-Signal dans{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">robots.txt</code>,{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">sitemap.xml</code>, en-têtes{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">Link</code> (RFC 8288), négociation de
+              contenu Markdown, et support WebMCP. Si aucun{" "}
+              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">llms.txt</code> n&apos;est trouvé, un
+              brouillon est généré automatiquement par IA à partir du contenu réel de la page d&apos;accueil (à
+              relire avant publication).
+            </p>
+          </div>
+        </details>
         </div>
       </main>
     </div>
