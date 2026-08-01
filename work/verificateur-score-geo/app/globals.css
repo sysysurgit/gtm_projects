@@ -7,7 +7,8 @@
  * de marque), 2 polices max (Outfit pour tout le texte courant et les grands
  * titres/scores, Space Mono pour les libellés techniques). Fond bleu continu
  * sur toute la page ; les résultats flottent en cartes lavande avec du texte
- * en bleu Majorelle pour rester lisibles.
+ * quasi-noir (contraste WCAG AA) — le bleu Majorelle reste réservé aux accents
+ * (titres de plan d'action, boutons, bordures).
  */
 :root {
   --hero: #1c00fe;
@@ -15,9 +16,9 @@
   --paper: #1c00fe;
   --plane: #1c00fe;
   --surface: #e7e4f2;
-  --ink: #1c00fe;
-  --ink-secondary: #4b3fc4;
-  --ink-muted: #7c74b0;
+  --ink: #171426;
+  --ink-secondary: #453f66;
+  --ink-muted: #625d7a;
   --border: rgba(28, 0, 254, 0.35);
   --border-soft: rgba(28, 0, 254, 0.14);
   --signal: #1c00fe;
