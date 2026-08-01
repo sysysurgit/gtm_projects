@@ -17,6 +17,9 @@ keys/
 temporary/*
 !temporary/.gitkeep
 
+# ── Private projects (never committed, never even diffed) ──
+/private/
+
 # ── OS ───────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
