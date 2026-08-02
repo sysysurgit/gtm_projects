@@ -4,4 +4,4 @@ Librairie communautaire de hooks/ad copy (Google, LinkedIn, Meta, Reddit) tagué
 
 **Score** : 74/100 (Facilité 90 · Viralité 65 · Utilité 80 · Différenciation 55)
 
-**Statut** : idée — pas encore démarré. Socle de données partagé avec Hooks (ex-generateur-hooks-ia, devenu un vrai SaaS payant, gardé dans `private/` car repo à part).
+**Statut** : idée — pas encore démarré. Socle de données partagé avec [Hooks](../hooks) (ex-generateur-hooks-ia — outil gratuit, comme verificateur-score-geo).
