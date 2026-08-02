@@ -21,11 +21,11 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-6">Historique</h1>
+      <h1 className="mb-6 font-display text-3xl font-normal">Historique</h1>
 
       {usage && (
-        <div className="rounded-lg border border-border-soft bg-surface p-5 mb-8">
-          <p className="text-xs font-mono text-ink-muted uppercase mb-1">Usage</p>
+        <div className="mb-8 rounded-2xl border border-border-soft bg-surface p-5">
+          <p className="mb-1 text-xs font-medium tracking-wide text-ink-muted uppercase">Usage</p>
           <p className="text-lg font-semibold">
             {usage.count} / {usage.cap} générations{" "}
             <span className="text-sm font-normal text-ink-muted">
@@ -41,7 +41,7 @@ export default async function DashboardPage() {
             <Link
               key={g.id}
               href={`/generations/${g.id}`}
-              className="flex items-center justify-between rounded-lg border border-border-soft px-4 py-3 text-sm hover:border-accent transition-colors"
+              className="flex items-center justify-between rounded-xl border border-border-soft px-4 py-3 text-sm transition-colors hover:border-accent/50"
             >
               <span>{new Date(g.created_at).toLocaleString("fr-FR")}</span>
               <span

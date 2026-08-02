@@ -34,13 +34,13 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="flex-1 flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold mb-1">Créer un compte</h1>
-        <p className="text-ink-muted mb-8 text-sm">3 générations gratuites, sans carte bancaire.</p>
+    <main className="flex flex-1 items-center justify-center px-6 py-16">
+      <div className="w-full max-w-sm rounded-2xl border border-border-soft bg-surface p-8">
+        <h1 className="mb-1 font-display text-3xl font-normal">Créer un compte</h1>
+        <p className="mb-8 text-sm text-ink-muted">3 générations gratuites, sans carte bancaire.</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="email">
+            <label className="mb-1 block text-sm text-ink-secondary" htmlFor="email">
               Email
             </label>
             <input
@@ -49,11 +49,11 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-accent"
+              className="w-full rounded-lg border border-border bg-transparent px-3 py-2 outline-none focus:border-accent"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="password">
+            <label className="mb-1 block text-sm text-ink-secondary" htmlFor="password">
               Mot de passe
             </label>
             <input
@@ -63,14 +63,14 @@ export default function SignupPage() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-accent"
+              className="w-full rounded-lg border border-border bg-transparent px-3 py-2 outline-none focus:border-accent"
             />
           </div>
           {error && <p className="text-sm text-critical">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-accent text-accent-ink font-medium py-2 disabled:opacity-60"
+            className="w-full rounded-lg bg-btn-primary py-2 font-semibold text-btn-primary-ink transition-[filter] hover:brightness-95 disabled:opacity-60"
           >
             {loading ? "Création..." : "Créer mon compte"}
           </button>

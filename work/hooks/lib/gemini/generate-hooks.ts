@@ -3,7 +3,12 @@ import { gemini } from "./client";
 import { getFormatSpec, PLATFORMS } from "@/lib/ad-platforms";
 import type { Brief, GenerationResult, HookCard } from "@/lib/types";
 
-const MODEL = "gemini-3.5-flash";
+// gemini-3.5-flash is effectively unusable on the free tier for a public
+// tool: a hard 20 requests/day cap plus an occasional repetition-loop
+// failure mode. gemini-3.1-flash-lite has no such daily cap (a per-minute
+// quota that recovers within minutes instead) and measured both faster
+// (~1.2-1.7s vs ~6-9s) and 100% reliable across a 8-call burst test.
+export const MODEL = "gemini-3.1-flash-lite";
 const MAX_CARDS = 5;
 const MIN_CARDS = 3;
 
@@ -142,6 +147,61 @@ export type GenerateHooksResult = GenerationResult & {
   completionTokens: number;
 };
 
+const MAX_ATTEMPTS = 2;
+
+// Gemini occasionally falls into a degenerate repetition loop in one field
+// (observed: the same sentence repeated hundreds of times) and burns the
+// entire max_tokens budget before finishing the JSON array, truncating it
+// mid-string — measured at roughly 1 in 6-9 calls, with EITHER automatic or
+// a fixed thinking budget, not just when thinking is disabled. maxOutputTokens
+// is kept modest (2000, vs. ~300-400 for a normal successful response) so a
+// runaway truncates faster instead of burning ~15-18s before failing, and a
+// single retry absorbs the residual failure rate (two consecutive failures
+// on an already-rare, largely independent failure mode is very unlikely).
+async function callGemini(
+  systemPrompt: string,
+  parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }>
+): Promise<{ rawCards: RawCard[]; promptTokens: number; completionTokens: number }> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await gemini.models.generateContent({
+        model: MODEL,
+        contents: [{ role: "user", parts }],
+        config: {
+          systemInstruction: systemPrompt,
+          responseMimeType: "application/json",
+          responseSchema,
+          // Fixed moderate budget, not automatic(-1): measured faster
+          // (~6s vs ~8-10s) AND with fewer repetition-loop failures in
+          // side-by-side trials — less "thinking" apparently means less
+          // opportunity to spiral into a bad attractor state.
+          thinkingConfig: { thinkingBudget: 512 },
+          maxOutputTokens: 2000,
+        },
+      });
+      if (!response.text) {
+        throw new Error("Réponse Gemini vide ou invalide.");
+      }
+      const rawCards = JSON.parse(response.text) as RawCard[];
+      return {
+        rawCards,
+        promptTokens: response.usageMetadata?.promptTokenCount ?? 0,
+        completionTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+      };
+    } catch (err) {
+      lastError = err;
+      console.error(`generateHooks: Gemini call failed (attempt ${attempt}/${MAX_ATTEMPTS})`, err);
+      // A quota error (429) will fail identically on retry — don't burn a
+      // second request (and extra latency) on a call that can't succeed.
+      if (err instanceof Error && "status" in err && err.status === 429) {
+        break;
+      }
+    }
+  }
+  throw lastError;
+}
+
 export async function generateHooks(brief: Brief): Promise<GenerateHooksResult> {
   const formatSpec = getFormatSpec(brief.platform, brief.adFormat);
   if (!formatSpec) {
@@ -160,22 +220,7 @@ export async function generateHooks(brief: Brief): Promise<GenerateHooksResult> 
   }
   parts.push({ text: userPromptText });
 
-  const response = await gemini.models.generateContent({
-    model: MODEL,
-    contents: [{ role: "user", parts }],
-    config: {
-      systemInstruction: systemPrompt,
-      responseMimeType: "application/json",
-      responseSchema,
-      thinkingConfig: { thinkingBudget: -1 },
-      maxOutputTokens: 4096,
-    },
-  });
-
-  if (!response.text) {
-    throw new Error("Réponse Gemini vide ou invalide.");
-  }
-  const rawCards = JSON.parse(response.text) as RawCard[];
+  const { rawCards, promptTokens, completionTokens } = await callGemini(systemPrompt, parts);
 
   const compliant = rawCards.filter((c) => isCompliant(c, formatSpec.titleMaxChars, formatSpec.descriptionMaxChars));
   const pool = compliant.length > 0 ? compliant : rawCards;
@@ -185,9 +230,6 @@ export async function generateHooks(brief: Brief): Promise<GenerateHooksResult> 
     description: c.description || undefined,
     cta: c.cta || undefined,
   }));
-
-  const promptTokens = response.usageMetadata?.promptTokenCount ?? 0;
-  const completionTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
 
   return { cards, promptTokens, completionTokens };
 }

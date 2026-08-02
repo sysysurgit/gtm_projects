@@ -1,41 +1,46 @@
 @import "tailwindcss";
 
 /*
- * Direction artistique v4 (2026-08-02) : dark-mode natif partout — landing ET
- * app, un seul système. L'accent gold de v3 est revenu au bleu Majorelle
- * (#1c00fe, texte blanc dessus) sur retour explicite du fondateur — v3
- * l'avait abandonné, mais la couleur de marque historique (déjà utilisée
- * dans verificateur-score-geo) reste la préférée. Le fond quasi-noir, la
- * hiérarchie par opacité de blanc, et l'absence de particules (retirées :
- * jugées "site d'astrologie") restent de v3. 3 couleurs max (bleu Majorelle
- * comme unique accent — good/warning/critical restent un système
- * fonctionnel séparé), 2 polices max (Fraunces en serif d'affichage pour le
- * H1 et la citation, Inter pour tout le reste).
+ * Direction artistique v5 (2026-08-02) : refonte complète calquée sur
+ * neverboring.app/home — off-black/off-white (jamais de noir/blanc pur),
+ * cartes à bord subtil et coins arrondis 12-16px, badges pill, section
+ * "avant/après" mise en valeur par un bord bleu. Le bleu outremer
+ * (historiquement "bleu Majorelle" #1c00fe dans ce projet, même famille de
+ * teinte) reste l'unique couleur de contraste — mais en usage SECONDAIRE
+ * (focus, liens, sélection, bord de mise en valeur), pas en fond de bouton :
+ * les CTA primaires sont désormais blanc cassé/texte quasi-noir, comme sur
+ * le site de référence, où le bleu n'apparaît qu'en accents ponctuels.
+ * Polices : Instrument Serif (regular uniquement) pour tout titre/moment
+ * éditorial, Geist pour tout le reste (corps de texte, UI, boutons).
+ * good/warning/critical restent un système fonctionnel séparé, inchangé.
  */
 :root {
-  /* Neutrals are cool/blue-tinted (not warm) to match --paper's navy
-     undertone — same-family hues read as higher-contrast and more cohesive
-     than warm grays dropped onto a blue background (deliberate switch from
-     the warm palette used when --paper was pure near-black). */
-  --ink: #f0f2f7;
-  --ink-secondary: #a8b0c4;
-  --ink-muted: #6b7390;
-  /* Deep navy ("bleu pétrole"), not flat black — brighter/less stark than
-     pure #0a0a0c, and ties the page background into the same blue family as
-     --accent instead of a neutral void. */
-  --paper: #0a0f1c;
-  --surface: #131a2c;
-  --border: rgba(255, 255, 255, 0.14);
-  --border-soft: rgba(255, 255, 255, 0.08);
+  --ink: #f0f0f0;
+  --ink-secondary: #b9b9bb;
+  --ink-muted: #8a8a8c;
+  --paper: #0e0e0f;
+  --surface: #131314;
+  --surface-raised: #1b1b1d;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-soft: rgba(255, 255, 255, 0.06);
+
+  /* Bouton primaire : blanc cassé / texte quasi-noir, jamais du bleu plein —
+     le bleu reste réservé aux accents (voir --accent ci-dessous). */
+  --btn-primary: #d9d9d9;
+  --btn-primary-ink: #0a0a0a;
+
+  /* Bleu outremer — unique couleur de contraste, en usage secondaire :
+     focus ring, sélection, liens, bord de mise en valeur. Jamais comme fond
+     de bouton principal. */
   --accent: #1c00fe;
   --accent-ink: #ffffff;
   --accent-tint: rgba(28, 0, 254, 0.14);
-  /* #1c00fe as TEXT on a dark background fails WCAG contrast (~2.2:1, needs
-     4.5:1) — it only works as a solid button fill with white text on top.
-     --link is a lighter blue reserved for blue text/icons directly on
-     --paper/--surface (links, CTA-in-card text, hover states). Never use
-     --accent as a text color on a dark background; use --link instead. */
+  /* #1c00fe en texte direct sur fond sombre échoue le contraste WCAG
+     (~2.2:1, il faut 4.5:1). --link est une variante plus claire réservée au
+     texte/icônes bleus sur --paper/--surface. Ne jamais utiliser --accent
+     comme couleur de texte sur fond sombre : utiliser --link à la place. */
   --link: #6b8aff;
+
   --good: #34c77b;
   --warning: #e8823c;
   --critical: #e5484d;
@@ -50,8 +55,11 @@
   --color-ink-muted: var(--ink-muted);
   --color-paper: var(--paper);
   --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-border: var(--border);
   --color-border-soft: var(--border-soft);
+  --color-btn-primary: var(--btn-primary);
+  --color-btn-primary-ink: var(--btn-primary-ink);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-tint: var(--accent-tint);
@@ -62,9 +70,9 @@
   --color-good-tint: var(--good-tint);
   --color-warning-tint: var(--warning-tint);
   --color-critical-tint: var(--critical-tint);
-  --font-sans: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
-  --font-mono: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-geist), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-geist), "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 body {
@@ -75,22 +83,15 @@ body {
 
 /* --- Landing page signature moments (see DESIGN.md) --- */
 
-.icon-badge {
-  --rx: 0deg;
-  --ry: 0deg;
+/* Icône plate dans une tuile arrondie, subtile — remplace l'ancien badge 3D
+   à dégradé saturé (trop "SaaS dashboard", pas assez sobre pour ce système). */
+.icon-tile {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem;
-  background: linear-gradient(150deg, #4a35ff 0%, #1c00fe 55%, #1200b8 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.35),
-    inset 0 -8px 12px rgba(0, 0, 0, 0.3),
-    0 10px 22px -8px rgba(28, 0, 254, 0.55),
-    0 3px 8px rgba(0, 0, 0, 0.35);
-  transform: perspective(600px) rotateX(var(--rx)) rotateY(var(--ry));
-  transition: transform 150ms ease-out;
-  will-change: transform;
+  border-radius: 0.75rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-soft);
 }
 
 @keyframes icon-float {
@@ -103,7 +104,7 @@ body {
   }
 }
 
-.icon-badge-float {
+.icon-tile-float {
   animation: icon-float 3.6s ease-in-out infinite;
 }
 
@@ -120,7 +121,7 @@ body {
   border-radius: inherit;
   background: radial-gradient(
     280px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(28, 0, 254, 0.14),
+    rgba(28, 0, 254, 0.1),
     transparent 70%
   );
   opacity: 0;
@@ -132,29 +133,41 @@ body {
   opacity: 1;
 }
 
-/* Ambient glow blobs behind the hero copy — pure CSS, no canvas, no particles. */
+/* Ambient glow behind the hero copy — a single soft blue blob, much more
+   restrained than v4's multi-blob aurora (neverboring's own hero glow is
+   subtle, not a dominant visual layer). */
 .aurora {
   position: absolute;
   inset: -10%;
   pointer-events: none;
-  background:
-    radial-gradient(36% 30% at 20% 20%, rgba(28, 0, 254, 0.22), transparent 70%),
-    radial-gradient(30% 26% at 80% 15%, rgba(74, 53, 255, 0.16), transparent 70%),
-    radial-gradient(38% 32% at 60% 90%, rgba(28, 0, 254, 0.1), transparent 70%);
-  filter: blur(50px);
-  animation: aurora-drift 16s ease-in-out infinite alternate;
+  background: radial-gradient(40% 35% at 50% 25%, rgba(28, 0, 254, 0.16), transparent 70%);
+  filter: blur(60px);
+  animation: aurora-drift 18s ease-in-out infinite alternate;
 }
 @keyframes aurora-drift {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
   }
   100% {
-    transform: translate3d(1.5%, -2%, 0) scale(1.06);
+    transform: translate3d(1%, -1.5%, 0) scale(1.05);
   }
 }
 
+/* Oversized faded wordmark bleeding off the footer edge — signature
+   neverboring footer moment. */
+.footer-wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 16vw, 11rem);
+  line-height: 0.85;
+  color: var(--ink);
+  opacity: 0.06;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .icon-badge-float,
+  .icon-tile-float,
   .aurora {
     animation: none;
   }

@@ -8,10 +8,13 @@ import {
   Ruler,
   Sparkles,
   Gauge,
-  RefreshCw,
   TrendingUp,
   Code2,
   ExternalLink,
+  ArrowRight,
+  X,
+  Check,
+  Plus,
 } from "lucide-react";
 import Image from "next/image";
 import { PLATFORMS, type PlatformId } from "@/lib/ad-platforms";
@@ -19,7 +22,6 @@ import { Reveal } from "@/components/Reveal";
 import { IconBadge } from "@/components/IconBadge";
 import { SpotlightCard } from "@/components/SpotlightCard";
 import { MagneticLink } from "@/components/MagneticLink";
-import { EdgeParticles } from "@/components/EdgeParticles";
 
 const PLATFORM_ICONS: Record<PlatformId, typeof Briefcase> = {
   linkedin_ads: Briefcase,
@@ -66,102 +68,197 @@ const CREDENTIALS = [
   },
 ];
 
+const BEFORE = [
+  "Une accroche générique qui ressemble à celle du concurrent d'à côté",
+  "Un seul angle, décliné huit fois avec les mêmes mots",
+  "Aucune idée si ça rentre vraiment dans le format de la régie",
+  "Un prompt ChatGPT à retravailler à la main avant de pouvoir tester",
+];
+
+const AFTER = [
+  "Des hooks ancrés dans ton brief réel : offre, persona, preuve, concurrence",
+  "Plusieurs angles nommés et vraiment distincts (AIDA, PAS, preuve sociale...)",
+  "Des limites de caractères réelles par régie, vérifiées en code, pas juste dans le prompt",
+  "Un résultat prêt à coller dans ton ad manager, pas un brouillon à retravailler",
+];
+
+const EXAMPLE_CARDS = [
+  { title: "0 erreur sur 14 200 bulletins de paie en 2023.", cta: "En savoir plus" },
+  { title: "Vos commerciaux perdent 3h/semaine sur des devis manuels.", cta: "Essayer gratuitement" },
+];
+
+const FAQ = [
+  {
+    q: "C'est vraiment gratuit ?",
+    a: "Oui — 10 crédits offerts chaque jour, jusqu'à 5 hooks par crédit, sans carte bancaire et sans limite de temps sur l'offre.",
+  },
+  {
+    q: "Mes briefs sont-ils sauvegardés ?",
+    a: "Ton dernier brief est mémorisé pour préremplir la prochaine génération. Un visuel joint reste éphémère : il sert uniquement à la génération en cours, jamais stocké.",
+  },
+  {
+    q: "Sur quelles régies ça marche ?",
+    a: "LinkedIn Ads, Meta Ads, Google Ads (format RSA) et Reddit Ads — chacune avec ses vraies contraintes de format, pas une limite générique.",
+  },
+  {
+    q: "Pourquoi pas juste ChatGPT ou Claude directement ?",
+    a: "Hooks connaît les contraintes réelles de chaque régie, applique des techniques de copywriting nommées et distinctes par angle, et s'auto-critique avant de te montrer le résultat — un prompt générique ne fait rien de tout ça par défaut.",
+  },
+];
+
 export default function LandingPage() {
   const platforms = Object.entries(PLATFORMS) as [PlatformId, (typeof PLATFORMS)[PlatformId]][];
 
   return (
-    <main className="relative flex-1 overflow-x-clip">
-      <EdgeParticles className="pointer-events-none absolute top-0 left-0 z-0 hidden w-40 lg:block" />
-      <EdgeParticles className="pointer-events-none absolute top-0 right-0 z-0 hidden w-40 lg:block" />
+    <main className="flex-1">
+      {/* Bandeau d'annonce — info réelle, pas d'urgence fabriquée */}
+      <div className="border-b border-border-soft bg-surface px-4 py-2.5 text-center text-xs text-ink-secondary">
+        100% gratuit — 10 crédits offerts chaque jour, sans carte bancaire.
+      </div>
 
-      <div className="relative z-10">
+      <header className="sticky top-0 z-30 border-b border-border-soft bg-paper/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link href="/" className="font-display text-2xl">
+            Hooks
+          </Link>
+          <nav className="hidden items-center gap-8 text-sm text-ink-secondary sm:flex">
+            <a href="#fonctionnalites" className="transition-colors hover:text-ink">
+              Fonctionnalités
+            </a>
+            <a href="#pourquoi" className="transition-colors hover:text-ink">
+              Pourquoi Hooks
+            </a>
+            <a href="#faq" className="transition-colors hover:text-ink">
+              FAQ
+            </a>
+          </nav>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/login"
+              className="hidden text-sm text-ink-secondary transition-colors hover:text-ink sm:inline"
+            >
+              Se connecter
+            </Link>
+            <MagneticLink
+              href="/signup"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-btn-primary px-4 py-2 text-sm font-semibold text-btn-primary-ink transition-[filter] hover:brightness-95"
+            >
+              Essayer <ArrowRight className="h-3.5 w-3.5" />
+            </MagneticLink>
+          </div>
+        </div>
+      </header>
+
       <div className="relative overflow-hidden">
         <div className="aurora" />
 
-        <div className="absolute top-4 left-4 z-20 rounded border border-ink px-2 py-1.5 text-[11px] leading-[0.95] font-bold text-ink italic transition-transform hover:-rotate-3 hover:scale-105 sm:top-6 sm:left-6">
+        <div className="absolute top-4 left-4 z-20 rounded border border-ink/25 px-2 py-1.5 text-[11px] leading-[0.95] font-bold text-ink/70 italic transition-transform hover:-rotate-3 hover:scale-105 sm:top-6 sm:left-6">
           <div>SYSY&apos;S</div>
           <div>GTM</div>
           <div>PROJECTS</div>
         </div>
-        <Link
-          href="/login"
-          className="absolute top-6 right-4 z-20 text-sm text-ink/70 transition-colors hover:text-ink sm:top-8 sm:right-6"
-        >
-          Se connecter
-        </Link>
 
-        <section className="relative z-10 px-6 pt-28 pb-20 max-w-3xl mx-auto text-center sm:pt-32 sm:pb-28">
+        <section className="relative z-10 mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-24">
           <Reveal>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-ink/25 bg-ink/5 px-3 py-1 text-[11px] font-medium tracking-wide text-ink/70 uppercase backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-medium tracking-wide text-ink-secondary uppercase">
               LinkedIn · Meta · Google · Reddit Ads
             </span>
           </Reveal>
 
           <Reveal delay={0.08}>
-            <h1 className="mt-6 font-display text-4xl sm:text-6xl font-bold tracking-tight leading-[1.1] text-balance">
+            <h1 className="mt-6 text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
               Générateur d&apos;accroches pour publicitaires exigeants
             </h1>
           </Reveal>
 
-          <Reveal delay={0.5}>
-            <p className="mt-6 text-lg text-ink-secondary text-balance">
+          <Reveal delay={0.16}>
+            <p className="mt-6 text-balance text-lg text-ink-secondary">
               Hooks génère des accroches publicitaires prêtes à tester, pensées avant tout pour
               les régies SEA (LinkedIn, Meta, Google, Reddit Ads) — mais adaptables à d&apos;autres
               formats. Chaque génération est calibrée sur ton contexte réel : ta régie, ton
               industrie et ton persona, pas un prompt générique.
             </p>
           </Reveal>
-          <Reveal delay={0.6}>
-            <div className="mt-10">
+
+          <Reveal delay={0.24}>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <MagneticLink
                 href="/signup"
-                className="inline-block rounded-lg bg-accent text-accent-ink font-medium px-6 py-3 shadow-[0_12px_30px_-8px_rgba(28,0,254,0.45)] transition-[filter] hover:brightness-95"
+                className="inline-flex items-center gap-2 rounded-lg bg-btn-primary px-6 py-3 font-semibold text-btn-primary-ink transition-[filter] hover:brightness-95"
               >
-                Essayer gratuitement — 10 crédits offerts par jour
+                Essayer gratuitement <ArrowRight className="h-4 w-4" />
               </MagneticLink>
+              <a
+                href="#fonctionnalites"
+                className="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-3 font-medium text-ink-secondary transition-colors hover:border-accent/50 hover:text-ink"
+              >
+                Voir comment ça marche
+              </a>
             </div>
+            <p className="mt-4 text-xs text-ink-muted">
+              Sans carte bancaire. 10 crédits offerts par jour.
+            </p>
           </Reveal>
         </section>
+
+        <Reveal delay={0.3}>
+          <section className="relative z-10 mx-auto max-w-2xl px-6 pb-20">
+            <p className="mb-3 text-center text-xs font-medium tracking-wide text-ink-muted uppercase">
+              Exemple de résultat
+            </p>
+            <div className="grid gap-4 rounded-2xl border border-border-soft bg-surface p-4 sm:grid-cols-2 sm:p-5">
+              {EXAMPLE_CARDS.map((c) => (
+                <div key={c.title} className="rounded-xl border border-border-soft bg-surface-raised p-4 text-left">
+                  <p className="text-sm font-medium text-ink">{c.title}</p>
+                  <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium tracking-wide text-link uppercase">
+                    {c.cta} <ArrowRight className="h-3.5 w-3.5" />
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </Reveal>
       </div>
 
-      <section className="px-6 pb-16 max-w-3xl mx-auto">
+      <section id="fonctionnalites" className="mx-auto max-w-4xl scroll-mt-20 px-6 py-16">
         <Reveal>
-          <SpotlightCard className="rounded-2xl border border-border-soft bg-surface text-ink p-8 text-center sm:p-12">
-            <div className="flex justify-center">
-              <IconBadge size="md">
-                <RefreshCw size={24} strokeWidth={1.75} className="text-accent-ink" />
-              </IconBadge>
-            </div>
-            <p className="mt-6 font-display text-2xl sm:text-3xl font-semibold text-balance">
-              Hooks analyse ses propres recommandations et les retravaille jusqu&apos;à obtenir
-              un résultat vraiment convaincant — avant de te les montrer.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
-              <span>20s pour un résultat</span>
-              <span>4 régies, leurs vraies contraintes</span>
-            </div>
-          </SpotlightCard>
+          <h2 className="text-balance text-center font-display text-3xl font-normal sm:text-4xl">
+            Ce qui rend chaque génération vraiment utile
+          </h2>
         </Reveal>
+        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          {FEATURES.map((f, i) => (
+            <Reveal key={f.title} delay={i * 0.06}>
+              <SpotlightCard className="h-full rounded-2xl border border-border-soft bg-surface p-6 transition-transform hover:-translate-y-1">
+                <IconBadge size="sm" floatDelay={i * 0.25}>
+                  <f.icon size={20} strokeWidth={1.75} className="text-link" />
+                </IconBadge>
+                <p className="mt-4 mb-2 font-semibold">{f.title}</p>
+                <p className="text-sm text-ink-secondary">{f.body}</p>
+              </SpotlightCard>
+            </Reveal>
+          ))}
+        </div>
       </section>
 
-      <section className="px-6 py-16 max-w-4xl mx-auto">
+      <section className="mx-auto max-w-4xl px-6 py-16">
         <Reveal>
-          <p className="text-center text-xs font-medium uppercase tracking-wide text-ink-muted mb-6">
+          <p className="mb-6 text-center text-xs font-medium tracking-wide text-ink-muted uppercase">
             Régies supportées
           </p>
         </Reveal>
-        <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {platforms.map(([id, p], i) => {
             const Icon = PLATFORM_ICONS[id];
             return (
               <Reveal key={id} delay={i * 0.05}>
-                <SpotlightCard className="h-full rounded-lg border border-border-soft bg-surface text-ink p-4 text-center transition-transform hover:-translate-y-1">
+                <SpotlightCard className="h-full rounded-2xl border border-border-soft bg-surface p-4 text-center transition-transform hover:-translate-y-1">
                   <div className="flex justify-center">
                     <IconBadge size="sm" floatDelay={i * 0.3}>
-                      <Icon size={20} strokeWidth={1.75} className="text-accent-ink" />
+                      <Icon size={20} strokeWidth={1.75} className="text-link" />
                     </IconBadge>
                   </div>
-                  <p className="mt-3 font-semibold text-sm mb-1 break-words">{p.label}</p>
+                  <p className="mt-3 mb-1 text-sm font-semibold break-words">{p.label}</p>
                   <p className="text-xs text-ink-muted">
                     {p.formats.length} format{p.formats.length > 1 ? "s" : ""}
                   </p>
@@ -172,39 +269,58 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 max-w-4xl mx-auto">
+      <section className="mx-auto max-w-5xl px-6 py-16">
         <Reveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">
-            Ce qui rend chaque génération vraiment utile
+          <h2 className="text-balance text-center font-display text-3xl font-normal sm:text-4xl">
+            Un hook ne devrait jamais être une corvée de rédaction
           </h2>
         </Reveal>
-        <div className="grid gap-6 sm:grid-cols-2">
-          {FEATURES.map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.06}>
-              <SpotlightCard className="h-full rounded-lg border border-border-soft bg-surface text-ink p-6 transition-transform hover:-translate-y-1">
-                <IconBadge size="sm" floatDelay={i * 0.25}>
-                  <f.icon size={20} strokeWidth={1.75} className="text-accent-ink" />
-                </IconBadge>
-                <p className="mt-4 font-semibold mb-2">{f.title}</p>
-                <p className="text-sm text-ink-secondary">{f.body}</p>
-              </SpotlightCard>
-            </Reveal>
-          ))}
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <Reveal delay={0.05}>
+            <div className="h-full rounded-2xl border border-border-soft p-6 sm:p-7">
+              <span className="inline-block rounded-full border border-border-soft px-3 py-1 text-xs font-medium tracking-wide text-ink-muted uppercase">
+                Sans Hooks
+              </span>
+              <ul className="mt-5 space-y-3.5">
+                {BEFORE.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-ink-muted">
+                    <X className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+          <Reveal delay={0.12}>
+            <div className="h-full rounded-2xl border border-accent/40 bg-accent-tint/40 p-6 shadow-[0_0_40px_-15px_rgba(28,0,254,0.5)] sm:p-7">
+              <span className="inline-block rounded-full border border-accent/40 bg-paper px-3 py-1 text-xs font-medium tracking-wide text-link uppercase">
+                Avec Hooks
+              </span>
+              <ul className="mt-5 space-y-3.5">
+                {AFTER.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-ink">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-link" strokeWidth={1.75} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      <section className="px-6 py-16 max-w-3xl mx-auto">
+      <section id="pourquoi" className="mx-auto max-w-3xl scroll-mt-20 px-6 py-16">
         <Reveal>
-          <p className="text-center text-xs font-medium uppercase tracking-wide text-ink-muted mb-3">
+          <p className="mb-3 text-center text-xs font-medium tracking-wide text-ink-muted uppercase">
             Pourquoi Hooks existe
           </p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10 text-balance">
+          <h2 className="text-balance text-center font-display text-3xl font-normal sm:text-4xl">
             Construit par quelqu&apos;un qui gère encore des budgets média au jour le jour.
           </h2>
         </Reveal>
         <Reveal delay={0.08}>
-          <SpotlightCard className="rounded-lg border border-border-soft bg-surface text-ink p-6 sm:p-8">
-            <div className="flex items-center gap-4 mb-6">
+          <SpotlightCard className="mt-10 rounded-2xl border border-border-soft bg-surface p-6 sm:p-8">
+            <div className="mb-6 flex items-center gap-4">
               <Image
                 src="/founder.jpeg"
                 alt="Syrian FIS"
@@ -226,14 +342,14 @@ export default function LandingPage() {
                 <ExternalLink className="h-5 w-5" strokeWidth={1.75} />
               </a>
             </div>
-            <p className="text-ink-secondary mb-4">
+            <p className="mb-4 text-ink-secondary">
               Après plus de 5 ans à piloter des budgets Google Ads, LinkedIn Ads et Meta Ads pour
               des environnements B2B exigeants — plus de 100k$/mois en Lead Growth Marketing,
               du paid media et de l&apos;ABM avant ça — j&apos;ai vu passer assez de hooks
               médiocres pour savoir où se cache le vrai coût : jamais dans la génération, toujours
               dans le budget média dépensé à découvrir qu&apos;une accroche ne fonctionne pas.
             </p>
-            <p className="text-ink-secondary mb-6">
+            <p className="mb-6 text-ink-secondary">
               Hooks est né de cette frustration très concrète. Je l&apos;ai construit avec Claude
               Code, en marge de mon métier de growth marketer, pour avoir enfin un outil qui
               connaît les vraies contraintes de chaque régie et qui retravaille ses propres
@@ -251,33 +367,128 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      <section className="px-6 py-16 max-w-2xl mx-auto text-center">
+      <section className="mx-auto max-w-lg px-6 py-16 text-center">
         <Reveal>
-          <SpotlightCard className="rounded-2xl border border-border-soft bg-surface text-ink p-8 sm:p-10">
-            <p className="font-display text-3xl sm:text-4xl font-bold mb-3">100% gratuit.</p>
-            <p className="text-ink-secondary">
-              10 crédits par jour, jusqu&apos;à 5 hooks par crédit — sans carte bancaire, sans
-              essai limité dans le temps.
-            </p>
-          </SpotlightCard>
+          <div className="rounded-2xl border border-accent/40 bg-surface p-8 shadow-[0_0_50px_-20px_rgba(28,0,254,0.5)] sm:p-10">
+            <p className="font-display text-6xl font-normal">0€</p>
+            <p className="mt-1 text-sm text-ink-muted">Pour toujours, sans carte bancaire</p>
+            <ul className="mt-6 space-y-3 border-t border-border-soft pt-6 text-left">
+              {["10 crédits offerts par jour", "Jusqu'à 5 hooks par crédit", "4 régies, leurs vraies contraintes", "Aucune limite de temps sur l'offre"].map(
+                (item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-ink-secondary">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-link" strokeWidth={1.75} />
+                    {item}
+                  </li>
+                )
+              )}
+            </ul>
+            <MagneticLink
+              href="/signup"
+              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-btn-primary px-6 py-3 font-semibold text-btn-primary-ink transition-[filter] hover:brightness-95"
+            >
+              Essayer gratuitement <ArrowRight className="h-4 w-4" />
+            </MagneticLink>
+          </div>
         </Reveal>
       </section>
 
-      <section className="px-6 py-20 max-w-2xl mx-auto text-center">
+      <section id="faq" className="mx-auto max-w-2xl scroll-mt-20 px-6 py-16">
         <Reveal>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+          <h2 className="text-balance text-center font-display text-3xl font-normal sm:text-4xl">
+            Questions fréquentes
+          </h2>
+        </Reveal>
+        <Reveal delay={0.08}>
+          <div className="mt-10 divide-y divide-border-soft rounded-2xl border border-border-soft bg-surface">
+            {FAQ.map((item) => (
+              <details key={item.q} className="group px-6 py-5 first:rounded-t-2xl last:rounded-b-2xl">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium marker:content-none">
+                  {item.q}
+                  <Plus className="h-4 w-4 shrink-0 text-ink-muted transition-transform group-open:rotate-45" />
+                </summary>
+                <p className="mt-3 text-sm text-ink-secondary">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      <section className="mx-auto max-w-2xl px-6 py-20 text-center">
+        <Reveal>
+          <h2 className="font-display text-3xl font-normal sm:text-4xl">
             Prêt à tester sur ton prochain brief ?
           </h2>
-          <p className="text-ink-secondary mb-8">10 crédits offerts par jour, sans carte bancaire.</p>
+          <p className="mt-4 mb-8 text-ink-secondary">10 crédits offerts par jour, sans carte bancaire.</p>
           <MagneticLink
             href="/signup"
-            className="inline-block rounded-lg bg-accent text-accent-ink font-medium px-6 py-3 shadow-[0_12px_30px_-8px_rgba(28,0,254,0.45)] transition-[filter] hover:brightness-95"
+            className="inline-flex items-center gap-2 rounded-lg bg-btn-primary px-6 py-3 font-semibold text-btn-primary-ink transition-[filter] hover:brightness-95"
           >
-            Essayer gratuitement
+            Essayer gratuitement <ArrowRight className="h-4 w-4" />
           </MagneticLink>
         </Reveal>
       </section>
-      </div>
+
+      <footer className="relative overflow-hidden border-t border-border-soft px-6 pt-16">
+        <div className="mx-auto grid max-w-6xl gap-10 pb-16 sm:grid-cols-[2fr_1fr_1fr]">
+          <div>
+            <p className="font-display text-2xl">Hooks</p>
+            <p className="mt-3 max-w-xs text-sm text-ink-muted">
+              Générateur d&apos;accroches publicitaires calibrées sur ton brief réel, régie par
+              régie.
+            </p>
+          </div>
+          <div>
+            <p className="mb-3 text-xs font-medium tracking-wide text-ink-muted uppercase">Produit</p>
+            <ul className="space-y-2 text-sm text-ink-secondary">
+              <li>
+                <a href="#fonctionnalites" className="hover:text-ink">
+                  Fonctionnalités
+                </a>
+              </li>
+              <li>
+                <a href="#pourquoi" className="hover:text-ink">
+                  Pourquoi Hooks
+                </a>
+              </li>
+              <li>
+                <a href="#faq" className="hover:text-ink">
+                  FAQ
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="mb-3 text-xs font-medium tracking-wide text-ink-muted uppercase">Compte</p>
+            <ul className="space-y-2 text-sm text-ink-secondary">
+              <li>
+                <Link href="/signup" className="hover:text-ink">
+                  Inscription
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="hover:text-ink">
+                  Connexion
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 border-t border-border-soft py-6 text-xs text-ink-muted">
+          <p>&copy; {new Date().getFullYear()} Hooks. Tous droits réservés.</p>
+          <a
+            href="https://linkedin.com/in/syrian-fis"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-ink"
+            aria-label="Profil LinkedIn de Syrian FIS"
+          >
+            <ExternalLink className="h-4 w-4" strokeWidth={1.75} />
+          </a>
+        </div>
+        <div className="pointer-events-none flex justify-center overflow-hidden pb-2 text-center">
+          <p className="footer-wordmark">Hooks</p>
+        </div>
+      </footer>
     </main>
   );
 }

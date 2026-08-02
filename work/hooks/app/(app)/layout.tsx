@@ -24,18 +24,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <header className="border-b border-border-soft px-6 py-4">
+      <header className="sticky top-0 z-30 border-b border-border-soft bg-paper/80 px-6 py-4 backdrop-blur-md">
         <div className="flex items-center justify-between">
-          <Link href="/onboarding" className="font-semibold">
+          <Link href="/onboarding" className="font-display text-xl">
             Hooks
           </Link>
-          <nav className="hidden items-center gap-6 text-sm sm:flex">
+          <nav className="hidden items-center gap-6 text-sm text-ink-secondary sm:flex">
             {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className="hover:text-link">
+              <Link key={l.href} href={l.href} className="transition-colors hover:text-ink">
                 {l.label}
               </Link>
             ))}
-            <button onClick={handleLogout} className="text-ink-muted hover:text-link">
+            <button onClick={handleLogout} className="text-ink-muted transition-colors hover:text-ink">
               Déconnexion
             </button>
           </nav>
@@ -48,27 +48,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         {menuOpen && (
-          <nav className="mt-4 flex flex-col gap-4 text-sm sm:hidden">
+          <nav className="mt-4 flex flex-col gap-4 text-sm text-ink-secondary sm:hidden">
             {NAV_LINKS.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setMenuOpen(false)}
-                className="hover:text-link"
+                className="transition-colors hover:text-ink"
               >
                 {l.label}
               </Link>
             ))}
             <button
               onClick={handleLogout}
-              className="text-left text-ink-muted hover:text-link"
+              className="text-left text-ink-muted transition-colors hover:text-ink"
             >
               Déconnexion
             </button>
           </nav>
         )}
       </header>
-      <main className="flex-1 px-6 py-10 max-w-3xl mx-auto w-full">{children}</main>
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">{children}</main>
     </>
   );
 }

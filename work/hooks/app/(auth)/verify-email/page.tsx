@@ -15,10 +15,10 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <main className="flex-1 flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm text-center">
-        <h1 className="text-2xl font-semibold mb-2">Vérifie ta boîte mail</h1>
-        <p className="text-ink-muted mb-8 text-sm">
+    <main className="flex flex-1 items-center justify-center px-6 py-16">
+      <div className="w-full max-w-sm rounded-2xl border border-border-soft bg-surface p-8 text-center">
+        <h1 className="mb-2 font-display text-3xl font-normal">Vérifie ta boîte mail</h1>
+        <p className="mb-8 text-sm text-ink-muted">
           On t&apos;a envoyé un lien de confirmation. Clique dessus pour activer ton compte.
         </p>
         <form onSubmit={handleResend} className="space-y-3">
@@ -28,11 +28,11 @@ export default function VerifyEmailPage() {
             placeholder="ton@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-accent"
+            className="w-full rounded-lg border border-border bg-transparent px-3 py-2 outline-none focus:border-accent"
           />
           <button
             type="submit"
-            className="w-full rounded-lg border border-border py-2 font-medium hover:border-accent"
+            className="w-full rounded-lg border border-border py-2 font-medium transition-colors hover:border-accent/50"
           >
             Renvoyer l&apos;email
           </button>

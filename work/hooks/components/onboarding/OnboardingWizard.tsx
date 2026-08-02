@@ -366,7 +366,7 @@ export function OnboardingWizard({
           >
             {stepId === "profile" && (
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">Pour commencer</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-normal mb-2">Pour commencer</h1>
                 <p className="text-ink-muted mb-8">
                   Réutilisé automatiquement à chaque génération — modifiable à tout moment.
                 </p>
@@ -395,7 +395,7 @@ export function OnboardingWizard({
                 </div>
                 <button
                   onClick={goNext}
-                  className="mt-8 inline-flex items-center gap-2 rounded-lg bg-accent text-accent-ink font-medium px-5 py-2.5"
+                  className="mt-8 inline-flex items-center gap-2 rounded-lg bg-btn-primary text-btn-primary-ink font-medium px-5 py-2.5"
                 >
                   Continuer <ArrowRight className="h-4 w-4" />
                 </button>
@@ -404,7 +404,7 @@ export function OnboardingWizard({
 
             {stepId === "platform" && (
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">Quelle régie publicitaire ?</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-normal mb-2">Quelle régie publicitaire ?</h1>
                 <p className="text-ink-muted mb-8">Chaque régie a ses propres contraintes de format.</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {Object.entries(PLATFORMS).map(([id, spec]) => (
@@ -421,7 +421,7 @@ export function OnboardingWizard({
 
             {stepId === "format" && platform && (
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">Quel format d&apos;annonce ?</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-normal mb-2">Quel format d&apos;annonce ?</h1>
                 <p className="text-ink-muted mb-8">Sur {PLATFORMS[platform].label}.</p>
                 <div className="grid gap-3">
                   {formats.map((f) => (
@@ -438,7 +438,7 @@ export function OnboardingWizard({
 
             {stepId === "budget" && (
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">Quel budget média ?</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-normal mb-2">Quel budget média ?</h1>
                 <p className="text-ink-muted mb-8">Ça calibre le ton et l&apos;ambition des hooks.</p>
                 <div className="grid gap-3">
                   {BUDGET_OPTIONS.map((o) => (
@@ -455,7 +455,7 @@ export function OnboardingWizard({
 
             {stepId === "funnel" && (
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">À quelle étape du funnel ?</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-normal mb-2">À quelle étape du funnel ?</h1>
                 <p className="text-ink-muted mb-8">L&apos;angle change selon la proximité de l&apos;achat.</p>
                 <div className="grid gap-3">
                   {FUNNEL_OPTIONS.map((o) => (
@@ -476,7 +476,7 @@ export function OnboardingWizard({
                 <p className="text-xs font-medium uppercase tracking-wide text-link mb-3">
                   {textField.category}
                 </p>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">{textField.question}</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-normal mb-2">{textField.question}</h1>
                 <p className="text-ink-muted mb-8">{textField.placeholder}</p>
                 <input
                   autoFocus
@@ -489,7 +489,7 @@ export function OnboardingWizard({
                 <button
                   onClick={goNext}
                   disabled={!fields[textField.id].trim()}
-                  className="mt-8 inline-flex items-center gap-2 rounded-lg bg-accent text-accent-ink font-medium px-5 py-2.5 disabled:opacity-40"
+                  className="mt-8 inline-flex items-center gap-2 rounded-lg bg-btn-primary text-btn-primary-ink font-medium px-5 py-2.5 disabled:opacity-40"
                 >
                   Continuer <ArrowRight className="h-4 w-4" />
                 </button>
@@ -498,7 +498,7 @@ export function OnboardingWizard({
 
             {stepId === "visual" && (
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">Un visuel de la créa ?</h1>
+                <h1 className="font-display text-3xl sm:text-4xl font-normal mb-2">Un visuel de la créa ?</h1>
                 <p className="text-ink-muted mb-8">
                   Optionnel — Hooks s&apos;en inspire si ça rend l&apos;accroche plus forte.
                 </p>
@@ -545,7 +545,7 @@ export function OnboardingWizard({
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="mt-8 inline-flex items-center gap-2 rounded-lg bg-accent text-accent-ink font-medium px-6 py-3 disabled:opacity-60"
+                  className="mt-8 inline-flex items-center gap-2 rounded-lg bg-btn-primary text-btn-primary-ink font-medium px-6 py-3 disabled:opacity-60"
                 >
                   {loading ? (
                     <>

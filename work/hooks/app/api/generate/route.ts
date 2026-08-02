@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { generateHooks } from "@/lib/gemini/generate-hooks";
+import { generateHooks, MODEL } from "@/lib/gemini/generate-hooks";
 import { getFormatSpec, PLATFORMS, type PlatformId } from "@/lib/ad-platforms";
 import type { Brief, DefaultBrief } from "@/lib/types";
 
@@ -73,34 +73,44 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "VISUAL_TOO_LARGE" }, { status: 400 });
   }
 
-  const { data: briefRow, error: briefError } = await supabaseAdmin
-    .from("briefs")
-    .insert({
-      user_id: user.id,
-      platform: brief.platform,
-      ad_format: brief.adFormat,
-      budget_range: brief.budgetRange,
-      funnel_stage: brief.funnelStage,
-      industry: brief.industry,
-      product_offer: brief.productOffer,
-      key_features: brief.keyFeatures,
-      credibility_proof: brief.credibilityProof,
-      persona: brief.persona,
-      target_goals: brief.targetGoals,
-      target_pains_objections: brief.targetPainsObjections,
-      competitor_strengths: brief.competitorStrengths,
-      competitor_gaps: brief.competitorGaps,
-    })
-    .select("id")
-    .single();
+  // Brief insert and slot claim don't depend on each other's result — run
+  // them concurrently instead of two sequential round-trips before the
+  // (much longer) Gemini call even starts.
+  const [briefResult, claimResult] = await Promise.all([
+    supabaseAdmin
+      .from("briefs")
+      .insert({
+        user_id: user.id,
+        platform: brief.platform,
+        ad_format: brief.adFormat,
+        budget_range: brief.budgetRange,
+        funnel_stage: brief.funnelStage,
+        industry: brief.industry,
+        product_offer: brief.productOffer,
+        key_features: brief.keyFeatures,
+        credibility_proof: brief.credibilityProof,
+        persona: brief.persona,
+        target_goals: brief.targetGoals,
+        target_pains_objections: brief.targetPainsObjections,
+        competitor_strengths: brief.competitorStrengths,
+        competitor_gaps: brief.competitorGaps,
+      })
+      .select("id")
+      .single(),
+    supabaseAdmin.rpc("claim_generation_slot", { p_user_id: user.id }).single<ClaimResult>(),
+  ]);
+
+  const { data: briefRow, error: briefError } = briefResult;
+  const { data: claim, error: claimError } = claimResult;
 
   if (briefError || !briefRow) {
+    // Brief failed but the slot claim ran anyway (they're concurrent) — undo
+    // it so a transient DB hiccup never costs the user a credit.
+    if (claim?.allowed) {
+      await supabaseAdmin.rpc("release_generation_slot", { p_user_id: user.id });
+    }
     return NextResponse.json({ error: "BRIEF_INSERT_FAILED" }, { status: 500 });
   }
-
-  const { data: claim, error: claimError } = await supabaseAdmin
-    .rpc("claim_generation_slot", { p_user_id: user.id })
-    .single<ClaimResult>();
 
   if (claimError || !claim) {
     return NextResponse.json({ error: "CLAIM_FAILED" }, { status: 500 });
@@ -116,16 +126,6 @@ export async function POST(request: Request) {
   try {
     const result = await generateHooks(brief);
     const { promptTokens, completionTokens, ...output } = result;
-
-    await supabaseAdmin.from("generations").insert({
-      user_id: user.id,
-      brief_id: briefRow.id,
-      model: "gemini-3.5-flash",
-      prompt_tokens: promptTokens,
-      completion_tokens: completionTokens,
-      status: "completed",
-      output,
-    });
 
     // Profil : prénom/marque (si fournis) + brief par défaut pour préremplir
     // la prochaine génération — best-effort, ne doit jamais faire échouer la
@@ -152,7 +152,20 @@ export async function POST(request: Request) {
     if (typeof body.brandName === "string" && body.brandName.trim()) {
       profileUpdate.brand_name = body.brandName.trim();
     }
-    await supabaseAdmin.from("profiles").update(profileUpdate).eq("id", user.id);
+
+    // Neither write depends on the other's result — run concurrently.
+    await Promise.all([
+      supabaseAdmin.from("generations").insert({
+        user_id: user.id,
+        brief_id: briefRow.id,
+        model: MODEL,
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        status: "completed",
+        output,
+      }),
+      supabaseAdmin.from("profiles").update(profileUpdate).eq("id", user.id),
+    ]);
 
     return NextResponse.json({ ...output, remaining: claim.remaining });
   } catch (err) {
@@ -161,7 +174,7 @@ export async function POST(request: Request) {
     await supabaseAdmin.from("generations").insert({
       user_id: user.id,
       brief_id: briefRow.id,
-      model: "gemini-3.5-flash",
+      model: MODEL,
       status: "failed",
       error_message: err instanceof Error ? err.message : "unknown error",
     });

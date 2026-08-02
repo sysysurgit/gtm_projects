@@ -51,14 +51,16 @@ export default async function GenerationDetailPage({ params }: { params: Promise
 
   return (
     <div>
-      <Link href="/dashboard" className="text-sm text-ink-muted hover:text-link mb-6 inline-block">
+      <Link href="/dashboard" className="mb-6 inline-block text-sm text-ink-muted transition-colors hover:text-ink">
         ← Retour à l&apos;historique
       </Link>
 
-      <h1 className="text-2xl font-semibold mb-1">Génération du {new Date(generation.created_at).toLocaleString("fr-FR")}</h1>
+      <h1 className="mb-1 font-display text-2xl font-normal sm:text-3xl">
+        Génération du {new Date(generation.created_at).toLocaleString("fr-FR")}
+      </h1>
 
       {brief && (
-        <div className="rounded-lg border border-border-soft bg-surface p-4 my-5 text-sm space-y-1">
+        <div className="my-5 space-y-1 rounded-2xl border border-border-soft bg-surface p-4 text-sm">
           <p>
             <span className="text-ink-muted">Régie : </span>
             {platformLabel} — {formatLabel}
