@@ -119,6 +119,7 @@ export default function LandingPage() {
       <div className="relative z-10">
       {/* Bandeau d'annonce — info réelle, pas d'urgence fabriquée */}
       <div className="border-b border-border-soft bg-surface px-4 py-2.5 text-center text-xs text-ink-secondary">
+        <span className="pulse-dot mr-2 align-middle" />
         100% gratuit — 5 crédits offerts chaque jour, sans carte bancaire.
       </div>
 
@@ -166,24 +167,32 @@ export default function LandingPage() {
 
       <div className="relative overflow-hidden">
         <div className="aurora" />
+        <div className="side-glow side-glow-left" />
+        <div className="side-glow side-glow-right" />
 
         <section className="relative z-10 mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-24">
           <Reveal>
-            <div className="relative isolate">
-              <span
-                aria-hidden
-                className="pointer-events-none absolute top-[92%] left-[42%] z-0 -translate-x-1/2 -translate-y-1/2 text-[7rem] opacity-65 grayscale select-none sm:left-[60%] sm:text-[11rem]"
-                style={{
-                  transform: "translate(-50%, -50%) scaleX(0.85) rotate(-8deg)",
-                  filter: "grayscale(1) brightness(2.1) contrast(0.85)",
-                }}
-              >
-                🪝
+            <h1 className="text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
+              Générateur d&apos;accroches pour publicitaires{" "}
+              <span className="relative inline-block whitespace-nowrap">
+                exigeants
+                <svg
+                  aria-hidden
+                  viewBox="0 0 220 24"
+                  className="pointer-events-none absolute -bottom-2 left-0 h-4 w-full text-link sm:-bottom-3 sm:h-6"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M4 15.5C40 8 90 5 112 10.5C138 17 168 6 216 12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    className="underline-draw"
+                  />
+                </svg>
               </span>
-              <h1 className="relative z-10 text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
-                Générateur d&apos;accroches pour publicitaires exigeants
-              </h1>
-            </div>
+            </h1>
           </Reveal>
 
           <Reveal delay={0.08}>
@@ -209,7 +218,7 @@ export default function LandingPage() {
             <p className="mb-3 text-center text-xs font-medium tracking-wide text-ink-muted uppercase">
               Exemple de résultat
             </p>
-            <div className="grid gap-4 rounded-2xl border border-border-soft bg-surface p-4 sm:grid-cols-2 sm:p-5">
+            <div className="grid gap-4 rounded-2xl border border-accent/25 bg-surface p-4 shadow-[0_0_35px_-20px_rgba(42,77,255,0.6)] sm:grid-cols-2 sm:p-5">
               {EXAMPLE_CARDS.map((c) => (
                 <div key={c.title} className="rounded-xl border border-border-soft bg-surface-raised p-4 text-left">
                   <p className="text-sm font-medium text-ink">{c.title}</p>

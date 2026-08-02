@@ -1,5 +1,5 @@
 // A flat icon tile in a subtly-bordered rounded square — deliberately
-// minimal (no gradient, no 3D tilt) to match the neverboring-derived design
+// minimal (no gradient, no 3D tilt) to match the design system minimal (flat, sans dégradé)
 // system, where color is reserved for text/borders, not icon containers.
 export function IconBadge({
   children,

@@ -2,7 +2,7 @@
 
 /*
  * Direction artistique v5 (2026-08-02) : refonte complète calquée sur
- * neverboring.app/home — off-black/off-white (jamais de noir/blanc pur),
+ * la référence de design externe — off-black/off-white (jamais de noir/blanc pur),
  * cartes à bord subtil et coins arrondis 12-16px, badges pill, section
  * "avant/après" mise en valeur par un bord bleu. Le bleu outremer
  * (historiquement "bleu Majorelle" #1c00fe dans ce projet, même famille de
@@ -95,6 +95,11 @@ body {
   border-radius: 0.75rem;
   background: var(--surface-raised);
   border: 1px solid var(--border-soft);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.icon-tile:hover {
+  border-color: rgba(124, 148, 255, 0.5);
+  box-shadow: 0 0 24px -8px rgba(42, 77, 255, 0.45);
 }
 
 @keyframes icon-float {
@@ -137,7 +142,7 @@ body {
 }
 
 /* Ambient glow behind the hero copy — a single soft blue blob, much more
-   restrained than v4's multi-blob aurora (neverboring's own hero glow is
+   restrained than v4's multi-blob aurora (l'inspiration de départ avait un glow de hero
    subtle, not a dominant visual layer). */
 .aurora {
   position: absolute;
@@ -156,8 +161,90 @@ body {
   }
 }
 
+/* Pastille pulsante — petite touche de couleur/motion tout en haut du
+   bandeau d'annonce, avant même le hero. */
+.pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--link);
+}
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--link);
+  animation: pulse-dot-ring 2s ease-out infinite;
+}
+@keyframes pulse-dot-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+/* Bandes bleues texturées sur les côtés du hero — apportent de la couleur
+   above the fold sans reprendre tout le fond. "Texturé" via 2 radial-gradients
+   décalés (gros halo doux + grain plus fin et plus saturé) plutôt qu'un
+   dégradé plat, pour un effet moins "glow IA générique". Confinées aux
+   marges (comme EdgeParticles) pour ne jamais gêner la lisibilité du texte
+   central. */
+.side-glow {
+  position: absolute;
+  top: -5%;
+  width: 38vw;
+  max-width: 520px;
+  height: 130%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.75;
+  background:
+    radial-gradient(60% 45% at 30% 20%, rgba(124, 148, 255, 0.32), transparent 70%),
+    radial-gradient(45% 35% at 70% 65%, rgba(42, 77, 255, 0.4), transparent 70%),
+    radial-gradient(30% 25% at 40% 85%, rgba(124, 148, 255, 0.22), transparent 70%);
+  filter: blur(34px);
+  animation: side-glow-drift 14s ease-in-out infinite alternate;
+}
+.side-glow-left {
+  left: -8vw;
+}
+.side-glow-right {
+  right: -8vw;
+  animation-delay: -7s;
+}
+@keyframes side-glow-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(0, -3%, 0) scale(1.08);
+  }
+}
+
+/* Soulignage "à main levée" sous "exigeants" dans le H1 — un seul trait SVG
+   irrégulier (pas une <hr> droite), qui se dessine au chargement pour un
+   petit moment de couleur/motion supplémentaire au-dessus de la ligne de
+   flottaison. */
+.underline-draw {
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation: underline-draw 0.9s 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes underline-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 /* Oversized faded wordmark bleeding off the footer edge — signature
-   neverboring footer moment. */
+   moment de footer signature. */
 .footer-wordmark {
   font-family: var(--font-display);
   font-size: clamp(4rem, 16vw, 11rem);
@@ -171,7 +258,15 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .icon-tile-float,
-  .aurora {
+  .aurora,
+  .side-glow {
+    animation: none;
+  }
+  .underline-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .pulse-dot::after {
     animation: none;
   }
 }
