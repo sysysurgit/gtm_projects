@@ -124,15 +124,13 @@ export default function LandingPage() {
 
       <header className="sticky top-0 z-30 border-b border-border-soft bg-paper/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             <Link href="/" aria-label="Hooks" className="text-2xl leading-none">
               🪝
             </Link>
-            <div className="w-fit rounded border border-ink/25 px-1.5 py-1 text-[9px] leading-[0.95] font-bold text-ink/70 italic transition-transform hover:-rotate-3 hover:scale-105">
-              <div>SYSY&apos;S</div>
-              <div>GTM</div>
-              <div>PROJECTS</div>
-            </div>
+            <p className="text-[10px] leading-none text-ink-muted italic">
+              a sysy&apos;s gtm project
+            </p>
           </div>
           <nav className="hidden items-center gap-8 text-sm text-ink-secondary sm:flex">
             <a href="#fonctionnalites" className="transition-colors hover:text-ink">
@@ -168,7 +166,22 @@ export default function LandingPage() {
         <section className="relative z-10 mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-24">
           <Reveal>
             <h1 className="text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
-              Générateur d&apos;accroches pour publicitaires exigeants
+              Générateur d&apos;accroch
+              <span className="relative inline-block">
+                e
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 text-4xl select-none sm:-top-14 sm:text-6xl"
+                  style={{
+                    transform:
+                      "translateX(-50%) perspective(300px) rotateX(22deg) rotateZ(-9deg)",
+                    filter: "drop-shadow(0 10px 14px rgba(20,20,30,0.35))",
+                  }}
+                >
+                  🪝
+                </span>
+              </span>
+              s pour publicitaires exigeants
             </h1>
           </Reveal>
 
@@ -183,14 +196,6 @@ export default function LandingPage() {
           <Reveal delay={0.16}>
             <div className="mt-8">
               <BrandNameCta />
-              <div className="mt-4">
-                <a
-                  href="#fonctionnalites"
-                  className="text-sm text-ink-muted transition-colors hover:text-ink"
-                >
-                  Voir comment ça marche
-                </a>
-              </div>
               <p className="mt-4 text-xs text-ink-muted">
                 Sans carte bancaire. 5 crédits offerts par jour.
               </p>

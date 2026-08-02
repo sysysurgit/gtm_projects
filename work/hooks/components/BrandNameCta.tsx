@@ -35,7 +35,7 @@ export function BrandNameCta() {
           type="text"
           value={brand}
           onChange={(e) => setBrand(e.target.value)}
-          placeholder="Nom de la marque"
+          placeholder="Nom de la marque à promouvoir"
           className="flex-1 bg-transparent text-ink outline-none placeholder:text-ink-muted"
         />
         <button
