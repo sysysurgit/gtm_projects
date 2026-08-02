@@ -66,24 +66,49 @@ Génère entre 3 et 5 cards.`;
 
 async function run(label, config) {
   const t0 = Date.now();
-  const response = await gemini.models.generateContent({
-    model: "gemini-3.5-flash",
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-    config: {
-      systemInstruction: systemPrompt,
-      responseMimeType: "application/json",
-      responseSchema,
-      maxOutputTokens: 4096,
-      ...config,
-    },
-  });
-  const elapsed = (Date.now() - t0) / 1000;
-  const cards = JSON.parse(response.text || "[]");
-  console.log(`[${label}] ${elapsed.toFixed(1)}s — usage:`, response.usageMetadata);
-  for (const c of cards) console.log(`   [${c.title.length}c] "${c.title}"`);
-  return elapsed;
+  try {
+    const response = await gemini.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      config: {
+        systemInstruction: systemPrompt,
+        responseMimeType: "application/json",
+        responseSchema,
+        maxOutputTokens: 4096,
+        ...config,
+      },
+    });
+    const elapsed = (Date.now() - t0) / 1000;
+    const u = response.usageMetadata;
+    let cards;
+    let parseError = null;
+    try {
+      cards = JSON.parse(response.text || "[]");
+    } catch (e) {
+      parseError = e.message;
+    }
+    console.log(
+      `[${label}] ${elapsed.toFixed(1)}s think=${u?.thoughtsTokenCount ?? 0} out=${u?.candidatesTokenCount ?? 0}${parseError ? " PARSE_ERROR: " + parseError.slice(0, 80) : " cards=" + cards.length}`
+    );
+    if (cards) {
+      for (const c of cards) console.log(`     [${c.title.length}c] "${c.title}"`);
+    }
+    return { elapsed, ok: !parseError };
+  } catch (e) {
+    const elapsed = (Date.now() - t0) / 1000;
+    console.log(`[${label}] ${elapsed.toFixed(1)}s FAILED: ${e.message?.slice(0, 150)}`);
+    return { elapsed, ok: false };
+  }
 }
 
-await run("automatic(-1)", { thinkingConfig: { thinkingBudget: -1 } });
-await run("disabled(0)", { thinkingConfig: { thinkingBudget: 0 } });
-await run("low-budget(512)", { thinkingConfig: { thinkingBudget: 512 } });
+const TRIALS = 3;
+for (const [label, config] of [
+  ["automatic(-1)", { thinkingConfig: { thinkingBudget: -1 } }],
+  ["budget(1024)", { thinkingConfig: { thinkingBudget: 1024 } }],
+  ["budget(512)", { thinkingConfig: { thinkingBudget: 512 } }],
+]) {
+  console.log(`\n=== ${label} — ${TRIALS} trials ===`);
+  for (let i = 0; i < TRIALS; i++) {
+    await run(`${label} #${i + 1}`, config);
+  }
+}

@@ -1,11 +1,14 @@
 # gtm_projects
 
-Projects for all GTM (go-to-market) purposes.
+Personal GTM (go-to-market) tools and experiments — shipped products and an idea backlog,
+in one repo.
 
 ## Structure
 
-- `work/` — active project files
+- [`work/`](work) — active projects: shipped tools ([`hooks`](work/hooks),
+  [`verificateur-score-geo`](work/verificateur-score-geo)) and an [idea backlog](work/ideas)
 - `temporary/` — local scratch space, git-ignored (never pushed)
+- `private/` — personal/paid projects excluded from this public repo, git-ignored
 - `.env.example` — template for local environment variables
 
 ## Setup
