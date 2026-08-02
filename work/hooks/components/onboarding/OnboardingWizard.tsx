@@ -6,6 +6,7 @@ import { RefreshCw, ArrowLeft, ArrowRight, Upload, X } from "lucide-react";
 import { PLATFORMS, type PlatformId } from "@/lib/ad-platforms";
 import type { BudgetRange, FunnelStage, GenerationResult, DefaultBrief } from "@/lib/types";
 import { GenerationResultView } from "@/components/GenerationResultView";
+import { HOOKS_PENDING_BRAND_KEY } from "@/components/BrandNameCta";
 
 interface UpsellInfo {
   cap: number;
@@ -158,7 +159,18 @@ export function OnboardingWizard({
   const [direction, setDirection] = useState(1);
 
   const [firstName, setFirstName] = useState(initialFirstName);
-  const [brandName, setBrandName] = useState(initialBrandName);
+  // Le nom de marque tapé dans le CTA de la landing (BrandNameCta) traverse
+  // signup -> confirmation email -> login via localStorage plutôt qu'un
+  // query param, qui risquerait de se perdre dans cette chaîne de redirects
+  // — lu une seule fois via l'initialiseur paresseux de useState, pas un
+  // effect (évite un second render juste pour appliquer la valeur).
+  const [brandName, setBrandName] = useState(() => {
+    if (typeof window === "undefined") return initialBrandName;
+    const pending = window.localStorage.getItem(HOOKS_PENDING_BRAND_KEY);
+    if (!pending) return initialBrandName;
+    window.localStorage.removeItem(HOOKS_PENDING_BRAND_KEY);
+    return pending;
+  });
 
   const [platform, setPlatform] = useState<PlatformId | null>(defaultBrief?.platform ?? null);
   const [adFormat, setAdFormat] = useState<string | null>(defaultBrief?.adFormat ?? null);

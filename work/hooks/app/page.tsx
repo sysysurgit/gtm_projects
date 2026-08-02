@@ -22,6 +22,8 @@ import { Reveal } from "@/components/Reveal";
 import { IconBadge } from "@/components/IconBadge";
 import { SpotlightCard } from "@/components/SpotlightCard";
 import { MagneticLink } from "@/components/MagneticLink";
+import { EdgeParticles } from "@/components/EdgeParticles";
+import { BrandNameCta } from "@/components/BrandNameCta";
 
 const PLATFORM_ICONS: Record<PlatformId, typeof Briefcase> = {
   linkedin_ads: Briefcase,
@@ -90,7 +92,7 @@ const EXAMPLE_CARDS = [
 const FAQ = [
   {
     q: "C'est vraiment gratuit ?",
-    a: "Oui — 10 crédits offerts chaque jour, jusqu'à 5 hooks par crédit, sans carte bancaire et sans limite de temps sur l'offre.",
+    a: "Oui — 5 crédits offerts chaque jour, jusqu'à 5 hooks par crédit, sans carte bancaire et sans limite de temps sur l'offre.",
   },
   {
     q: "Mes briefs sont-ils sauvegardés ?",
@@ -110,17 +112,28 @@ export default function LandingPage() {
   const platforms = Object.entries(PLATFORMS) as [PlatformId, (typeof PLATFORMS)[PlatformId]][];
 
   return (
-    <main className="flex-1">
+    <main className="relative flex-1 overflow-x-clip">
+      <EdgeParticles className="pointer-events-none absolute top-0 left-0 z-0 hidden w-40 lg:block" />
+      <EdgeParticles className="pointer-events-none absolute top-0 right-0 z-0 hidden w-40 lg:block" />
+
+      <div className="relative z-10">
       {/* Bandeau d'annonce — info réelle, pas d'urgence fabriquée */}
       <div className="border-b border-border-soft bg-surface px-4 py-2.5 text-center text-xs text-ink-secondary">
-        100% gratuit — 10 crédits offerts chaque jour, sans carte bancaire.
+        100% gratuit — 5 crédits offerts chaque jour, sans carte bancaire.
       </div>
 
       <header className="sticky top-0 z-30 border-b border-border-soft bg-paper/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="font-display text-2xl">
-            Hooks
-          </Link>
+          <div className="flex flex-col gap-1.5">
+            <Link href="/" aria-label="Hooks" className="text-2xl leading-none">
+              🪝
+            </Link>
+            <div className="w-fit rounded border border-ink/25 px-1.5 py-1 text-[9px] leading-[0.95] font-bold text-ink/70 italic transition-transform hover:-rotate-3 hover:scale-105">
+              <div>SYSY&apos;S</div>
+              <div>GTM</div>
+              <div>PROJECTS</div>
+            </div>
+          </div>
           <nav className="hidden items-center gap-8 text-sm text-ink-secondary sm:flex">
             <a href="#fonctionnalites" className="transition-colors hover:text-ink">
               Fonctionnalités
@@ -152,52 +165,36 @@ export default function LandingPage() {
       <div className="relative overflow-hidden">
         <div className="aurora" />
 
-        <div className="absolute top-4 left-4 z-20 rounded border border-ink/25 px-2 py-1.5 text-[11px] leading-[0.95] font-bold text-ink/70 italic transition-transform hover:-rotate-3 hover:scale-105 sm:top-6 sm:left-6">
-          <div>SYSY&apos;S</div>
-          <div>GTM</div>
-          <div>PROJECTS</div>
-        </div>
-
         <section className="relative z-10 mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-24">
           <Reveal>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-medium tracking-wide text-ink-secondary uppercase">
-              LinkedIn · Meta · Google · Reddit Ads
-            </span>
-          </Reveal>
-
-          <Reveal delay={0.08}>
-            <h1 className="mt-6 text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
+            <h1 className="text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
               Générateur d&apos;accroches pour publicitaires exigeants
             </h1>
           </Reveal>
 
-          <Reveal delay={0.16}>
+          <Reveal delay={0.08}>
             <p className="mt-6 text-balance text-lg text-ink-secondary">
-              Hooks génère des accroches publicitaires prêtes à tester, pensées avant tout pour
-              les régies SEA (LinkedIn, Meta, Google, Reddit Ads) — mais adaptables à d&apos;autres
-              formats. Chaque génération est calibrée sur ton contexte réel : ta régie, ton
-              industrie et ton persona, pas un prompt générique.
+              Hooks écrit tes accroches pour LinkedIn, Meta, Google et Reddit Ads.
+              <br />
+              Calibrées sur ta régie, ton industrie et ta cible — pas un prompt générique.
             </p>
           </Reveal>
 
-          <Reveal delay={0.24}>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <MagneticLink
-                href="/signup"
-                className="inline-flex items-center gap-2 rounded-lg bg-btn-primary px-6 py-3 font-semibold text-btn-primary-ink transition-[filter] hover:brightness-95"
-              >
-                Essayer gratuitement <ArrowRight className="h-4 w-4" />
-              </MagneticLink>
-              <a
-                href="#fonctionnalites"
-                className="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-3 font-medium text-ink-secondary transition-colors hover:border-accent/50 hover:text-ink"
-              >
-                Voir comment ça marche
-              </a>
+          <Reveal delay={0.16}>
+            <div className="mt-8">
+              <BrandNameCta />
+              <div className="mt-4">
+                <a
+                  href="#fonctionnalites"
+                  className="text-sm text-ink-muted transition-colors hover:text-ink"
+                >
+                  Voir comment ça marche
+                </a>
+              </div>
+              <p className="mt-4 text-xs text-ink-muted">
+                Sans carte bancaire. 5 crédits offerts par jour.
+              </p>
             </div>
-            <p className="mt-4 text-xs text-ink-muted">
-              Sans carte bancaire. 10 crédits offerts par jour.
-            </p>
           </Reveal>
         </section>
 
@@ -292,7 +289,7 @@ export default function LandingPage() {
             </div>
           </Reveal>
           <Reveal delay={0.12}>
-            <div className="h-full rounded-2xl border border-accent/40 bg-accent-tint/40 p-6 shadow-[0_0_40px_-15px_rgba(28,0,254,0.5)] sm:p-7">
+            <div className="h-full rounded-2xl border border-accent/40 bg-accent-tint/40 p-6 shadow-[0_0_40px_-15px_rgba(42,77,255,0.5)] sm:p-7">
               <span className="inline-block rounded-full border border-accent/40 bg-paper px-3 py-1 text-xs font-medium tracking-wide text-link uppercase">
                 Avec Hooks
               </span>
@@ -369,11 +366,11 @@ export default function LandingPage() {
 
       <section className="mx-auto max-w-lg px-6 py-16 text-center">
         <Reveal>
-          <div className="rounded-2xl border border-accent/40 bg-surface p-8 shadow-[0_0_50px_-20px_rgba(28,0,254,0.5)] sm:p-10">
+          <div className="rounded-2xl border border-accent/40 bg-surface p-8 shadow-[0_0_50px_-20px_rgba(42,77,255,0.5)] sm:p-10">
             <p className="font-display text-6xl font-normal">0€</p>
             <p className="mt-1 text-sm text-ink-muted">Pour toujours, sans carte bancaire</p>
             <ul className="mt-6 space-y-3 border-t border-border-soft pt-6 text-left">
-              {["10 crédits offerts par jour", "Jusqu'à 5 hooks par crédit", "4 régies, leurs vraies contraintes", "Aucune limite de temps sur l'offre"].map(
+              {["5 crédits offerts par jour", "Jusqu'à 5 hooks par crédit", "4 régies, leurs vraies contraintes", "Aucune limite de temps sur l'offre"].map(
                 (item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-ink-secondary">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-link" strokeWidth={1.75} />
@@ -418,7 +415,7 @@ export default function LandingPage() {
           <h2 className="font-display text-3xl font-normal sm:text-4xl">
             Prêt à tester sur ton prochain brief ?
           </h2>
-          <p className="mt-4 mb-8 text-ink-secondary">10 crédits offerts par jour, sans carte bancaire.</p>
+          <p className="mt-4 mb-8 text-ink-secondary">5 crédits offerts par jour, sans carte bancaire.</p>
           <MagneticLink
             href="/signup"
             className="inline-flex items-center gap-2 rounded-lg bg-btn-primary px-6 py-3 font-semibold text-btn-primary-ink transition-[filter] hover:brightness-95"
@@ -489,6 +486,7 @@ export default function LandingPage() {
           <p className="footer-wordmark">Hooks</p>
         </div>
       </footer>
+      </div>
     </main>
   );
 }

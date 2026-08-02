@@ -31,15 +31,18 @@
 
   /* Bleu outremer — unique couleur de contraste, en usage secondaire :
      focus ring, sélection, liens, bord de mise en valeur. Jamais comme fond
-     de bouton principal. */
-  --accent: #1c00fe;
+     de bouton principal. Recalibré le 2026-08-02 : l'ancien #1c00fe a un
+     canal vert à 0, ce qui le fait dériver vers l'indigo/violet — exactement
+     le cliché "gradient IA" que le fondateur veut éviter. Ce bleu garde un
+     canal vert réel (77) pour rester nettement bleu, jamais violet. */
+  --accent: #2a4dff;
   --accent-ink: #ffffff;
-  --accent-tint: rgba(28, 0, 254, 0.14);
-  /* #1c00fe en texte direct sur fond sombre échoue le contraste WCAG
-     (~2.2:1, il faut 4.5:1). --link est une variante plus claire réservée au
+  --accent-tint: rgba(42, 77, 255, 0.14);
+  /* --accent en texte direct sur fond sombre échoue le contraste WCAG
+     (~2.4:1, il faut 4.5:1). --link est une variante plus claire réservée au
      texte/icônes bleus sur --paper/--surface. Ne jamais utiliser --accent
      comme couleur de texte sur fond sombre : utiliser --link à la place. */
-  --link: #6b8aff;
+  --link: #7c94ff;
 
   --good: #34c77b;
   --warning: #e8823c;
@@ -121,7 +124,7 @@ body {
   border-radius: inherit;
   background: radial-gradient(
     280px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(28, 0, 254, 0.1),
+    rgba(42, 77, 255, 0.1),
     transparent 70%
   );
   opacity: 0;
@@ -140,7 +143,7 @@ body {
   position: absolute;
   inset: -10%;
   pointer-events: none;
-  background: radial-gradient(40% 35% at 50% 25%, rgba(28, 0, 254, 0.16), transparent 70%);
+  background: radial-gradient(40% 35% at 50% 25%, rgba(42, 77, 255, 0.16), transparent 70%);
   filter: blur(60px);
   animation: aurora-drift 18s ease-in-out infinite alternate;
 }
