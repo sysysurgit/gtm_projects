@@ -23,7 +23,7 @@ import { IconBadge } from "@/components/IconBadge";
 import { SpotlightCard } from "@/components/SpotlightCard";
 import { MagneticLink } from "@/components/MagneticLink";
 import { EdgeParticles } from "@/components/EdgeParticles";
-import { BrandNameCta } from "@/components/BrandNameCta";
+import { PreSignupWizard } from "@/components/PreSignupWizard";
 
 const PLATFORM_ICONS: Record<PlatformId, typeof Briefcase> = {
   linkedin_ads: Briefcase,
@@ -165,24 +165,22 @@ export default function LandingPage() {
 
         <section className="relative z-10 mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-24">
           <Reveal>
-            <h1 className="text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
-              Générateur d&apos;accroch
-              <span className="relative inline-block">
-                e
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 text-4xl select-none sm:-top-14 sm:text-6xl"
-                  style={{
-                    transform:
-                      "translateX(-50%) perspective(300px) rotateX(22deg) rotateZ(-9deg)",
-                    filter: "drop-shadow(0 10px 14px rgba(20,20,30,0.35))",
-                  }}
-                >
-                  🪝
-                </span>
+            <div className="relative">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 left-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-[5rem] opacity-[0.16] mix-blend-luminosity select-none sm:text-[9rem]"
+                style={{
+                  transform:
+                    "translate(-50%, -50%) perspective(400px) rotateX(20deg) rotateZ(-6deg)",
+                  filter: "drop-shadow(0 14px 18px rgba(20,20,30,0.4))",
+                }}
+              >
+                🪝
               </span>
-              s pour publicitaires exigeants
-            </h1>
+              <h1 className="relative z-10 text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
+                Générateur d&apos;accroches pour publicitaires exigeants
+              </h1>
+            </div>
           </Reveal>
 
           <Reveal delay={0.08}>
@@ -195,7 +193,7 @@ export default function LandingPage() {
 
           <Reveal delay={0.16}>
             <div className="mt-8">
-              <BrandNameCta />
+              <PreSignupWizard />
               <p className="mt-4 text-xs text-ink-muted">
                 Sans carte bancaire. 5 crédits offerts par jour.
               </p>

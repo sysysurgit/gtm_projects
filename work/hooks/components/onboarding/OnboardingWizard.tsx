@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { RefreshCw, ArrowLeft, ArrowRight, Upload, X } from "lucide-react";
 import { PLATFORMS, type PlatformId } from "@/lib/ad-platforms";
 import type { BudgetRange, FunnelStage, GenerationResult, DefaultBrief } from "@/lib/types";
 import { GenerationResultView } from "@/components/GenerationResultView";
-import { HOOKS_PENDING_BRAND_KEY } from "@/components/BrandNameCta";
+import { BUDGET_OPTIONS, FUNNEL_OPTIONS, TEXT_FIELDS, transitionVariants, type TextFieldId } from "@/lib/brief-options";
+import { readPendingPresignupBrief } from "@/lib/pending-brief";
+import { ChoiceCard } from "@/components/ChoiceCard";
 
 interface UpsellInfo {
   cap: number;
@@ -14,137 +16,39 @@ interface UpsellInfo {
 
 const MAX_VISUAL_BYTES = 5 * 1024 * 1024;
 
-const BUDGET_OPTIONS: { value: BudgetRange; label: string }[] = [
-  { value: "lt_1k", label: "Moins de 1000€/mois" },
-  { value: "1k_5k", label: "1000-5000€/mois" },
-  { value: "5k_20k", label: "5000-20000€/mois" },
-  { value: "gt_20k", label: "Plus de 20000€/mois" },
-];
+// Étapes pouvant avoir déjà été répondues dans le PreSignupWizard de la
+// landing (régie, budget, funnel, persona, painpoint). "format" reste
+// toujours demandé ici : il dépend de la régie mais n'est jamais posé avant
+// inscription. Les champs produit/preuves/concurrence restants sont ceux
+// dans TEXT_FIELDS moins persona/targetPainsObjections.
+const PRESIGNUP_COVERABLE_STEPS = ["platform", "budget", "funnel"] as const;
+const REMAINING_TEXT_FIELDS = TEXT_FIELDS.filter(
+  (f) => f.id !== "persona" && f.id !== "targetPainsObjections"
+);
 
-const FUNNEL_OPTIONS: { value: FunnelStage; label: string; hint: string }[] = [
-  { value: "awareness", label: "Awareness", hint: "Faire connaître, top of funnel" },
-  { value: "consideration", label: "Consideration", hint: "Comparaison, preuve, différenciation" },
-  { value: "action", label: "Action", hint: "Conversion, offre, appel à l'action direct" },
-];
-
-type TextFieldId =
-  | "industry"
-  | "productOffer"
-  | "keyFeatures"
-  | "credibilityProof"
-  | "persona"
-  | "targetGoals"
-  | "targetPainsObjections"
-  | "competitorStrengths"
-  | "competitorGaps";
-
-const TEXT_FIELDS: {
-  id: TextFieldId;
-  category: string;
-  question: string;
-  placeholder: string;
-}[] = [
-  {
-    id: "industry",
-    category: "Mon produit",
-    question: "Quelle industrie / secteur ?",
-    placeholder: "SaaS RH, cabinet de recrutement tech...",
-  },
-  {
-    id: "productOffer",
-    category: "Mon produit",
-    question: "Quel produit / offre ?",
-    placeholder: "Outil de paie automatisée pour PME",
-  },
-  {
-    id: "keyFeatures",
-    category: "Mon produit",
-    question: "Quelles fonctionnalités clés ?",
-    placeholder: "Calcul automatique, déclarations DSN, virements en 1 clic...",
-  },
-  {
-    id: "credibilityProof",
-    category: "Mon produit",
-    question: "Quelles preuves de crédibilité ?",
-    placeholder: "0 erreur sur 14 200 bulletins en 2023, certifié ISO 27001...",
-  },
-  {
-    id: "persona",
-    category: "Ma cible",
-    question: "Quel persona cible ?",
-    placeholder: "VP Sales dans une scale-up B2B de 50-200 salariés",
-  },
-  {
-    id: "targetGoals",
-    category: "Ma cible",
-    question: "Ses rêves, ses objectifs ?",
-    placeholder: "Scaler l'équipe sans complexifier les opérations RH",
-  },
-  {
-    id: "targetPainsObjections",
-    category: "Ma cible",
-    question: "Ses douleurs et objections actuelles ?",
-    placeholder: "Trop cher, peur de migrer les données, pas le temps de tester...",
-  },
-  {
-    id: "competitorStrengths",
-    category: "Concurrence",
-    question: "Ce que les concurrents apportent ?",
-    placeholder: "Intégration Slack, prix d'appel bas...",
-  },
-  {
-    id: "competitorGaps",
-    category: "Concurrence",
-    question: "Ce qu'ils n'ont pas / leurs limites ?",
-    placeholder: "Pas de DSN automatique, support client lent...",
-  },
-];
-
-const STEP_IDS = [
-  "profile",
-  "platform",
-  "format",
-  "budget",
-  "funnel",
-  ...TEXT_FIELDS.map((f) => f.id),
-  "visual",
-] as const;
-type StepId = (typeof STEP_IDS)[number];
-
-function transitionVariants(direction: number) {
-  return {
-    enter: { opacity: 0, x: direction > 0 ? 40 : -40 },
-    center: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: direction > 0 ? -40 : 40 },
-  };
+function buildStepIds(skipPlatform: boolean, skipBudget: boolean, skipFunnel: boolean, skipPersona: boolean, skipPain: boolean) {
+  const ids: string[] = ["profile"];
+  if (!skipPlatform) ids.push("platform");
+  ids.push("format");
+  if (!skipBudget) ids.push("budget");
+  if (!skipFunnel) ids.push("funnel");
+  for (const f of TEXT_FIELDS) {
+    if (f.id === "persona" && skipPersona) continue;
+    if (f.id === "targetPainsObjections" && skipPain) continue;
+    ids.push(f.id);
+  }
+  ids.push("visual");
+  return ids as StepId[];
 }
 
-function ChoiceCard({
-  label,
-  hint,
-  selected,
-  onClick,
-}: {
-  label: string;
-  hint?: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-full rounded-xl border px-5 py-4 text-left transition-all ${
-        selected
-          ? "border-accent bg-accent-tint"
-          : "border-border-soft hover:border-accent/50 hover:-translate-y-0.5"
-      }`}
-    >
-      <p className="font-semibold">{label}</p>
-      {hint && <p className="text-sm text-ink-muted mt-0.5">{hint}</p>}
-    </button>
-  );
-}
+type StepId =
+  | "profile"
+  | "platform"
+  | "format"
+  | "budget"
+  | "funnel"
+  | TextFieldId
+  | "visual";
 
 export function OnboardingWizard({
   initialFirstName,
@@ -155,36 +59,38 @@ export function OnboardingWizard({
   initialBrandName: string;
   defaultBrief: DefaultBrief | null;
 }) {
+  // Lu une seule fois via l'initialiseur paresseux de useState (pas un
+  // effect) pour éviter un second render juste pour appliquer les valeurs —
+  // voir lib/pending-brief.ts pour pourquoi ce brief transite par
+  // localStorage plutôt qu'un query param.
+  const [pendingBrief] = useState(() => readPendingPresignupBrief());
+
   const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
 
-  const [firstName, setFirstName] = useState(initialFirstName);
-  // Le nom de marque tapé dans le CTA de la landing (BrandNameCta) traverse
-  // signup -> confirmation email -> login via localStorage plutôt qu'un
-  // query param, qui risquerait de se perdre dans cette chaîne de redirects
-  // — lu une seule fois via l'initialiseur paresseux de useState, pas un
-  // effect (évite un second render juste pour appliquer la valeur).
-  const [brandName, setBrandName] = useState(() => {
-    if (typeof window === "undefined") return initialBrandName;
-    const pending = window.localStorage.getItem(HOOKS_PENDING_BRAND_KEY);
-    if (!pending) return initialBrandName;
-    window.localStorage.removeItem(HOOKS_PENDING_BRAND_KEY);
-    return pending;
-  });
+  const [firstName, setFirstName] = useState(pendingBrief?.firstName || initialFirstName);
+  const [brandName, setBrandName] = useState(pendingBrief?.brandName || initialBrandName);
 
-  const [platform, setPlatform] = useState<PlatformId | null>(defaultBrief?.platform ?? null);
+  const [platform, setPlatform] = useState<PlatformId | null>(
+    pendingBrief?.platform ?? defaultBrief?.platform ?? null
+  );
   const [adFormat, setAdFormat] = useState<string | null>(defaultBrief?.adFormat ?? null);
-  const [budgetRange, setBudgetRange] = useState<BudgetRange | null>(defaultBrief?.budgetRange ?? null);
-  const [funnelStage, setFunnelStage] = useState<FunnelStage | null>(defaultBrief?.funnelStage ?? null);
+  const [budgetRange, setBudgetRange] = useState<BudgetRange | null>(
+    pendingBrief?.budgetRange ?? defaultBrief?.budgetRange ?? null
+  );
+  const [funnelStage, setFunnelStage] = useState<FunnelStage | null>(
+    pendingBrief?.funnelStage ?? defaultBrief?.funnelStage ?? null
+  );
 
   const [fields, setFields] = useState<Record<TextFieldId, string>>({
     industry: defaultBrief?.industry ?? "",
     productOffer: defaultBrief?.productOffer ?? "",
     keyFeatures: defaultBrief?.keyFeatures ?? "",
     credibilityProof: defaultBrief?.credibilityProof ?? "",
-    persona: defaultBrief?.persona ?? "",
+    persona: pendingBrief?.persona || defaultBrief?.persona || "",
     targetGoals: defaultBrief?.targetGoals ?? "",
-    targetPainsObjections: defaultBrief?.targetPainsObjections ?? "",
+    targetPainsObjections:
+      pendingBrief?.targetPainsObjections || defaultBrief?.targetPainsObjections || "",
     competitorStrengths: defaultBrief?.competitorStrengths ?? "",
     competitorGaps: defaultBrief?.competitorGaps ?? "",
   });
@@ -202,6 +108,21 @@ export function OnboardingWizard({
   const [remaining, setRemaining] = useState<number | null>(null);
 
   const formats = platform ? PLATFORMS[platform].formats : [];
+
+  // Le brief pré-signup couvre régie/budget/funnel/persona/painpoint : ces
+  // étapes ne sont posées ici que si elles manquent encore (ex. compte créé
+  // via /signup direct, sans passer par le wizard de la landing).
+  const STEP_IDS = useMemo(
+    () =>
+      buildStepIds(
+        Boolean(pendingBrief?.platform),
+        Boolean(pendingBrief?.budgetRange),
+        Boolean(pendingBrief?.funnelStage),
+        Boolean(pendingBrief?.persona),
+        Boolean(pendingBrief?.targetPainsObjections)
+      ),
+    [pendingBrief]
+  );
   const stepId: StepId = STEP_IDS[stepIndex];
 
   function goNext() {
@@ -294,6 +215,10 @@ export function OnboardingWizard({
       if (data.error === "CAP_REACHED") {
         setUpsell({ cap: data.cap });
       } else if (data.error === "EMAIL_NOT_VERIFIED") {
+        // Garde-fou serveur ceinture-bretelles : normalement inatteignable
+        // puisque /onboarding n'est accessible qu'après avoir cliqué le lien
+        // de confirmation (voir app/auth/callback/route.ts), mais on ne
+        // montre jamais de résultat de génération sans cette vérification.
         setError("Confirme ton email avant de générer — vérifie ta boîte mail.");
       } else if (data.error === "VISUAL_TOO_LARGE") {
         setError("L'image jointe est trop lourde (5 Mo max).");
@@ -313,7 +238,7 @@ export function OnboardingWizard({
     setError(null);
     clearVisual();
     setDirection(-1);
-    setStepIndex(1); // le profil reste rempli, repart direct sur "régie"
+    setStepIndex(0);
   }
 
   if (result) {
@@ -335,7 +260,7 @@ export function OnboardingWizard({
 
   const progressPct = ((stepIndex + 1) / STEP_IDS.length) * 100;
   const v = transitionVariants(direction);
-  const textField = TEXT_FIELDS.find((f) => f.id === stepId);
+  const textField = REMAINING_TEXT_FIELDS.find((f) => f.id === stepId) ?? TEXT_FIELDS.find((f) => f.id === stepId);
 
   return (
     <div className="mx-auto max-w-xl">
