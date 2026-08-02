@@ -125,8 +125,12 @@ export default function LandingPage() {
       <header className="sticky top-0 z-30 border-b border-border-soft bg-paper/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex flex-col gap-1">
-            <Link href="/" aria-label="Hooks" className="text-2xl leading-none">
-              🪝
+            <Link
+              href="/"
+              aria-label="Hooks"
+              className="inline-flex items-center gap-1.5 font-display text-xl leading-none"
+            >
+              Hooks <span className="text-lg">🪝</span>
             </Link>
             <p className="text-[10px] leading-none text-ink-muted italic">
               a sysy&apos;s gtm project
@@ -165,14 +169,13 @@ export default function LandingPage() {
 
         <section className="relative z-10 mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-24">
           <Reveal>
-            <div className="relative">
+            <div className="relative isolate">
               <span
                 aria-hidden
-                className="pointer-events-none absolute top-1/2 left-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-[5rem] opacity-[0.16] mix-blend-luminosity select-none sm:text-[9rem]"
+                className="pointer-events-none absolute top-[92%] left-[42%] z-0 -translate-x-1/2 -translate-y-1/2 text-[7rem] opacity-65 grayscale select-none sm:left-[60%] sm:text-[11rem]"
                 style={{
-                  transform:
-                    "translate(-50%, -50%) perspective(400px) rotateX(20deg) rotateZ(-6deg)",
-                  filter: "drop-shadow(0 14px 18px rgba(20,20,30,0.4))",
+                  transform: "translate(-50%, -50%) scaleX(0.85) rotate(-8deg)",
+                  filter: "grayscale(1) brightness(2.1) contrast(0.85)",
                 }}
               >
                 🪝
