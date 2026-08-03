@@ -93,7 +93,10 @@ export default async function GenerationDetailPage({ params }: { params: Promise
         </p>
       ) : generation.output ? (
         <div className="mt-6">
-          <GenerationResultView result={generation.output as unknown as GenerationResult} />
+          <GenerationResultView
+            result={generation.output as unknown as GenerationResult}
+            generationId={generation.id}
+          />
         </div>
       ) : (
         <p className="text-sm text-ink-muted mt-6">Aucun résultat disponible pour cette génération.</p>
