@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
@@ -45,9 +46,17 @@ export async function POST(req: NextRequest) {
     console.log(`[Landing Roast] Analyse de ${url}`);
 
     // 1. Screenshot + extraction HTML
+    const isProduction = process.env.VERCEL_ENV === "production";
     const browser = await puppeteer.launch({
+      args: isProduction ? chromium.args : ["--no-sandbox", "--disable-setuid-sandbox"],
+      executablePath: isProduction
+        ? await chromium.executablePath()
+        : process.platform === "win32"
+          ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+          : process.platform === "darwin"
+            ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+            : "/usr/bin/google-chrome",
       headless: true,
-      args: ["--no-sandbox", "----setuid-sandbox"],
     });
 
     const page = await browser.newPage();
