@@ -196,11 +196,38 @@ export default function LandingPage() {
           </Reveal>
 
           <Reveal delay={0.08}>
-            <p className="mt-6 text-balance text-lg text-ink-secondary">
-              Hooks écrit tes accroches pour LinkedIn, Meta, Google et Reddit Ads.
-              <br />
-              Calibrées sur ta régie, ton industrie et ta cible — pas un prompt générique.
-            </p>
+            <div className="mt-6 max-w-2xl mx-auto space-y-4 text-balance text-lg text-ink-secondary">
+              <p className="font-medium text-ink">
+                Le vrai coût d'un hook médiocre n'est jamais sa génération — c'est le budget média gâché à le tester.
+              </p>
+              
+              <p>
+                Après 5 ans à piloter du paid media B2B, j'ai construit <span className="font-semibold text-ink">Hooks</span> pour résoudre ce problème.
+              </p>
+              
+              <p>
+                L'outil génère des accroches pour LinkedIn Ads, Meta, Google et Reddit Ads — mais contrairement aux génériques qui sortent 8 variations du même paragraphe, il :
+              </p>
+              
+              <ul className="text-left space-y-2 max-w-xl mx-auto">
+                <li className="flex gap-3">
+                  <span className="text-link shrink-0">🎯</span>
+                  <span>Connaît les contraintes réelles de chaque régie (limites de caractères, formats, tonalités)</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-link shrink-0">🔄</span>
+                  <span>Itère sur ses propres recommandations pour différencier les angles</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-link shrink-0">📋</span>
+                  <span>Propose des templates pré-remplis par industrie (SaaS B2B, e-commerce, formation, services pros)</span>
+                </li>
+              </ul>
+              
+              <p className="pt-2">
+                Construit avec Claude Code en marge de mon métier de growth marketer. 100% gratuit, 5 crédits/jour, sans carte bancaire.
+              </p>
+            </div>
           </Reveal>
 
           <Reveal delay={0.12}>
