@@ -7,6 +7,11 @@ import type { GenerationResult } from "@/lib/types";
 interface HookFavorite {
   hook_index: number;
   tags: string[];
+  hook: {
+    title: string;
+    description?: string;
+    cta?: string;
+  };
 }
 
 export function GenerationResultView({
@@ -43,7 +48,17 @@ export function GenerationResultView({
     if (newFavorites.has(index)) {
       newFavorites.delete(index);
     } else {
-      newFavorites.set(index, { hook_index: index, tags: [] });
+      // Sauvegarder le hook complet avec l'index et les tags
+      const hook = result.cards[index];
+      newFavorites.set(index, {
+        hook_index: index,
+        tags: [],
+        hook: {
+          title: hook.title,
+          description: hook.description,
+          cta: hook.cta,
+        },
+      });
     }
     setFavorites(newFavorites);
     if (generationId) {
@@ -57,7 +72,16 @@ export function GenerationResultView({
   async function addTag(index: number, tag: string) {
     if (!tag.trim()) return;
     const newFavorites = new Map(favorites);
-    const fav = newFavorites.get(index) || { hook_index: index, tags: [] };
+    const hook = result.cards[index];
+    const fav = newFavorites.get(index) || {
+      hook_index: index,
+      tags: [],
+      hook: {
+        title: hook.title,
+        description: hook.description,
+        cta: hook.cta,
+      },
+    };
     if (!fav.tags.includes(tag.trim())) {
       fav.tags.push(tag.trim());
       newFavorites.set(index, fav);

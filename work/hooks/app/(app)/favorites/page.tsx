@@ -34,22 +34,17 @@ export default function FavoritesPage() {
           const stored = localStorage.getItem(key);
           if (stored) {
             const parsed = JSON.parse(stored);
-            // Récupérer aussi les hooks depuis le storage des générations si disponible
-            const genKey = `generation_${generationId}`;
-            const genStored = localStorage.getItem(genKey);
-            if (genStored) {
-              const generation = JSON.parse(genStored);
-              parsed.forEach((fav: { hook_index: number; tags: string[] }) => {
-                if (generation.cards && generation.cards[fav.hook_index]) {
-                  allFavs.push({
-                    generationId,
-                    hook_index: fav.hook_index,
-                    tags: fav.tags,
-                    hook: generation.cards[fav.hook_index],
-                  });
-                }
-              });
-            }
+            // Le hook est maintenant sauvegardé directement dans le favori
+            parsed.forEach((fav: { hook_index: number; tags: string[]; hook: any }) => {
+              if (fav.hook) {
+                allFavs.push({
+                  generationId,
+                  hook_index: fav.hook_index,
+                  tags: fav.tags,
+                  hook: fav.hook,
+                });
+              }
+            });
           }
         } catch (e) {
           console.error("Failed to parse favorites", e);
