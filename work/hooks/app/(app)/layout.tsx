@@ -8,15 +8,25 @@ import { createClient } from "@/lib/supabase/client";
 
 const NAV_LINKS = [
   { href: "/onboarding", label: "Générer" },
+  { href: "/templates", label: "Templates" },
+  { href: "/favorites", label: "Favoris" },
   { href: "/dashboard", label: "Historique" },
   { href: "/pricing", label: "Tarifs" },
 ];
+
+interface UsageInfo {
+  remaining: number;
+  cap: number;
+  scope: "daily" | "monthly" | "lifetime";
+  lastResetOn: string;
+}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,6 +38,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    loadUsage();
+  }, []);
+
+  async function loadUsage() {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("usage_counters")
+      .select("count, cap, scope, last_reset_on")
+      .eq("user_id", user.id)
+      .single();
+
+    if (data) {
+      setUsage({
+        remaining: data.cap - data.count,
+        cap: data.cap,
+        scope: data.scope,
+        lastResetOn: data.last_reset_on,
+      });
+    }
+  }
 
   async function handleLogout() {
     const supabase = createClient();
@@ -41,7 +76,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Appel à une route API pour supprimer le compte
     const res = await fetch("/api/account/delete", { method: "POST" });
     if (res.ok) {
       await supabase.auth.signOut();
@@ -52,13 +86,46 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
+  function getResetDate() {
+    if (!usage) return null;
+    const lastReset = new Date(usage.lastResetOn);
+    if (usage.scope === "monthly") {
+      // Premier jour du mois prochain
+      const nextMonth = new Date(lastReset.getFullYear(), lastReset.getMonth() + 1, 1);
+      return nextMonth.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    } else if (usage.scope === "daily") {
+      // Demain
+      const tomorrow = new Date(lastReset);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    }
+    return null;
+  }
+
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border-soft bg-paper/80 px-6 py-4 backdrop-blur-md">
         <div className="flex items-center justify-between">
-          <Link href="/onboarding" className="font-display text-xl">
+          <Link href="/templates" className="font-display text-xl">
             Hooks
           </Link>
+
+          {/* Crédits au centre sur desktop */}
+          {usage && (
+            <div className="hidden items-center gap-2 text-sm sm:flex">
+              <span className="font-medium text-ink">{usage.remaining}</span>
+              <span className="text-ink-muted">crédit{usage.remaining > 1 ? "s" : ""}</span>
+              {getResetDate() && (
+                <>
+                  <span className="text-ink-muted">·</span>
+                  <span className="text-xs text-ink-muted">
+                    renouvelé le {getResetDate()}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
           <nav className="hidden items-center gap-6 text-sm text-ink-secondary sm:flex">
             {NAV_LINKS.map((l) => (
               <Link key={l.href} href={l.href} className="transition-colors hover:text-ink">
@@ -118,6 +185,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
         {menuOpen && (
           <nav className="mt-4 flex flex-col gap-4 text-sm text-ink-secondary sm:hidden">
+            {/* Crédits sur mobile */}
+            {usage && (
+              <div className="mb-2 rounded-lg border border-border-soft bg-surface px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-ink">{usage.remaining}</span>
+                  <span className="text-ink-muted">crédit{usage.remaining > 1 ? "s" : ""}</span>
+                </div>
+                {getResetDate() && (
+                  <p className="mt-1 text-xs text-ink-muted">
+                    Renouvelé le {getResetDate()}
+                  </p>
+                )}
+              </div>
+            )}
             {NAV_LINKS.map((l) => (
               <Link
                 key={l.href}
