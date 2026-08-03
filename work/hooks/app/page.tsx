@@ -179,7 +179,7 @@ export default function LandingPage() {
                 <svg
                   aria-hidden
                   viewBox="0 0 220 24"
-                  className="pointer-events-none absolute -bottom-2 left-0 h-4 w-full text-link sm:-bottom-3 sm:h-6"
+                  className="pointer-events-none absolute -bottom-2 left-0 h-4 w-full text-link sm:-bottom-3 sm:h-6 -z-10"
                   preserveAspectRatio="none"
                 >
                   <path
