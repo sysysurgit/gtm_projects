@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Outfit, Space_Mono } from "next/font/google";
+import { Libre_Baskerville, Geist } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-  weight: ["700", "800", "900"],
-});
-
-const spaceMono = Space_Mono({
-  variable: "--font-space-mono",
+const libreBaskerville = Libre_Baskerville({
+  variable: "--font-libre-baskerville",
   subsets: ["latin"],
   weight: ["400", "700"],
+  style: ["normal", "italic"],
+});
+
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${outfit.variable} ${spaceMono.variable} h-full antialiased`}>
+    <html lang="fr" className={`${libreBaskerville.variable} ${geist.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
