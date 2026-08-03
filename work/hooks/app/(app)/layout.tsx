@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Building2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV_LINKS = [
@@ -38,6 +38,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <button onClick={handleLogout} className="text-ink-muted transition-colors hover:text-ink">
               Déconnexion
             </button>
+            <Link
+              href="/profile"
+              aria-label="Profil entreprise"
+              className="text-ink-muted transition-colors hover:text-ink"
+            >
+              <Building2 className="h-4 w-4" strokeWidth={1.75} />
+            </Link>
           </nav>
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -59,6 +66,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {l.label}
               </Link>
             ))}
+            <Link
+              href="/profile"
+              onClick={() => setMenuOpen(false)}
+              className="transition-colors hover:text-ink"
+            >
+              Profil entreprise
+            </Link>
             <button
               onClick={handleLogout}
               className="text-left text-ink-muted transition-colors hover:text-ink"

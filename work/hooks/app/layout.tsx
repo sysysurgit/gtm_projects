@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, Geist } from "next/font/google";
+import { Libre_Baskerville, Geist } from "next/font/google";
 import "./globals.css";
 
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
+const libreBaskerville = Libre_Baskerville({
+  variable: "--font-libre-baskerville",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["400", "700"],
   style: ["normal", "italic"],
 });
 
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="fr"
-      className={`${instrumentSerif.variable} ${geist.variable} h-full antialiased`}
+      className={`${libreBaskerville.variable} ${geist.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

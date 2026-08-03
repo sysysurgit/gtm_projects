@@ -172,7 +172,7 @@ export default function LandingPage() {
 
         <section className="relative z-10 mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-24">
           <Reveal>
-            <h1 className="text-balance font-display text-5xl leading-[1.05] font-normal sm:text-7xl">
+            <h1 className="text-balance font-display text-4xl leading-[1.1] font-normal sm:text-5xl">
               Générateur d&apos;accroches pour publicitaires{" "}
               <span className="relative inline-block whitespace-nowrap">
                 exigeants
@@ -218,7 +218,7 @@ export default function LandingPage() {
             <p className="mb-3 text-center text-xs font-medium tracking-wide text-ink-muted uppercase">
               Exemple de résultat
             </p>
-            <div className="grid gap-4 rounded-2xl border border-accent/25 bg-surface p-4 shadow-[0_0_35px_-20px_rgba(42,77,255,0.6)] sm:grid-cols-2 sm:p-5">
+            <div className="grid gap-4 rounded-2xl border border-border-soft bg-surface p-4 sm:grid-cols-2 sm:p-5">
               {EXAMPLE_CARDS.map((c) => (
                 <div key={c.title} className="rounded-xl border border-border-soft bg-surface-raised p-4 text-left">
                   <p className="text-sm font-medium text-ink">{c.title}</p>
@@ -304,7 +304,7 @@ export default function LandingPage() {
             </div>
           </Reveal>
           <Reveal delay={0.12}>
-            <div className="h-full rounded-2xl border border-accent/40 bg-accent-tint/40 p-6 shadow-[0_0_40px_-15px_rgba(42,77,255,0.5)] sm:p-7">
+            <div className="h-full rounded-2xl border border-accent/30 bg-accent-tint/60 p-6 shadow-[0_10px_28px_-18px_rgba(23,19,13,0.5)] sm:p-7">
               <span className="inline-block rounded-full border border-accent/40 bg-paper px-3 py-1 text-xs font-medium tracking-wide text-link uppercase">
                 Avec Hooks
               </span>
@@ -381,7 +381,7 @@ export default function LandingPage() {
 
       <section className="mx-auto max-w-lg px-6 py-16 text-center">
         <Reveal>
-          <div className="rounded-2xl border border-accent/40 bg-surface p-8 shadow-[0_0_50px_-20px_rgba(42,77,255,0.5)] sm:p-10">
+          <div className="rounded-2xl border border-accent/30 bg-surface p-8 shadow-[0_12px_32px_-18px_rgba(23,19,13,0.5)] sm:p-10">
             <p className="font-display text-6xl font-normal">0€</p>
             <p className="mt-1 text-sm text-ink-muted">Pour toujours, sans carte bancaire</p>
             <ul className="mt-6 space-y-3 border-t border-border-soft pt-6 text-left">

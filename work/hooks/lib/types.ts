@@ -20,6 +20,11 @@ export interface Brief {
   // Catégorie 3 : concurrence
   competitorStrengths: string;
   competitorGaps: string;
+  // Contexte entreprise stable (profil, pas le brief) — optionnel, s'applique
+  // à toutes les générations sans être retapé à chaque brief.
+  companyDescription?: string;
+  brandTone?: string;
+  complianceNotes?: string;
   // Visuel : éphémère, jamais persisté au-delà de l'appel de génération
   visualBase64?: string;
   visualMediaType?: string;
@@ -33,6 +38,9 @@ export interface Profile {
   firstName: string | null;
   brandName: string | null;
   defaultBrief: DefaultBrief | null;
+  companyDescription: string | null;
+  brandTone: string | null;
+  complianceNotes: string | null;
 }
 
 export interface HookCard {
