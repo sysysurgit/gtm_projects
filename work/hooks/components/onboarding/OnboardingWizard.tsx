@@ -241,17 +241,35 @@ export function OnboardingWizard({
     setStepIndex(0);
   }
 
+  function regenerateWithSameBrief() {
+    // Garde le même brief, recommence juste la génération
+    setResult(null);
+    setUpsell(null);
+    setError(null);
+    // On repart à la dernière étape (visual) pour regénérer direct
+    setStepIndex(STEP_IDS.length - 1);
+  }
+
   if (result) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <p className="text-sm text-ink-muted">
             {remaining} crédit{remaining === 1 ? "" : "s"} restant{remaining === 1 ? "" : "s"}{" "}
             aujourd&apos;hui
           </p>
-          <button onClick={resetForm} className="text-sm font-medium text-link hover:underline">
-            Nouvelle génération →
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={regenerateWithSameBrief}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-link hover:underline"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Autre angle avec ce brief
+            </button>
+            <button onClick={resetForm} className="text-sm font-medium text-ink-muted hover:text-ink">
+              Nouveau brief
+            </button>
+          </div>
         </div>
         <GenerationResultView result={result} />
       </div>
