@@ -120,7 +120,7 @@ export default function LandingPage() {
       {/* Bandeau d'annonce — info réelle, pas d'urgence fabriquée */}
       <div className="border-b border-border-soft bg-surface px-4 py-2.5 text-center text-xs text-ink-secondary">
         <span className="pulse-dot mr-2 align-middle" />
-        Offre Free : 10 crédits par mois
+        100% gratuit — 5 crédits par jour, sans carte bancaire
       </div>
 
       <header className="sticky top-0 z-30 border-b border-border-soft bg-paper/80 backdrop-blur-md">

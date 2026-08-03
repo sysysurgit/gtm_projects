@@ -29,9 +29,8 @@ export default async function OnboardingPage({
   if (templateId) {
     const template = INDUSTRY_TEMPLATES.find((t) => t.id === templateId);
     if (template) {
-      // Convertir le brief du template en DefaultBrief (qui attend platform/adFormat)
-      // On laisse l'utilisateur choisir platform/adFormat dans le wizard
-      templateBrief = template.brief as DefaultBrief;
+      // Le brief du template inclut maintenant platform et adFormat
+      templateBrief = template.brief;
     }
   }
 

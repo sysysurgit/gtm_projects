@@ -1,11 +1,15 @@
 import type { DefaultBrief } from "./types";
+import type { PlatformId } from "./ad-platforms";
 
 export interface IndustryTemplate {
   id: string;
   label: string;
   icon: string;
   description: string;
-  brief: Omit<DefaultBrief, "platform" | "adFormat">;
+  brief: DefaultBrief & {
+    platform: PlatformId;
+    adFormat: string;
+  };
 }
 
 export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
@@ -15,6 +19,8 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     icon: "💼",
     description: "Logiciels d'entreprise, outils de productivité, plateformes métier",
     brief: {
+      platform: "linkedin_ads",
+      adFormat: "single_image",
       budgetRange: "5k_20k",
       funnelStage: "consideration",
       industry: "SaaS B2B",
@@ -34,6 +40,8 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     icon: "🛒",
     description: "Boutiques en ligne, marketplaces, retail digital",
     brief: {
+      platform: "meta_ads",
+      adFormat: "feed_image",
       budgetRange: "1k_5k",
       funnelStage: "action",
       industry: "E-commerce / Mode",
@@ -53,6 +61,8 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     icon: "🎓",
     description: "E-learning, coaching, certifications professionnelles",
     brief: {
+      platform: "linkedin_ads",
+      adFormat: "video",
       budgetRange: "1k_5k",
       funnelStage: "awareness",
       industry: "Formation professionnelle / Marketing digital",
@@ -72,6 +82,8 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
     icon: "⚖️",
     description: "Conseil, juridique, comptabilité, audit",
     brief: {
+      platform: "google_ads",
+      adFormat: "rsa",
       budgetRange: "lt_1k",
       funnelStage: "consideration",
       industry: "Services juridiques / Droit des affaires",

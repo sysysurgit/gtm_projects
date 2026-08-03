@@ -11,7 +11,6 @@ const NAV_LINKS = [
   { href: "/templates", label: "Templates" },
   { href: "/favorites", label: "Favoris" },
   { href: "/dashboard", label: "Historique" },
-  { href: "/pricing", label: "Tarifs" },
 ];
 
 interface UsageInfo {

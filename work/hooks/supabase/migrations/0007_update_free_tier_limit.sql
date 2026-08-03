@@ -1,7 +1,7 @@
--- Mise à jour de la limite free tier : passe de 10/jour à 10/mois
--- Modifie le trigger signup pour créer avec scope='monthly' et cap=10
+-- Retour au modèle 100% gratuit : 5 crédits par jour
+-- Modifie le trigger handle_new_user pour créer des comptes avec daily/5
 
--- 1. Modifier le trigger handle_new_user pour créer des comptes avec monthly/10
+-- 1. Modifier le trigger handle_new_user pour créer des comptes avec daily/5
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -10,7 +10,7 @@ AS $$
 BEGIN
   INSERT INTO public.profiles (id, email) VALUES (new.id, new.email);
   INSERT INTO public.usage_counters (user_id, scope, count, cap, last_reset_on)
-  VALUES (new.id, 'monthly', 0, 10, DATE_TRUNC('month', CURRENT_DATE)::date);
+  VALUES (new.id, 'daily', 0, 5, CURRENT_DATE);
   RETURN new;
 END;
 $$;
