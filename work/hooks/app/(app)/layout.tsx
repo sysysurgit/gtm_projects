@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 const NAV_LINKS = [
   { href: "/onboarding", label: "Générer" },
   { href: "/dashboard", label: "Historique" },
+  { href: "/pricing", label: "Tarifs" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
