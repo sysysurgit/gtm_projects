@@ -1,8 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import type { DefaultBrief } from "@/lib/types";
+import { INDUSTRY_TEMPLATES } from "@/lib/industry-templates";
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ template?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,11 +21,25 @@ export default async function OnboardingPage() {
     .eq("id", user.id)
     .single();
 
+  // Charger le template si présent dans l'URL
+  const params = await searchParams;
+  const templateId = params.template;
+  let templateBrief: DefaultBrief | null = null;
+
+  if (templateId) {
+    const template = INDUSTRY_TEMPLATES.find((t) => t.id === templateId);
+    if (template) {
+      // Convertir le brief du template en DefaultBrief (qui attend platform/adFormat)
+      // On laisse l'utilisateur choisir platform/adFormat dans le wizard
+      templateBrief = template.brief as DefaultBrief;
+    }
+  }
+
   return (
     <OnboardingWizard
       initialFirstName={profile?.first_name ?? ""}
       initialBrandName={profile?.brand_name ?? ""}
-      defaultBrief={(profile?.default_brief as DefaultBrief | null) ?? null}
+      defaultBrief={templateBrief ?? (profile?.default_brief as DefaultBrief | null) ?? null}
     />
   );
 }
