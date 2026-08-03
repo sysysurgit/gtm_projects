@@ -9,8 +9,7 @@ import type { Brief, GenerationResult, HookCard } from "@/lib/types";
 // quota that recovers within minutes instead) and measured both faster
 // (~1.2-1.7s vs ~6-9s) and 100% reliable across a 8-call burst test.
 export const MODEL = "gemini-3.1-flash-lite";
-const MAX_CARDS = 5;
-const MIN_CARDS = 3;
+const CARDS_PER_GENERATION = 4;
 
 const BUDGET_LABEL: Record<Brief["budgetRange"], string> = {
   lt_1k: "moins de 1000€/mois",
@@ -57,7 +56,7 @@ ${COPYWRITING_TECHNIQUES}
 Régie : ${platformLabel} — Format : ${formatLabel}
 ${guidance}
 
-Méthode de travail obligatoire : pour chaque angle, rédige d'abord un brouillon, critique-le toi-même honnêtement (pouvoir d'arrêt au scroll, clarté, une seule phrase, spécificité, adéquation avec le format et la régie, alignement avec l'offre et la cible), puis retravaille-le jusqu'à ce qu'il soit vraiment bon — en particulier, vérifie que le title n'est jamais devenu deux phrases collées. Ne renvoie que le résultat final retravaillé — jamais le premier jet, jamais de version faible. Si un angle ne devient pas convaincant après retravail, abandonne-le et n'en génère pas plus que nécessaire (entre ${MIN_CARDS} et ${MAX_CARDS} cards).`;
+Méthode de travail obligatoire : pour chaque angle, rédige d'abord un brouillon, critique-le toi-même honnêtement (pouvoir d'arrêt au scroll, clarté, une seule phrase, spécificité, adéquation avec le format et la régie, alignement avec l'offre et la cible), puis retravaille-le jusqu'à ce qu'il soit vraiment bon — en particulier, vérifie que le title n'est jamais devenu deux phrases collées. Ne renvoie que le résultat final retravaillé — jamais le premier jet, jamais de version faible. GÉNÈRE EXACTEMENT ${CARDS_PER_GENERATION} cards.`;
 }
 
 function buildUserPrompt(brief: Brief, platformLabel: string, formatLabel: string): string {
@@ -84,7 +83,7 @@ CONCURRENCE
 - Ce qu'ils n'ont pas / leurs limites : ${brief.competitorGaps}
 ${hasVisual ? "\nUn visuel de la créa est joint — utilise-le comme contexte optionnel : ne le référence que si ça rend vraiment le hook plus fort, ne force pas le lien." : ""}
 
-Génère entre ${MIN_CARDS} et ${MAX_CARDS} cards en respectant strictement les limites de caractères données. Utilise la faiblesse identifiée chez les concurrents et les vraies preuves de crédibilité pour rendre chaque angle spécifique à cette marque, pas générique au secteur.`;
+Génère exactement ${CARDS_PER_GENERATION} cards en respectant strictement les limites de caractères données. Utilise la faiblesse identifiée chez les concurrents et les vraies preuves de crédibilité pour rendre chaque angle spécifique à cette marque, pas générique au secteur.`;
 }
 
 const hookCardSchema = {
@@ -113,8 +112,8 @@ const hookCardSchema = {
 
 const responseSchema = {
   type: Type.ARRAY,
-  minItems: String(MIN_CARDS),
-  maxItems: String(MAX_CARDS),
+  minItems: String(CARDS_PER_GENERATION),
+  maxItems: String(CARDS_PER_GENERATION),
   items: hookCardSchema,
 };
 
@@ -223,9 +222,9 @@ export async function generateHooks(brief: Brief): Promise<GenerateHooksResult> 
   const { rawCards, promptTokens, completionTokens } = await callGemini(systemPrompt, parts);
 
   const compliant = rawCards.filter((c) => isCompliant(c, formatSpec.titleMaxChars, formatSpec.descriptionMaxChars));
-  const pool = compliant.length > 0 ? compliant : rawCards;
+  const pool = compliant.length >= CARDS_PER_GENERATION ? compliant : rawCards;
 
-  const cards: HookCard[] = pool.slice(0, MAX_CARDS).map((c) => ({
+  const cards: HookCard[] = pool.slice(0, CARDS_PER_GENERATION).map((c) => ({
     title: c.title,
     description: c.description || undefined,
     cta: c.cta || undefined,
