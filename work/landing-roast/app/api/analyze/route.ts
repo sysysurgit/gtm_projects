@@ -1,8 +1,8 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export const maxDuration = 60;
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     // 1. Screenshot + extraction HTML
     const browser = await puppeteer.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: ["--no-sandbox", "----setuid-sandbox"],
     });
 
     const page = await browser.newPage();
@@ -81,8 +81,6 @@ export async function POST(req: NextRequest) {
     await browser.close();
 
     // 2. Analyse IA via Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-
     const prompt = `Tu es un expert en conversion de landing pages B2B paid (LinkedIn Ads, Google Ads, Meta Ads).
 
 Analyse cette landing page et note-la selon ce barème STRICT (total 100 points) :
@@ -188,33 +186,46 @@ ${htmlContent.substring(0, 15000)}
 - topWins = les 3 quick wins les plus impactants (gains rapides)
 - Réponds UNIQUEMENT en JSON valide, aucun texte avant/après`;
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          mimeType: "image/png",
-          data: screenshotBase64.split(",")[1],
+    const geminiResponse = await genAI.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: prompt,
+      config: {
+        maxOutputTokens: 2048,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            sections: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  name: { type: "STRING" },
+                  score: { type: "INTEGER" },
+                  max: { type: "INTEGER" },
+                  issues: { type: "ARRAY", items: { type: "STRING" } },
+                  wins: { type: "ARRAY", items: { type: "STRING" } },
+                },
+                required: ["name", "score", "max", "issues", "wins"],
+              },
+            },
+            topWins: {
+              type: "ARRAY",
+              items: { type: "STRING" },
+            },
+          },
+          required: ["sections", "topWins"],
         },
       },
-      {
-        inlineData: {
-          mimeType: "image/png",
-          data: mobileScreenshotBase64.split(",")[1],
-        },
-      },
-    ]);
+    });
 
-    const responseText = result.response.text();
+    const responseText = geminiResponse.text || "";
     console.log("[Landing Roast] Réponse Gemini (raw):", responseText);
 
-    // Parse JSON (tolérant aux markdown fences)
+    // Parse JSON (schema forcé donc devrait être clean)
     let analysisData: { sections: SectionScore[]; topWins: string[] };
     try {
-      const jsonMatch = responseText.match(/```json\s*(\{[\s\S]*\})\s*```/) || responseText.match(/(\{[\s\S]*\})/);
-      if (!jsonMatch) {
-        throw new Error("Pas de JSON trouvé dans la réponse");
-      }
-      analysisData = JSON.parse(jsonMatch[1]);
+      analysisData = JSON.parse(responseText);
     } catch (parseError) {
       console.error("[Landing Roast] Erreur parsing JSON:", parseError);
       console.error("Réponse brute:", responseText);
@@ -227,7 +238,7 @@ ${htmlContent.substring(0, 15000)}
     // Share ID (6 chars aléatoires)
     const shareId = Math.random().toString(36).substring(2, 8);
 
-    const response: AnalysisResult = {
+    const result: AnalysisResult = {
       url,
       screenshot: screenshotBase64,
       totalScore,
@@ -239,7 +250,7 @@ ${htmlContent.substring(0, 15000)}
     // TODO: stocker en DB pour share link (pour MVP on skip, on renvoie direct)
     console.log(`[Landing Roast] Analyse terminée : ${totalScore}/100`);
 
-    return NextResponse.json(response);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("[Landing Roast] Erreur serveur:", error);
     return NextResponse.json({ error: "Erreur interne serveur" }, { status: 500 });
