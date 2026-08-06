@@ -32,34 +32,54 @@ export async function deepseekChatCompletion(params: {
   model: string;
   messages: DeepSeekMessage[];
   maxTokens?: number;
-  // Thinking mode : plus lent mais meilleure qualité de raisonnement créatif —
-  // activé par défaut ici car c'est précisément le point de bascule depuis
-  // Gemini flash-lite (vitesse) vers DeepSeek (qualité).
+  // Thinking mode : plus lent (raisonnement avant réponse), meilleure
+  // qualité créative sur v4-pro. Désactivé par défaut pour v4-flash — c'est
+  // précisément ce qui garantit une réponse rapide (<20s bout en bout).
   thinking?: boolean;
   reasoningEffort?: "low" | "high" | "max";
   jsonMode?: boolean;
+  // Coupe l'appel après ce délai plutôt que de laisser la requête pendre
+  // jusqu'au timeout de la fonction serverless (qui produit une erreur 500
+  // opaque côté utilisateur sans jamais avoir de retour DeepSeek). 15s par
+  // défaut : laisse de la marge sous le budget de 20s bout en bout demandé,
+  // en tenant compte de la latence réseau + parsing.
+  timeoutMs?: number;
 }): Promise<{ content: string; usage: DeepSeekUsage }> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
     throw new Error("DEEPSEEK_API_KEY manquante dans l'environnement.");
   }
 
-  const res = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: params.model,
-      messages: params.messages,
-      max_tokens: params.maxTokens ?? 2000,
-      thinking: { type: params.thinking === false ? "disabled" : "enabled" },
-      ...(params.reasoningEffort ? { reasoning_effort: params.reasoningEffort } : {}),
-      response_format: { type: params.jsonMode ? "json_object" : "text" },
-      stream: false,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), params.timeoutMs ?? 15000);
+
+  let res: Response;
+  try {
+    res = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: params.model,
+        messages: params.messages,
+        max_tokens: params.maxTokens ?? 1200,
+        thinking: { type: params.thinking === false ? "disabled" : "enabled" },
+        ...(params.reasoningEffort ? { reasoning_effort: params.reasoningEffort } : {}),
+        response_format: { type: params.jsonMode ? "json_object" : "text" },
+        stream: false,
+      }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new DeepSeekApiError(408, `DeepSeek API timeout après ${params.timeoutMs ?? 15000}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");

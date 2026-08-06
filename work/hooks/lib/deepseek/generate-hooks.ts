@@ -4,15 +4,33 @@ import { deepseekChatCompletion, DeepSeekApiError } from "@/lib/deepseek/client"
 import { describeVisual } from "@/lib/gemini/describe-image";
 import type { Brief, GenerationResult, HookCard } from "@/lib/types";
 
-// DeepSeek v4-pro : bascule qualité depuis gemini-3.1-flash-lite (voir
-// generate-hooks.ts, conservé pour référence/rollback). Coût mesuré
-// négligeable pour ce volume (~0.20-0.30$/mois à 10 générations/jour, voir
-// discussion du 2026-08-06) — le choix est motivé par la qualité créative et
-// l'absence du rate-limit serré de Gemini free tier (~15 appels/min), pas
-// par le prix.
-export const MODEL = "deepseek-v4-pro";
+// DeepSeek v4-flash, thinking désactivé : réponse en ~1-2s côté API (mesuré),
+// contre v4-pro thinking=enabled qui peut dépasser 15-20s voire cramer tout
+// le budget de tokens en "réflexion" sans jamais produire de réponse (observé
+// en test : reasoning_tokens = max_tokens entier, timeout côté fonction
+// serverless -> "Une erreur est survenue" générique côté utilisateur).
+// Qualité légèrement en retrait vs v4-pro mais largement suffisante pour ce
+// cas d'usage, et le budget demandé est <20s bout en bout, pas la meilleure
+// qualité absolue. v4-pro reste disponible si besoin (passer MODEL +
+// thinking:true + reasoningEffort dans callDeepSeek ci-dessous).
+export const MODEL = "deepseek-v4-flash";
 
 const MAX_ATTEMPTS = 2;
+
+// DeepSeek en json_object mode refuse un tableau JSON nu à la racine — il
+// wrappe systématiquement dans un objet (mesuré : {"cards": [...]}). On
+// gère aussi le cas où le modèle renvoie malgré tout un tableau nu, ou un
+// objet avec une autre clé racine contenant le tableau, pour rester robuste
+// aux variations de sortie.
+function extractCardsArray(content: string): RawCard[] {
+  const parsed = JSON.parse(content);
+  if (Array.isArray(parsed)) return parsed as RawCard[];
+  if (parsed && typeof parsed === "object") {
+    const firstArrayValue = Object.values(parsed).find((v) => Array.isArray(v));
+    if (firstArrayValue) return firstArrayValue as RawCard[];
+  }
+  throw new Error("Réponse DeepSeek : impossible de trouver un tableau de cards dans le JSON.");
+}
 
 async function callDeepSeek(
   systemPrompt: string,
@@ -26,17 +44,16 @@ async function callDeepSeek(
         messages: [
           {
             role: "system",
-            content: `${systemPrompt}\n\nRéponds UNIQUEMENT avec un tableau JSON de ${CARDS_PER_GENERATION} objets, chacun avec les clés "angle", "title", "description", "cta". Aucun texte avant ou après le JSON, aucun bloc markdown \`\`\`.`,
+            content: `${systemPrompt}\n\nRéponds UNIQUEMENT avec un objet JSON de la forme {"cards": [...]}, où "cards" est un tableau de ${CARDS_PER_GENERATION} objets, chacun avec les clés "angle", "title", "description", "cta". Aucun texte avant ou après le JSON, aucun bloc markdown \`\`\`.`,
           },
           { role: "user", content: userPrompt },
         ],
-        maxTokens: 2000,
-        // reasoning_effort "high" = qualité créative maximale pour un coût
-        // toujours négligeable à ce volume (voir commentaire MODEL ci-dessus).
-        reasoningEffort: "high",
+        maxTokens: 1200,
+        thinking: false,
         jsonMode: true,
+        timeoutMs: 15000,
       });
-      const rawCards = JSON.parse(content) as RawCard[];
+      const rawCards = extractCardsArray(content);
       return {
         rawCards,
         promptTokens: usage.prompt_tokens,
@@ -45,9 +62,10 @@ async function callDeepSeek(
     } catch (err) {
       lastError = err;
       console.error(`generateHooksDeepSeek: DeepSeek call failed (attempt ${attempt}/${MAX_ATTEMPTS})`, err);
-      // 429/401 échoueront identiquement au retry — ne pas gaspiller un
-      // second appel (et de la latence) sur une requête qui ne peut pas réussir.
-      if (err instanceof DeepSeekApiError && (err.status === 429 || err.status === 401)) {
+      // 429/401/408(timeout) échoueront identiquement ou trop lentement au
+      // retry — ne pas gaspiller un second appel (et du temps) sur une
+      // requête qui ne peut pas réussir dans le budget.
+      if (err instanceof DeepSeekApiError && (err.status === 429 || err.status === 401 || err.status === 408)) {
         break;
       }
     }

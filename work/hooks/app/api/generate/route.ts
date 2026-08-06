@@ -7,6 +7,15 @@ import type { Brief, DefaultBrief } from "@/lib/types";
 
 const MAX_VISUAL_BYTES = 5 * 1024 * 1024;
 
+// Budget explicite pour la fonction serverless : DeepSeek (v4-flash) répond
+// en ~1-5s, + jusqu'à ~5s pour la description Gemini du visuel si joint, +
+// marge réseau/DB. 30s laisse largement sous les limites Vercel (Hobby: 10s
+// par défaut mais configurable jusqu'à 60s ; Pro: 60s par défaut) tout en
+// empêchant un appel qui dérape de pendre indéfiniment et de retourner une
+// erreur 500 opaque après le timeout de la plateforme plutôt que le timeout
+// applicatif propre géré dans lib/deepseek/client.ts.
+export const maxDuration = 30;
+
 interface ClaimResult {
   allowed: boolean;
   remaining: number;

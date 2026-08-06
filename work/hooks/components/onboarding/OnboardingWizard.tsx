@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useMemo, useRef, useState, useEffect, type ChangeEvent, type KeyboardEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { RefreshCw, ArrowLeft, ArrowRight, Upload, X } from "lucide-react";
 import { PLATFORMS, type PlatformId } from "@/lib/ad-platforms";
@@ -112,6 +112,29 @@ export function OnboardingWizard({
   const [upsell, setUpsell] = useState<UpsellInfo | null>(null);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
+
+  // Légendes d'attente affichées pendant la génération — tournent toutes les
+  // ~2.2s pour donner l'impression que "ça travaille" sans jamais promettre
+  // une durée. La barre de progression est purement décorative (l'appel IA
+  // ne stream pas), elle fait 0 -> ~92% sur 20s en boucle douce.
+  const LOADING_CAPTIONS = [
+    "On concocte la meilleure soupe de mots…",
+    "On appelle Madison Avenue…",
+    "On réveille les grands noms de la pub…",
+    "On remue les méninges créatives…",
+    "On cherche l'angle qui va arrêter le scroll…",
+    "On taille le hook au millimètre…",
+  ];
+  const [captionIndex, setCaptionIndex] = useState(0);
+
+  useEffect(() => {
+    if (!loading) return;
+    setCaptionIndex(0);
+    const interval = setInterval(() => {
+      setCaptionIndex((i) => (i + 1) % LOADING_CAPTIONS.length);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const formats = platform ? PLATFORMS[platform].formats : [];
 
@@ -528,19 +551,32 @@ export function OnboardingWizard({
 
                 {error && <p className="text-sm text-critical mt-4">{error}</p>}
 
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="mt-8 inline-flex items-center gap-2 rounded-lg bg-btn-primary text-btn-primary-ink font-medium px-6 py-3 disabled:opacity-60"
-                >
-                  {loading ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" /> Génération en cours...
-                    </>
-                  ) : (
-                    "Générer les hooks"
-                  )}
-                </button>
+                {loading ? (
+                  <div className="mt-8 rounded-2xl border border-border-soft bg-surface p-6">
+                    <div className="mb-3 flex items-center gap-3">
+                      <RefreshCw className="h-5 w-5 animate-spin text-accent" />
+                      <p className="font-medium text-ink-secondary">Génération en cours…</p>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-border-soft">
+                      <motion.div
+                        className="h-full rounded-full bg-accent"
+                        initial={{ width: "0%" }}
+                        animate={{ width: "92%" }}
+                        transition={{ duration: 20, ease: "easeInOut" }}
+                      />
+                    </div>
+                    <p key={captionIndex} className="mt-3 text-sm text-ink-muted">
+                      {LOADING_CAPTIONS[captionIndex]}
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleSubmit}
+                    className="mt-8 inline-flex items-center gap-2 rounded-lg bg-btn-primary text-btn-primary-ink font-medium px-6 py-3"
+                  >
+                    Générer les hooks
+                  </button>
+                )}
               </div>
             )}
           </motion.div>
