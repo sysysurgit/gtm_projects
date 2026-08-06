@@ -5,7 +5,7 @@ import chromium from "@sparticuz/chromium";
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
-export const maxDuration = 60;
+export const maxDuration = 300; // 5 min pour Puppeteer + Gemini sur Vercel
 
 interface SectionScore {
   name: string;

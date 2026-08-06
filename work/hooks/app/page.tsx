@@ -197,35 +197,8 @@ export default function LandingPage() {
 
           <Reveal delay={0.08}>
             <div className="mt-6 max-w-2xl mx-auto space-y-4 text-balance text-lg text-ink-secondary">
-              <p className="font-medium text-ink">
-                Le vrai coût d'un hook médiocre n'est jamais sa génération — c'est le budget média gâché à le tester.
-              </p>
-              
-              <p>
-                Après 5 ans à piloter du paid media B2B, j'ai construit <span className="font-semibold text-ink">Hooks</span> pour résoudre ce problème.
-              </p>
-              
-              <p>
-                L'outil génère des accroches pour LinkedIn Ads, Meta, Google et Reddit Ads — mais contrairement aux génériques qui sortent 8 variations du même paragraphe, il :
-              </p>
-              
-              <ul className="text-left space-y-2 max-w-xl mx-auto">
-                <li className="flex gap-3">
-                  <span className="text-link shrink-0">🎯</span>
-                  <span>Connaît les contraintes réelles de chaque régie (limites de caractères, formats, tonalités)</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-link shrink-0">🔄</span>
-                  <span>Itère sur ses propres recommandations pour différencier les angles</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-link shrink-0">📋</span>
-                  <span>Propose des templates pré-remplis par industrie (SaaS B2B, e-commerce, formation, services pros)</span>
-                </li>
-              </ul>
-              
               <p className="pt-2">
-                Construit avec Claude Code en marge de mon métier de growth marketer. 100% gratuit, 5 crédits/jour, sans carte bancaire.
+                Ce projet fait partie des Sysy&apos;s GTM Projects, un ensemble de projets gratuits pour développer facilement les outils Go To Market.
               </p>
             </div>
           </Reveal>
@@ -412,18 +385,12 @@ export default function LandingPage() {
                 <ExternalLink className="h-5 w-5" strokeWidth={1.75} />
               </a>
             </div>
-            <p className="mb-4 text-ink-secondary">
-              Après plus de 5 ans à piloter des budgets Google Ads, LinkedIn Ads et Meta Ads pour
-              des environnements B2B exigeants — plus de 100k$/mois en Lead Growth Marketing,
-              du paid media et de l&apos;ABM avant ça — j&apos;ai vu passer assez de hooks
-              médiocres pour savoir où se cache le vrai coût : jamais dans la génération, toujours
-              dans le budget média dépensé à découvrir qu&apos;une accroche ne fonctionne pas.
-            </p>
             <p className="mb-6 text-ink-secondary">
-              Hooks est né de cette frustration très concrète. Je l&apos;ai construit avec Claude
-              Code, en marge de mon métier de growth marketer, pour avoir enfin un outil qui
-              connaît les vraies contraintes de chaque régie et qui retravaille ses propres
-              recommandations plutôt que de sortir huit variations du même paragraphe.
+              Je gère des budgets Google Ads, LinkedIn Ads et Meta Ads en B2B depuis plusieurs
+              années, et j&apos;ai vu passer beaucoup de hooks moyens. J&apos;ai construit Hooks
+              avec Claude Code, sur mon temps libre, pour avoir un outil simple qui tient compte
+              des vraies contraintes de chaque régie plutôt que de sortir huit variations du même
+              paragraphe.
             </p>
             <div className="grid gap-4 border-t border-border-soft pt-5 sm:grid-cols-3">
               {CREDENTIALS.map((c) => (

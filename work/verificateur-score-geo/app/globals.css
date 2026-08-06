@@ -1,11 +1,17 @@
 @import "tailwindcss";
 
 /*
- * Direction artistique v7 (2026-08-03) : design gethooks — off-black/off-white
- * (jamais noir/blanc pur), cartes coins arrondis 12-16px, badges pill, bleu
- * outremer #1c00fe en usage SECONDAIRE (focus, liens, accents), CTA primaires
- * blanc cassé/texte quasi-noir. Polices : Libre Baskerville h1/h2, Geist reste.
- * good/warning/critical système fonctionnel séparé, inchangé.
+ * Direction artistique v5 (2026-08-02) : refonte complète calquée sur
+ * neverboring.app/home — off-black/off-white (jamais de noir/blanc pur),
+ * cartes à bord subtil et coins arrondis 12-16px, badges pill, section
+ * "avant/après" mise en valeur par un bord bleu. Le bleu outremer
+ * (historiquement "bleu Majorelle" #1c00fe dans ce projet, même famille de
+ * teinte) reste l'unique couleur de contraste — mais en usage SECONDAIRE
+ * (focus, liens, sélection, bord de mise en valeur), pas en fond de bouton :
+ * les CTA primaires sont désormais blanc cassé/texte quasi-noir, comme sur
+ * le site de référence, où le bleu n'apparaît qu'en accents ponctuels.
+ * Polices : Libre Baskerville pour h1/h2, Geist pour tout le reste (corps de texte, UI, boutons).
+ * good/warning/critical restent un système fonctionnel séparé, inchangé.
  */
 :root {
   --ink: #f0f0f0;
@@ -17,14 +23,21 @@
   --border: rgba(255, 255, 255, 0.1);
   --border-soft: rgba(255, 255, 255, 0.06);
 
-  /* Bouton primaire : blanc cassé / texte quasi-noir */
+  /* Bouton primaire : blanc cassé / texte quasi-noir, jamais du bleu plein —
+     le bleu reste réservé aux accents (voir --accent ci-dessous). */
   --btn-primary: #d9d9d9;
   --btn-primary-ink: #0a0a0a;
 
-  /* Bleu outremer — usage secondaire : focus, liens, accents */
+  /* Bleu outremer — unique couleur de contraste, en usage secondaire :
+     focus ring, sélection, liens, bord de mise en valeur. Jamais comme fond
+     de bouton principal. */
   --accent: #1c00fe;
   --accent-ink: #ffffff;
   --accent-tint: rgba(28, 0, 254, 0.14);
+  /* #1c00fe en texte direct sur fond sombre échoue le contraste WCAG
+     (~2.2:1, il faut 4.5:1). --link est une variante plus claire réservée au
+     texte/icônes bleus sur --paper/--surface. Ne jamais utiliser --accent
+     comme couleur de texte sur fond sombre : utiliser --link à la place. */
   --link: #6b8aff;
 
   --good: #34c77b;
@@ -69,7 +82,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Background vivant halos bleus + particules + grain marqué */
+/* Background vivant avec halos bleus mouvants et particules + grain marqué */
 body::before {
   content: "";
   position: fixed;
@@ -99,10 +112,11 @@ body::after {
   background-size: 100% 100%;
   animation: particles-float 25s ease-in-out infinite;
   opacity: 0.4;
+  /* Effet grain marqué par-dessus */
   filter: url(#grain);
 }
 
-/* Filtre SVG grain/noise marqué */
+/* Filtre SVG pour l'effet grain/noise marqué */
 body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 0 0 0 1 1 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3C/svg%3E");
 }
@@ -134,12 +148,15 @@ body {
   }
 }
 
-/* Titres en Libre Baskerville */
+/* Titres principaux en Libre Baskerville */
 h1, h2 {
   font-family: var(--font-display);
 }
 
-/* Icon tile arrondie subtile */
+/* --- Landing page signature moments (see DESIGN.md) --- */
+
+/* Icône plate dans une tuile arrondie, subtile — remplace l'ancien badge 3D
+   à dégradé saturé (trop "SaaS dashboard", pas assez sobre pour ce système). */
 .icon-tile {
   display: flex;
   align-items: center;
@@ -150,7 +167,8 @@ h1, h2 {
 }
 
 @keyframes icon-float {
-  0%, 100% {
+  0%,
+  100% {
     translate: 0 0;
   }
   50% {
@@ -162,7 +180,8 @@ h1, h2 {
   animation: icon-float 3.6s ease-in-out infinite;
 }
 
-/* Cursor-following spotlight cards */
+/* Cursor-following highlight on cards — updated via JS on pointermove into
+   --mx/--my (percent), cheap: a single radial-gradient repaint, no layout. */
 .spotlight-card {
   position: relative;
   isolation: isolate;
@@ -186,7 +205,9 @@ h1, h2 {
   opacity: 1;
 }
 
-/* Ambient glow hero */
+/* Ambient glow behind the hero copy — a single soft blue blob, much more
+   restrained than v4's multi-blob aurora (neverboring's own hero glow is
+   subtle, not a dominant visual layer). */
 .aurora {
   position: absolute;
   inset: -10%;
@@ -204,7 +225,8 @@ h1, h2 {
   }
 }
 
-/* Footer wordmark */
+/* Oversized faded wordmark bleeding off the footer edge — signature
+   neverboring footer moment. */
 .footer-wordmark {
   font-family: var(--font-display);
   font-size: clamp(4rem, 16vw, 11rem);
@@ -216,7 +238,9 @@ h1, h2 {
   pointer-events: none;
 }
 
-/* Soulignage SVG animé */
+/* Soulignage "à main levée" sous "exigeants" dans le H1 — un seul trait SVG
+   irrégulier (pas une <hr> droite), qui se dessine au chargement et pulse
+   subtilement en boucle pour un effet vivant. */
 .underline-draw {
   stroke-dasharray: 260;
   stroke-dashoffset: 260;
@@ -304,12 +328,41 @@ h1, h2 {
     var(--border-soft);
 }
 
+/* Bandeau d'annonce : point qui pulse */
+.pulse-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--accent);
+  animation: signal-pulse 2s ease-in-out infinite;
+}
+
+/* Halos latéraux du hero (aurora complémentaire, gauche/droite) */
+.side-glow {
+  position: absolute;
+  top: 0;
+  width: 40%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+.side-glow-left {
+  left: 0;
+  background: radial-gradient(60% 50% at 0% 30%, rgba(28, 0, 254, 0.16), transparent 70%);
+}
+.side-glow-right {
+  right: 0;
+  background: radial-gradient(60% 50% at 100% 60%, rgba(59, 130, 246, 0.12), transparent 70%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .icon-tile-float,
   .aurora,
   .signal-dot,
   .bounce-dot,
-  .pop-in {
+  .pop-in,
+  .pulse-dot {
     animation: none;
   }
   body::before,

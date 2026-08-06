@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
+import { MagneticLink } from "@/components/MagneticLink";
 
 interface Recommendation {
   points: number;
@@ -99,17 +103,8 @@ function CategoryTag({ category }: { category: PageCategory }) {
   );
 }
 
-/** `variant="hero"` pour un badge posé directement sur le fond bleu (texte blanc, seul le point garde la couleur de statut) ; `variant="card"` (défaut) pour une carte lavande (texte teinté). */
-function StatusPill({ ratio, variant = "card" }: { ratio: number; variant?: "card" | "hero" }) {
+function StatusPill({ ratio }: { ratio: number }) {
   const tone = toneFromRatio(ratio);
-  if (variant === "hero") {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-hero-ink/40 bg-hero-ink/10 px-3 py-1 font-mono text-[11px] tracking-wide text-hero-ink uppercase">
-        <span className={`h-1.5 w-1.5 rounded-full ${TONE_BG[tone]}`} />
-        {statusWord(ratio)}
-      </span>
-    );
-  }
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[11px] tracking-wide uppercase ${TONE_TEXT[tone]} ${TONE_TINT[tone]}`}
@@ -185,10 +180,10 @@ function ActionPlan({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-signal/30 bg-surface p-4 text-left">
+    <div className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent-tint/40 p-4 text-left sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-medium text-signal">{title}</h3>
-        <span className="font-mono text-xs text-signal">
+        <h3 className="text-sm font-semibold text-ink">{title}</h3>
+        <span className="font-mono text-xs text-link">
           Score visé : <span className="font-bold tabular-nums">{target}/100</span>
         </span>
       </div>
@@ -198,7 +193,7 @@ function ActionPlan({
       <ol className="flex flex-col gap-2 text-sm text-ink-secondary">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5">
-            <span className="mt-0.5 shrink-0 rounded bg-signal-tint px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums text-signal">
+            <span className="mt-0.5 shrink-0 rounded bg-paper px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums text-link">
               +{item.points}
             </span>
             <span>
@@ -210,7 +205,7 @@ function ActionPlan({
       <button
         type="button"
         onClick={handleCopy}
-        className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-signal-tint"
+        className="self-start rounded-full border border-accent/40 px-3 py-1 font-mono text-xs font-medium text-link transition-colors hover:bg-paper"
       >
         {copied ? "Copié !" : "Copier le plan d'action"}
       </button>
@@ -258,20 +253,20 @@ function LlmsTxtDraft({ draft }: { draft: string }) {
   }
 
   return (
-    <details className="rounded-lg border border-signal/30 bg-surface px-4 py-3 text-left text-sm">
-      <summary className="cursor-pointer font-medium text-signal">Brouillon de llms.txt généré par IA</summary>
+    <details className="rounded-2xl border border-accent/30 bg-accent-tint/30 px-4 py-3 text-left text-sm">
+      <summary className="cursor-pointer font-medium text-link">Brouillon de llms.txt généré par IA</summary>
       <div className="mt-3 flex flex-col gap-3">
         <p className="text-xs text-ink-secondary">
           Généré à partir du contenu réel de la page d&apos;accueil — à relire avant publication (aucun chiffre n&apos;est
           inventé, mais la formulation doit être validée).
         </p>
-        <pre className="overflow-x-auto rounded-md border border-signal/20 bg-signal-tint p-3 font-mono text-xs whitespace-pre-wrap text-ink-secondary">
+        <pre className="overflow-x-auto rounded-xl border border-border-soft bg-paper p-3 font-mono text-xs whitespace-pre-wrap text-ink-secondary">
           {draft}
         </pre>
         <button
           type="button"
           onClick={handleCopy}
-          className="self-start rounded-full border border-signal/40 px-3 py-1 font-mono text-xs font-medium text-signal transition-colors hover:bg-signal-tint"
+          className="self-start rounded-full border border-accent/40 px-3 py-1 font-mono text-xs font-medium text-link transition-colors hover:bg-paper"
         >
           {copied ? "Copié !" : "Copier le llms.txt"}
         </button>
@@ -305,33 +300,20 @@ function AgentReadinessSection({ readiness }: { readiness: AgentReadinessResult 
   );
 }
 
-/**
- * Bloc hostname/score/statut d'une page — `variant="hero"` pour un affichage
- * posé directement sur le fond bleu (score et texte en blanc, c'est le
- * premier élément que l'œil rencontre) ; `variant="card"` (défaut) pour un
- * affichage compact niché dans une carte lavande (score coloré par tonalité).
- */
-function ScoreHero({ result, variant = "card" }: { result: GeoScoreResult; variant?: "hero" | "card" }) {
+/** Bloc hostname/score/statut d'une page. */
+function ScoreHero({ result }: { result: GeoScoreResult }) {
   const ratio = result.totalScore / 100;
-  const isHero = variant === "hero";
   return (
     <div className="flex flex-col items-center gap-2 text-center">
-      <span className={`text-sm ${isHero ? "text-hero-ink/70" : "text-ink-muted"}`}>{result.hostname}</span>
-      {result.pageTitle && (
-        <span className={`max-w-md text-sm font-medium ${isHero ? "text-hero-ink/85" : "text-ink-secondary"}`}>
-          {result.pageTitle}
-        </span>
-      )}
-      <span
-        className={`font-display text-4xl font-black tabular-nums ${isHero ? "text-hero-ink" : TONE_TEXT[toneFromRatio(ratio)]}`}
-      >
+      <span className="text-sm text-ink-muted">{result.hostname}</span>
+      {result.pageTitle && <span className="max-w-md text-sm font-medium text-ink-secondary">{result.pageTitle}</span>}
+      <span className={`font-display text-4xl font-normal tabular-nums ${TONE_TEXT[toneFromRatio(ratio)]}`}>
         {result.totalScore}
-        <span className={`text-lg ${isHero ? "text-hero-ink/60" : "text-ink-muted"}`}>/100</span>
+        <span className="text-lg text-ink-muted">/100</span>
       </span>
-      <StatusPill ratio={ratio} variant={isHero ? "hero" : "card"} />
+      <StatusPill ratio={ratio} />
       {!result.aiEvaluated && (
-        <span className={`inline-flex items-center gap-1.5 text-xs ${isHero ? "text-hero-ink/80" : "text-warning"}`}>
-          {isHero && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />}
+        <span className="inline-flex items-center gap-1.5 text-xs text-warning">
           Analyse IA non activée pour cette page — score plafonné.
         </span>
       )}
@@ -339,7 +321,7 @@ function ScoreHero({ result, variant = "card" }: { result: GeoScoreResult; varia
   );
 }
 
-/** Détail d'une page sous le score : catégories GEO, accessibilité agents IA, plan d'action GEO — toujours niché dans une carte lavande. */
+/** Détail d'une page sous le score : catégories GEO, accessibilité agents IA, plan d'action GEO. */
 function ResultDetail({ result }: { result: GeoScoreResult }) {
   return (
     <>
@@ -358,7 +340,7 @@ function ResultDetail({ result }: { result: GeoScoreResult }) {
 function ResultCard({ result }: { result: GeoScoreResult }) {
   return (
     <div className="flex flex-col gap-5">
-      <ScoreHero result={result} variant="card" />
+      <ScoreHero result={result} />
       {result.agentReadiness && (
         <ActionPlan
           categories={result.agentReadiness.checks}
@@ -552,97 +534,152 @@ export default function Home() {
   });
 
   return (
-    <div className="flex flex-1 flex-col font-sans">
-      <div className="relative flex flex-col items-center bg-hero px-4 pt-16 pb-20 text-hero-ink sm:px-8">
-        <div className="absolute top-4 left-4 rounded border border-hero-ink px-2 py-1.5 text-[11px] leading-[0.95] font-bold text-hero-ink italic sm:top-6 sm:left-6">
-          <div>SYSY&apos;S</div>
-          <div>GTM</div>
-          <div>PROJECTS</div>
+    <main className="relative flex-1 overflow-x-clip">
+      {/* Bandeau d'annonce */}
+      <div className="border-b border-border-soft bg-surface px-4 py-2.5 text-center text-xs text-ink-secondary">
+        <span className="pulse-dot mr-2 align-middle" />
+        Analyse gratuite — aucune carte bancaire requise
+      </div>
+
+      <header className="sticky top-0 z-30 border-b border-border-soft bg-paper/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <div className="flex flex-col gap-1">
+            <Link
+              href="/"
+              aria-label="Vérificateur de Score GEO"
+              className="inline-flex items-center gap-1.5 font-display text-xl leading-none"
+            >
+              Score GEO <span className="text-lg">📡</span>
+            </Link>
+            <p className="text-[10px] leading-none text-ink-muted italic">a sysy&apos;s gtm project</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <MagneticLink
+              href="#methodologie"
+              className="hidden text-sm text-ink-secondary transition-colors hover:text-ink sm:inline"
+            >
+              Méthodologie
+            </MagneticLink>
+          </div>
         </div>
-        <div className="flex w-full max-w-2xl flex-col gap-8">
-          <header className="flex flex-col items-center gap-3 text-center">
-            <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-hero-ink/40 bg-hero-ink/10 px-2.5 py-1 font-mono text-[11px] tracking-wide text-hero-ink uppercase">
-              <span className="signal-dot h-1.5 w-1.5 rounded-full bg-hero-ink" />
+      </header>
+
+      <div className="relative overflow-hidden">
+        <div className="aurora" />
+        <div className="side-glow side-glow-left" />
+        <div className="side-glow side-glow-right" />
+
+        <section className="relative z-10 mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-24">
+          <Reveal>
+            <span className="mb-5 inline-flex w-fit items-center gap-1.5 rounded-full border border-border-soft bg-surface px-2.5 py-1 font-mono text-[11px] tracking-wide text-ink-secondary uppercase">
+              <span className="signal-dot h-1.5 w-1.5 rounded-full bg-link" />
               Audit de visibilité IA
             </span>
-            <h1 className="font-display text-4xl font-black tracking-tight text-balance uppercase sm:text-5xl">
-              Vérificateur de Score GEO
+            <h1 className="text-balance font-display text-4xl leading-[1.1] font-normal sm:text-5xl">
+              Vérificateur de{" "}
+              <span className="relative inline-block whitespace-nowrap">
+                Score GEO
+                <svg
+                  aria-hidden
+                  viewBox="0 0 220 24"
+                  className="pointer-events-none absolute -bottom-2 left-0 h-4 w-full text-link sm:-bottom-3 sm:h-6 -z-10"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M4 15.5C40 8 90 5 112 10.5C138 17 168 6 216 12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    className="underline-draw"
+                  />
+                </svg>
+              </span>
             </h1>
-            <p className="mx-auto max-w-lg text-balance text-hero-ink/80">
+          </Reveal>
+
+          <Reveal delay={0.08}>
+            <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-ink-secondary">
               Analysez la visibilité d&apos;une page — ou d&apos;un site entier — dans les réponses des moteurs IA
               (ChatGPT, Perplexity, Claude) : structure, données structurées, clarté des réponses et citabilité.
             </p>
-          </header>
+          </Reveal>
 
-          <div className="flex justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => !busy && setMode("site")}
-              disabled={busy}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-                mode === "site" ? "bg-hero-ink text-hero" : "border border-hero-ink/40 text-hero-ink hover:bg-hero-ink/10"
-              }`}
-            >
-              Site entier
-            </button>
-            <button
-              type="button"
-              onClick={() => !busy && setMode("page")}
-              disabled={busy}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-                mode === "page" ? "bg-hero-ink text-hero" : "border border-hero-ink/40 text-hero-ink hover:bg-hero-ink/10"
-              }`}
-            >
-              Une page
-            </button>
-          </div>
+          <Reveal delay={0.16}>
+            <div className="mt-8 flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => !busy && setMode("site")}
+                disabled={busy}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                  mode === "site" ? "bg-btn-primary text-btn-primary-ink" : "border border-border-soft text-ink-secondary hover:text-ink"
+                }`}
+              >
+                Site entier
+              </button>
+              <button
+                type="button"
+                onClick={() => !busy && setMode("page")}
+                disabled={busy}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                  mode === "page" ? "bg-btn-primary text-btn-primary-ink" : "border border-border-soft text-ink-secondary hover:text-ink"
+                }`}
+              >
+                Une page
+              </button>
+            </div>
+          </Reveal>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
-            <input
-              type="text"
-              inputMode="url"
-              placeholder={mode === "page" ? "https://votre-site.com/article" : "https://votre-site.com"}
-              value={url}
-              disabled={busy}
-              onChange={(e) => setUrl(e.target.value)}
-              className="flex-1 rounded-lg border-2 border-signal bg-surface px-4 py-3 font-mono text-sm text-ink outline-none focus:ring-2 focus:ring-signal disabled:opacity-60"
-            />
-            <button
-              type="submit"
-              disabled={busy || !url.trim()}
-              className="rounded-lg bg-hero-ink px-6 py-3 font-medium text-hero transition-[filter] hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading ? "Analyse en cours..." : crawling ? "Audit en cours..." : mode === "page" ? "Analyser" : "Lancer l'audit"}
-            </button>
-          </form>
+          <Reveal delay={0.22}>
+            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <input
+                type="text"
+                inputMode="url"
+                placeholder={mode === "page" ? "https://votre-site.com/article" : "https://votre-site.com"}
+                value={url}
+                disabled={busy}
+                onChange={(e) => setUrl(e.target.value)}
+                className="flex-1 rounded-lg border border-border bg-surface px-4 py-3 font-mono text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/40 disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={busy || !url.trim()}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-btn-primary px-6 py-3 font-semibold text-btn-primary-ink transition-[filter] hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? "Analyse en cours..." : crawling ? "Audit en cours..." : mode === "page" ? "Analyser" : "Lancer l'audit"}
+                {!busy && <ArrowRight className="h-3.5 w-3.5" />}
+              </button>
+            </form>
+          </Reveal>
 
           {mode === "site" && (
-            <p className="text-xs text-hero-ink/75">
-              Découvre les pages via <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">sitemap.xml</code>{" "}
-              (repli sur les liens de la page d&apos;accueil si absent), respecte{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">robots.txt</code>, et sélectionne un
-              échantillon représentatif de 20 pages (accueil, pricing, produit, ressources...) pour rester raisonnable
-              en temps et en coût — chaque page déclenche une analyse indépendante. Les variantes de langue
-              (<code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/fr</code>,{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/en</code>...) et les pages de
-              compte ou légales sont automatiquement écartées de la sélection.
-            </p>
+            <Reveal delay={0.28}>
+              <p className="mt-4 text-xs text-ink-muted">
+                Découvre les pages via <code className="rounded bg-border-soft px-1 py-0.5 font-mono">sitemap.xml</code>{" "}
+                (repli sur les liens de la page d&apos;accueil si absent), respecte{" "}
+                <code className="rounded bg-border-soft px-1 py-0.5 font-mono">robots.txt</code>, et sélectionne un
+                échantillon représentatif de 20 pages (accueil, pricing, produit, ressources...) pour rester
+                raisonnable en temps et en coût — chaque page déclenche une analyse indépendante. Les variantes de
+                langue (<code className="rounded bg-border-soft px-1 py-0.5 font-mono">/fr</code>,{" "}
+                <code className="rounded bg-border-soft px-1 py-0.5 font-mono">/en</code>...) et les pages de compte
+                ou légales sont automatiquement écartées de la sélection.
+              </p>
+            </Reveal>
           )}
-        </div>
+        </section>
       </div>
 
-      <main className="flex flex-1 flex-col items-center bg-plane px-4 py-12 sm:px-8">
-        <div className="flex w-full max-w-2xl flex-col gap-8">
+      <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-8 px-6 pb-24">
         {error && (
-          <div className="rounded-lg border border-critical/40 bg-surface px-4 py-3 text-sm text-critical">{error}</div>
+          <div className="rounded-2xl border border-critical/40 bg-critical-tint px-4 py-3 text-sm text-critical">{error}</div>
         )}
 
         {(loading || (crawling && !discovery)) && (
           <div className="flex flex-col items-center gap-5 py-8">
             <div className="flex items-end gap-2.5">
-              <span className="bounce-dot h-3 w-3 rounded-full bg-hero-ink" />
-              <span className="bounce-dot h-3 w-3 rounded-full bg-hero-ink" />
-              <span className="bounce-dot h-3 w-3 rounded-full bg-hero-ink" />
+              <span className="bounce-dot h-3 w-3 rounded-full bg-link" />
+              <span className="bounce-dot h-3 w-3 rounded-full bg-link" />
+              <span className="bounce-dot h-3 w-3 rounded-full bg-link" />
             </div>
             {loading ? (
               <ul className="flex flex-col items-center gap-2">
@@ -650,7 +687,7 @@ export default function Home() {
                   <li
                     key={step}
                     className={`pop-in font-mono text-xs transition-colors duration-300 ${
-                      i === stepIndex ? "font-medium text-hero-ink" : "text-hero-ink/45"
+                      i === stepIndex ? "font-medium text-ink" : "text-ink-muted"
                     }`}
                   >
                     {i < stepIndex ? "✓ " : "… "}
@@ -659,14 +696,16 @@ export default function Home() {
                 ))}
               </ul>
             ) : (
-              <span className="pop-in font-mono text-xs text-hero-ink/80">Découverte des pages du site…</span>
+              <span className="pop-in font-mono text-xs text-ink-secondary">Découverte des pages du site…</span>
             )}
           </div>
         )}
 
         {mode === "page" && result && !loading && (
           <div className="flex flex-col gap-6">
-            <ScoreHero result={result} variant="hero" />
+            <div className="rounded-2xl border border-border-soft bg-surface p-6 sm:p-8">
+              <ScoreHero result={result} />
+            </div>
             {result.agentReadiness && (
               <ActionPlan
                 categories={result.agentReadiness.checks}
@@ -675,12 +714,12 @@ export default function Home() {
                 title="Plan d'action — agents IA"
               />
             )}
-            <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-6">
+            <div className="flex flex-col gap-4 rounded-2xl border border-border-soft bg-surface p-6">
               <ResultDetail result={result} />
             </div>
             <button
               onClick={handleCopyBadge}
-              className="self-center rounded-full border border-hero-ink/50 px-4 py-1.5 text-sm text-hero-ink transition-colors hover:bg-hero-ink/10"
+              className="self-center rounded-full border border-border-soft px-4 py-1.5 text-sm text-ink-secondary transition-colors hover:text-ink"
             >
               {copied ? "Copié !" : "Copier le badge à partager"}
             </button>
@@ -690,7 +729,7 @@ export default function Home() {
         {mode === "site" && (discovery || pages.length > 0) && (
           <div className="flex flex-col gap-6">
             {discovery && (
-              <p className="text-center font-mono text-xs text-hero-ink/70">
+              <p className="text-center font-mono text-xs text-ink-muted">
                 {discovery.totalFoundIsApproximate ? `${discovery.totalFound}+` : discovery.totalFound} page(s) trouvée(s) via{" "}
                 {discovery.source === "sitemap" ? "le sitemap" : "les liens de la page d'accueil (pas de sitemap trouvé)"}
                 {discovery.capped ? ` — ${pages.length} analysées (plafond de 20)` : ""} · {completedCount}/{pages.length} traitées
@@ -698,19 +737,19 @@ export default function Home() {
             )}
 
             {siteAverage !== null && (
-              <div className="flex flex-col items-center gap-2 text-center">
-                <span className="text-sm text-hero-ink/70">{discovery?.hostname}</span>
-                <span className="font-display text-6xl font-black tabular-nums text-hero-ink">
+              <div className="flex flex-col items-center gap-2 rounded-2xl border border-border-soft bg-surface p-6 text-center sm:p-8">
+                <span className="text-sm text-ink-muted">{discovery?.hostname}</span>
+                <span className="font-display text-6xl font-normal tabular-nums text-ink">
                   {siteAverage}
-                  <span className="text-2xl text-hero-ink/60">/100</span>
+                  <span className="text-2xl text-ink-muted">/100</span>
                 </span>
-                <StatusPill ratio={siteAverage / 100} variant="hero" />
-                <span className="text-xs text-hero-ink/70">
+                <StatusPill ratio={siteAverage / 100} />
+                <span className="text-xs text-ink-muted">
                   Moyenne sur {doneResults.length} page(s) analysée(s){erroredPages.length > 0 ? ` · ${erroredPages.length} en échec` : ""}
                 </span>
                 <button
                   onClick={handleCopySiteBadge}
-                  className="mt-2 rounded-full border border-hero-ink/50 px-4 py-1.5 text-sm text-hero-ink transition-colors hover:bg-hero-ink/10"
+                  className="mt-2 rounded-full border border-border-soft px-4 py-1.5 text-sm text-ink-secondary transition-colors hover:text-ink"
                 >
                   {siteCopied ? "Copié !" : "Copier le badge à partager"}
                 </button>
@@ -726,7 +765,7 @@ export default function Home() {
               />
             )}
 
-            <div className="flex flex-col gap-6 rounded-xl border border-border bg-surface p-6">
+            <div className="flex flex-col gap-6 rounded-2xl border border-border-soft bg-surface p-6">
               {aggregatedCategories.length > 0 && (
                 <div className="flex flex-col gap-4">
                   <h2 className="text-sm font-medium text-ink">Moyennes du site par catégorie</h2>
@@ -754,7 +793,7 @@ export default function Home() {
               {discovery?.agentReadiness && <AgentReadinessSection readiness={discovery.agentReadiness} />}
 
               {weakestPages.length > 0 && (
-                <div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning-tint p-4">
+                <div className="flex flex-col gap-2 rounded-2xl border border-warning/30 bg-warning-tint p-4">
                   <h2 className="text-sm font-medium text-warning">Pages à améliorer en priorité</h2>
                   <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
                     {weakestPages.map((p) => (
@@ -812,12 +851,12 @@ export default function Home() {
           </div>
         )}
 
-        <details className="rounded-lg border border-hero-ink/40 px-4 py-3 text-sm text-hero-ink/80 open:pb-4">
-          <summary className="cursor-pointer font-medium text-hero-ink">Méthodologie & sources</summary>
-          <div className="mt-3 flex flex-col gap-2 text-xs leading-relaxed">
+        <details id="methodologie" className="scroll-mt-20 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-sm text-ink-secondary open:pb-4">
+          <summary className="cursor-pointer font-medium text-ink">Méthodologie & sources</summary>
+          <div className="mt-3 flex flex-col gap-2 text-xs leading-relaxed text-ink-muted">
             <p>
               La pondération s&apos;appuie sur trois sources publiques : l&apos;étude{" "}
-              <span className="font-medium text-hero-ink">
+              <span className="font-medium text-ink-secondary">
                 « GEO: Generative Engine Optimization » (Aggarwal et al., 2023, arXiv:2311.09735)
               </span>
               , dont le résultat le plus robuste — citer des sources et ajouter des statistiques/citations augmente
@@ -831,8 +870,8 @@ export default function Home() {
               internes.
             </p>
             <p>
-              <span className="font-medium text-hero-ink">Sélection des 20 pages (mode « Site entier »)</span> : chaque
-              URL découverte est classée par motif d&apos;URL (Accueil, Pricing, Produit, Ressources, À propos,
+              <span className="font-medium text-ink-secondary">Sélection des 20 pages (mode « Site entier »)</span> :
+              chaque URL découverte est classée par motif d&apos;URL (Accueil, Pricing, Produit, Ressources, À propos,
               Carrières, Contact, Légal, Autre — aucun appel IA, juste une lecture du chemin) puis choisie par quota
               par catégorie (accueil, pricing, produit, ressources, à propos, carrières, contact) pour obtenir un
               échantillon représentatif de la structure du site plutôt qu&apos;un tri arbitraire — par exemple les 20
@@ -844,32 +883,47 @@ export default function Home() {
               plus probablement important »).
             </p>
             <p>
-              <span className="font-medium text-hero-ink">Déduplication & exclusions</span> : deux URLs qui ne diffèrent
-              que par un préfixe de langue (ex.{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/fr/pricing</code> et{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">/pricing</code>) sont fusionnées — seule
+              <span className="font-medium text-ink-secondary">Déduplication & exclusions</span> : deux URLs qui ne
+              diffèrent que par un préfixe de langue (ex.{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">/fr/pricing</code> et{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">/pricing</code>) sont fusionnées — seule
               la version sans préfixe est conservée, pour ne pas occuper deux places de l&apos;échantillon avec la
               même page. Les pages de compte, connexion, mentions légales, confidentialité, etc. sont exclues
               d&apos;office : elles ne concernent ni le produit ni le contenu éditorial du site.
             </p>
             <p>
-              <span className="font-medium text-hero-ink">Accessibilité aux agents IA</span> : en complément du score
-              GEO (visibilité dans une réponse générée), l&apos;outil vérifie si le site est directement exploitable
-              par un agent IA autonome — présence d&apos;un{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">llms.txt</code>, autorisation des
-              robots IA (GPTBot, ClaudeBot, PerplexityBot, Google-Extended...) et directive Content-Signal dans{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">robots.txt</code>,{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">sitemap.xml</code>, en-têtes{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">Link</code> (RFC 8288), négociation de
+              <span className="font-medium text-ink-secondary">Accessibilité aux agents IA</span> : en complément du
+              score GEO (visibilité dans une réponse générée), l&apos;outil vérifie si le site est directement
+              exploitable par un agent IA autonome — présence d&apos;un{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">llms.txt</code>, autorisation des robots
+              IA (GPTBot, ClaudeBot, PerplexityBot, Google-Extended...) et directive Content-Signal dans{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">robots.txt</code>,{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">sitemap.xml</code>, en-têtes{" "}
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">Link</code> (RFC 8288), négociation de
               contenu Markdown, et support WebMCP. Si aucun{" "}
-              <code className="rounded bg-hero-ink/10 px-1 py-0.5 font-mono">llms.txt</code> n&apos;est trouvé, un
-              brouillon est généré automatiquement par IA à partir du contenu réel de la page d&apos;accueil (à
-              relire avant publication).
+              <code className="rounded bg-border-soft px-1 py-0.5 font-mono">llms.txt</code> n&apos;est trouvé, un
+              brouillon est généré automatiquement par IA à partir du contenu réel de la page d&apos;accueil (à relire
+              avant publication).
             </p>
           </div>
         </details>
+      </div>
+
+      <footer className="relative overflow-hidden border-t border-border-soft px-6 pt-16">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 pb-10 text-center">
+          <p className="font-display text-2xl">Vérificateur de Score GEO</p>
+          <p className="max-w-md text-sm text-ink-muted">
+            Analysez la visibilité GEO de vos pages dans les réponses des moteurs IA — un projet gratuit des Sysy&apos;s
+            GTM Projects.
+          </p>
         </div>
-      </main>
-    </div>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-4 border-t border-border-soft py-6 text-xs text-ink-muted">
+          <p>&copy; {new Date().getFullYear()} Sysy&apos;s GTM Projects. Tous droits réservés.</p>
+        </div>
+        <div className="pointer-events-none flex justify-center overflow-hidden pb-2 text-center">
+          <p className="footer-wordmark">Score GEO</p>
+        </div>
+      </footer>
+    </main>
   );
 }
