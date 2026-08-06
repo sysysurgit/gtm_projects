@@ -14,7 +14,7 @@ export async function notifyAdminNewSignup(userEmail: string): Promise<void> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Hooks <onboarding@resend.dev>",
+        from: "Sysy's GTM Projects <onboarding@resend.dev>",
         to: [ADMIN_EMAIL],
         subject: `🪝 Nouvel inscrit Hooks : ${userEmail}`,
         text: `Nouvelle inscription sur Hooks.\n\nEmail : ${userEmail}\nDate : ${new Date().toISOString()}`,
