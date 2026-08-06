@@ -1,6 +1,7 @@
 import { Type } from "@google/genai";
 import { gemini } from "./client";
 import { getFormatSpec, PLATFORMS } from "@/lib/ad-platforms";
+import { getCreativeStyle } from "@/lib/creative-styles";
 import type { Brief, GenerationResult, HookCard } from "@/lib/types";
 
 // gemini-3.5-flash is effectively unusable on the free tier for a public
@@ -34,7 +35,12 @@ const COPYWRITING_TECHNIQUES = `- AIDA (Attention-Intérêt-Désir-Action)
 - Urgence / FOMO : fenêtre de temps, opportunité limitée, coût de l'inaction
 - Spécificité comme preuve de crédibilité : chiffres précis, délais précis, plutôt que des superlatifs vagues`;
 
-function buildSystemPrompt(platformLabel: string, formatLabel: string, guidance: string): string {
+function buildSystemPrompt(
+  platformLabel: string,
+  formatLabel: string,
+  guidance: string,
+  styleGuidance?: string
+): string {
   return `Tu es un copywriter direct-response senior, spécialisé en publicité payante B2B (LinkedIn, Meta, Google, Reddit Ads). Tu ne produis JAMAIS de paragraphe marketing générique — un hook est UNE ligne qui arrête le scroll, pas une présentation produit.
 
 RÈGLE ABSOLUE SUR LE "title" — LA PLUS IMPORTANTE DE CE PROMPT :
@@ -55,7 +61,7 @@ ${COPYWRITING_TECHNIQUES}
 
 Régie : ${platformLabel} — Format : ${formatLabel}
 ${guidance}
-
+${styleGuidance ? `\nDIRECTION CRÉATIVE IMPOSÉE POUR CETTE GÉNÉRATION :\n${styleGuidance}\nCette direction créative prime sur le ton par défaut, mais jamais sur la RÈGLE ABSOLUE du title en une seule phrase ni sur les contraintes de caractères de la régie.\n` : ""}
 Méthode de travail obligatoire : pour chaque angle, rédige d'abord un brouillon, critique-le toi-même honnêtement (pouvoir d'arrêt au scroll, clarté, une seule phrase, spécificité, adéquation avec le format et la régie, alignement avec l'offre et la cible), puis retravaille-le jusqu'à ce qu'il soit vraiment bon — en particulier, vérifie que le title n'est jamais devenu deux phrases collées. Ne renvoie que le résultat final retravaillé — jamais le premier jet, jamais de version faible. GÉNÈRE EXACTEMENT ${CARDS_PER_GENERATION} cards.`;
 }
 
@@ -207,10 +213,11 @@ export async function generateHooks(brief: Brief): Promise<GenerateHooksResult> 
     throw new Error(`Unknown platform/format combination: ${brief.platform}/${brief.adFormat}`);
   }
   const platformLabel = PLATFORMS[brief.platform].label;
+  const style = getCreativeStyle(brief.creativeStyle);
 
   const constraintsLine = `Contraintes strictes : title ≤ ${formatSpec.titleMaxChars} caractères, description ≤ ${formatSpec.descriptionMaxChars} caractères, cta ≤ ${formatSpec.ctaMaxChars} caractères. Compte les caractères, ne dépasse jamais.`;
 
-  const systemPrompt = `${buildSystemPrompt(platformLabel, formatSpec.label, formatSpec.promptGuidance)}\n\n${constraintsLine}`;
+  const systemPrompt = `${buildSystemPrompt(platformLabel, formatSpec.label, formatSpec.promptGuidance, style?.guidance)}\n\n${constraintsLine}`;
   const userPromptText = buildUserPrompt(brief, platformLabel, formatSpec.label);
 
   const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [];

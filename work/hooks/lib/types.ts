@@ -8,6 +8,10 @@ export interface Brief {
   adFormat: string;
   budgetRange: BudgetRange;
   funnelStage: FunnelStage;
+  // Direction créative optionnelle : id d'un CreativeStyle (lib/creative-styles.ts)
+  // — "comment [publicitaire/agence] l'aurait fait". null/undefined = pas de
+  // style imposé, comportement identique à avant cette feature.
+  creativeStyle?: string | null;
   // Catégorie 1 : mon produit
   industry: string;
   productOffer: string;

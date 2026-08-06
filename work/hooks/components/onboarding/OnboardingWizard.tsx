@@ -6,7 +6,7 @@ import { RefreshCw, ArrowLeft, ArrowRight, Upload, X } from "lucide-react";
 import { PLATFORMS, type PlatformId } from "@/lib/ad-platforms";
 import type { BudgetRange, FunnelStage, GenerationResult, DefaultBrief } from "@/lib/types";
 import { GenerationResultView } from "@/components/GenerationResultView";
-import { BUDGET_OPTIONS, FUNNEL_OPTIONS, TEXT_FIELDS, transitionVariants, type TextFieldId } from "@/lib/brief-options";
+import { BUDGET_OPTIONS, FUNNEL_OPTIONS, CREATIVE_STYLE_OPTIONS, TEXT_FIELDS, transitionVariants, type TextFieldId } from "@/lib/brief-options";
 import { readPendingPresignupBrief } from "@/lib/pending-brief";
 import { ChoiceCard } from "@/components/ChoiceCard";
 
@@ -32,6 +32,7 @@ function buildStepIds(skipPlatform: boolean, skipBudget: boolean, skipFunnel: bo
   ids.push("format");
   if (!skipBudget) ids.push("budget");
   if (!skipFunnel) ids.push("funnel");
+  ids.push("style");
   for (const f of TEXT_FIELDS) {
     if (f.id === "persona" && skipPersona) continue;
     if (f.id === "targetPainsObjections" && skipPain) continue;
@@ -47,6 +48,7 @@ type StepId =
   | "format"
   | "budget"
   | "funnel"
+  | "style"
   | TextFieldId
   | "visual";
 
@@ -81,6 +83,10 @@ export function OnboardingWizard({
   const [funnelStage, setFunnelStage] = useState<FunnelStage | null>(
     pendingBrief?.funnelStage ?? defaultBrief?.funnelStage ?? null
   );
+  // "none" = pas de direction créative imposée (comportement historique).
+  // Distinct de null pour que ChoiceCard puisse afficher "Aucun style
+  // particulier" comme une option sélectionnable au même titre que les autres.
+  const [creativeStyle, setCreativeStyle] = useState<string>(defaultBrief?.creativeStyle ?? "none");
 
   const [fields, setFields] = useState<Record<TextFieldId, string>>({
     industry: defaultBrief?.industry ?? "",
@@ -151,6 +157,10 @@ export function OnboardingWizard({
     setFunnelStage(v);
     setTimeout(goNext, 180);
   }
+  function selectStyle(v: string) {
+    setCreativeStyle(v);
+    setTimeout(goNext, 180);
+  }
 
   function handleVisualChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -201,6 +211,7 @@ export function OnboardingWizard({
         adFormat,
         budgetRange,
         funnelStage,
+        creativeStyle: creativeStyle === "none" ? null : creativeStyle,
         ...fields,
         visualBase64,
         visualMediaType,
@@ -420,6 +431,26 @@ export function OnboardingWizard({
                       hint={o.hint}
                       selected={funnelStage === o.value}
                       onClick={() => selectFunnel(o.value)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {stepId === "style" && (
+              <div>
+                <h1 className="font-display text-3xl sm:text-4xl font-normal mb-2">Des hooks comme... ?</h1>
+                <p className="text-ink-muted mb-8">
+                  Optionnel — Hooks s&apos;inspire du style et de la philosophie créative d&apos;un publicitaire ou d&apos;une agence culte. Ludique, en plus d&apos;être utile.
+                </p>
+                <div className="grid gap-3 max-h-[420px] overflow-y-auto pr-1 sm:grid-cols-2">
+                  {CREATIVE_STYLE_OPTIONS.map((o) => (
+                    <ChoiceCard
+                      key={o.value}
+                      label={o.label}
+                      hint={o.hint}
+                      selected={creativeStyle === o.value}
+                      onClick={() => selectStyle(o.value)}
                     />
                   ))}
                 </div>

@@ -1,4 +1,5 @@
 import type { BudgetRange, FunnelStage } from "@/lib/types";
+import { CREATIVE_STYLES } from "@/lib/creative-styles";
 
 // Options et métadonnées de brief partagées entre le wizard pré-inscription
 // de la landing (PreSignupWizard) et le wizard post-compte (OnboardingWizard)
@@ -15,6 +16,12 @@ export const FUNNEL_OPTIONS: { value: FunnelStage; label: string; hint: string }
   { value: "awareness", label: "Awareness", hint: "Faire connaître, top of funnel" },
   { value: "consideration", label: "Consideration", hint: "Comparaison, preuve, différenciation" },
   { value: "action", label: "Action", hint: "Conversion, offre, appel à l'action direct" },
+];
+
+// Option "pas de style imposé" toujours en tête + les 12 publicitaires/agences.
+export const CREATIVE_STYLE_OPTIONS: { value: string; label: string; hint: string }[] = [
+  { value: "none", label: "Aucun style particulier", hint: "Le hook le plus efficace, sans direction imposée" },
+  ...CREATIVE_STYLES.map((s) => ({ value: s.id, label: s.name, hint: `${s.org} — ${s.hint}` })),
 ];
 
 export type TextFieldId =
