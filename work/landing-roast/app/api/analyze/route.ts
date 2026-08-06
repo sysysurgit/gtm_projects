@@ -48,7 +48,17 @@ export async function POST(req: NextRequest) {
     // 1. Screenshot + extraction HTML
     const isProduction = process.env.VERCEL_ENV === "production";
     const browser = await puppeteer.launch({
-      args: isProduction ? chromium.args : ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: isProduction
+        ? [
+            ...chromium.args,
+            "--disable-gpu",
+            "--disable-dev-shm-usage",
+            "--no-first-run",
+            "--no-zygote",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+          ]
+        : ["--no-sandbox", "--disable-setuid-sandbox"],
       executablePath: isProduction
         ? await chromium.executablePath()
         : process.platform === "win32"
@@ -57,6 +67,18 @@ export async function POST(req: NextRequest) {
             ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
             : "/usr/bin/google-chrome",
       headless: true,
+      // @sparticuz/chromium's executablePath() decompresses the Chromium
+      // binary AND its shared libs (libnss3.so...) to /tmp. Puppeteer's
+      // child_process spawn can miss env mutations made just before launch
+      // in some Lambda contexts, so pass LD_LIBRARY_PATH explicitly.
+      ...(isProduction
+        ? {
+            env: {
+              ...process.env,
+              LD_LIBRARY_PATH: ["/tmp", process.env.LD_LIBRARY_PATH].filter(Boolean).join(":"),
+            },
+          }
+        : {}),
     });
 
     const page = await browser.newPage();
