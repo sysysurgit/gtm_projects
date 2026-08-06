@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` },
@@ -24,6 +24,12 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  // Supabase renvoie un succès "silencieux" (identities vide) quand l'email existe déjà,
+  // pour éviter l'énumération de comptes. On détecte ce cas pour rediriger vers la connexion.
+  if (data.user && data.user.identities && data.user.identities.length === 0) {
+    return NextResponse.json({ error: "EMAIL_ALREADY_REGISTERED" }, { status: 409 });
   }
 
   // Best-effort, ne bloque jamais la réponse au user.

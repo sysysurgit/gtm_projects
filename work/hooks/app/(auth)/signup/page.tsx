@@ -23,6 +23,10 @@ export default function SignupPage() {
     setLoading(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
+      if (data.error === "EMAIL_ALREADY_REGISTERED") {
+        router.push(`/login?notice=account_exists&email=${encodeURIComponent(email)}`);
+        return;
+      }
       setError(
         data.error === "RATE_LIMITED"
           ? "Trop de tentatives, réessaie plus tard."
