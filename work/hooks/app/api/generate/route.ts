@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { generateHooks, MODEL } from "@/lib/gemini/generate-hooks";
+import { generateHooksDeepSeek, MODEL } from "@/lib/deepseek/generate-hooks";
 import { getFormatSpec, PLATFORMS, type PlatformId } from "@/lib/ad-platforms";
 import type { Brief, DefaultBrief } from "@/lib/types";
 
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await generateHooks(brief);
+    const result = await generateHooksDeepSeek(brief);
     const { promptTokens, completionTokens, ...output } = result;
 
     // Profil : prénom/marque (si fournis) + brief par défaut pour préremplir
@@ -172,7 +172,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ...output, remaining: claim.remaining });
   } catch (err) {
-    console.error("generateHooks failed", err);
+    console.error("generateHooksDeepSeek failed", err);
     await supabaseAdmin.rpc("release_generation_slot", { p_user_id: user.id });
     await supabaseAdmin.from("generations").insert({
       user_id: user.id,
