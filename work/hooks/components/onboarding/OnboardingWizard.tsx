@@ -20,24 +20,28 @@ const MAX_VISUAL_BYTES = 5 * 1024 * 1024;
 // landing (régie, budget, funnel, persona, painpoint). "format" reste
 // toujours demandé ici : il dépend de la régie mais n'est jamais posé avant
 // inscription. Les champs produit/preuves/concurrence restants sont ceux
-// dans TEXT_FIELDS moins persona/targetPainsObjections.
+// dans TEXT_FIELDS moins persona/targetPainsObjections. Le style créatif
+// ("Des hooks comme...") est TOUJOURS la dernière étape du formulaire, sauf
+// s'il est déjà défini dans le profil entreprise (skipStyle) — dans ce cas
+// il ne doit pas être redemandé et la valeur du profil s'applique.
 const PRESIGNUP_COVERABLE_STEPS = ["platform", "budget", "funnel"] as const;
 const REMAINING_TEXT_FIELDS = TEXT_FIELDS.filter(
   (f) => f.id !== "persona" && f.id !== "targetPainsObjections"
 );
 
-function buildStepIds(skipPlatform: boolean, skipBudget: boolean, skipFunnel: boolean, skipPersona: boolean, skipPain: boolean) {
+function buildStepIds(skipPlatform: boolean, skipBudget: boolean, skipFunnel: boolean, skipPersona: boolean, skipPain: boolean, skipStyle: boolean) {
   const ids: string[] = ["profile"];
   if (!skipPlatform) ids.push("platform");
   ids.push("format");
   if (!skipBudget) ids.push("budget");
   if (!skipFunnel) ids.push("funnel");
-  ids.push("style");
   for (const f of TEXT_FIELDS) {
     if (f.id === "persona" && skipPersona) continue;
     if (f.id === "targetPainsObjections" && skipPain) continue;
     ids.push(f.id);
   }
+  // Style en dernier élément du formulaire (juste avant le visuel optionnel)
+  if (!skipStyle) ids.push("style");
   ids.push("visual");
   return ids as StepId[];
 }
@@ -56,10 +60,14 @@ export function OnboardingWizard({
   initialFirstName,
   initialBrandName,
   defaultBrief,
+  profileCreativeStyle,
 }: {
   initialFirstName: string;
   initialBrandName: string;
   defaultBrief: DefaultBrief | null;
+  // Style créatif défini dans le profil entreprise ("Des hooks comme...") —
+  // "none" ou null = pas de style imposé côté entreprise.
+  profileCreativeStyle: string;
 }) {
   // Lu une seule fois via l'initialiseur paresseux de useState (pas un
   // effect) pour éviter un second render juste pour appliquer les valeurs —
@@ -86,7 +94,10 @@ export function OnboardingWizard({
   // "none" = pas de direction créative imposée (comportement historique).
   // Distinct de null pour que ChoiceCard puisse afficher "Aucun style
   // particulier" comme une option sélectionnable au même titre que les autres.
-  const [creativeStyle, setCreativeStyle] = useState<string>(defaultBrief?.creativeStyle ?? "none");
+  // Priorité : brief (defaultBrief/template) > profil entreprise > none.
+  const [creativeStyle, setCreativeStyle] = useState<string>(
+    defaultBrief?.creativeStyle || (profileCreativeStyle && profileCreativeStyle !== "none" ? profileCreativeStyle : "none")
+  );
 
   const [fields, setFields] = useState<Record<TextFieldId, string>>({
     industry: defaultBrief?.industry ?? "",
@@ -140,7 +151,9 @@ export function OnboardingWizard({
 
   // Le brief pré-signup couvre régie/budget/funnel/persona/painpoint : ces
   // étapes ne sont posées ici que si elles manquent encore (ex. compte créé
-  // via /signup direct, sans passer par le wizard de la landing).
+  // via /signup direct, sans passer par le wizard de la landing). Le style
+  // est sauté si le profil entreprise en impose un (skipStyle).
+  const skipStyle = Boolean(profileCreativeStyle && profileCreativeStyle !== "none");
   const STEP_IDS = useMemo(
     () =>
       buildStepIds(
@@ -148,9 +161,10 @@ export function OnboardingWizard({
         Boolean(pendingBrief?.budgetRange),
         Boolean(pendingBrief?.funnelStage),
         Boolean(pendingBrief?.persona),
-        Boolean(pendingBrief?.targetPainsObjections)
+        Boolean(pendingBrief?.targetPainsObjections),
+        skipStyle
       ),
-    [pendingBrief]
+    [pendingBrief, skipStyle]
   );
   const stepId: StepId = STEP_IDS[stepIndex];
 

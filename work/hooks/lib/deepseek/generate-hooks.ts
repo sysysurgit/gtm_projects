@@ -51,7 +51,7 @@ async function callDeepSeek(
         maxTokens: 1200,
         thinking: false,
         jsonMode: true,
-        timeoutMs: 15000,
+        timeoutMs: 20000,
       });
       const rawCards = extractCardsArray(content);
       return {
@@ -62,10 +62,14 @@ async function callDeepSeek(
     } catch (err) {
       lastError = err;
       console.error(`generateHooksDeepSeek: DeepSeek call failed (attempt ${attempt}/${MAX_ATTEMPTS})`, err);
-      // 429/401/408(timeout) échoueront identiquement ou trop lentement au
-      // retry — ne pas gaspiller un second appel (et du temps) sur une
-      // requête qui ne peut pas réussir dans le budget.
-      if (err instanceof DeepSeekApiError && (err.status === 429 || err.status === 401 || err.status === 408)) {
+      // 429/401 échoueront identiquement au retry — ne pas gaspiller un
+      // second appel (et du temps) sur une requête qui ne peut pas réussir.
+      // 408 (timeout) est RETENTÉ au contraire : au premier appel après un
+      // cold start Vercel, le délai réseau peut dépasser le budget même si
+      // l'API répond correctement — le retry sur fonction chaude passe dans
+      // la grande majorité des cas (cause du "première génération échoue,
+      // la régénération marche").
+      if (err instanceof DeepSeekApiError && (err.status === 429 || err.status === 401)) {
         break;
       }
     }

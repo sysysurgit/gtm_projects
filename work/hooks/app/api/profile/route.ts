@@ -33,6 +33,9 @@ export async function PATCH(request: Request) {
   if (typeof body.complianceNotes === "string") {
     update.compliance_notes = body.complianceNotes.trim() || null;
   }
+  if (typeof body.defaultCreativeStyle === "string") {
+    update.default_creative_style = body.defaultCreativeStyle.trim() || null;
+  }
 
   const { error } = await supabaseAdmin.from("profiles").update(update).eq("id", user.id);
   if (error) {

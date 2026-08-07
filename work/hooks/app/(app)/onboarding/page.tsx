@@ -17,7 +17,7 @@ export default async function OnboardingPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name, brand_name, default_brief")
+    .select("first_name, brand_name, default_brief, default_creative_style")
     .eq("id", user.id)
     .single();
 
@@ -39,6 +39,7 @@ export default async function OnboardingPage({
       initialFirstName={profile?.first_name ?? ""}
       initialBrandName={profile?.brand_name ?? ""}
       defaultBrief={templateBrief ?? (profile?.default_brief as DefaultBrief | null) ?? null}
+      profileCreativeStyle={profile?.default_creative_style ?? "none"}
     />
   );
 }

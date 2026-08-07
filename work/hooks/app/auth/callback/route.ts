@@ -4,15 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next"); // Pour gérer le flow PreSignupWizard
 
   if (code) {
     const supabase = await createClient();
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  // Si next=onboarding, on va direct à onboarding (flow PreSignupWizard)
-  // Sinon, on passe par la sélection de templates
-  const destination = next === "onboarding" ? "/onboarding" : "/templates";
-  return NextResponse.redirect(`${origin}${destination}`);
+  // À l'inscription, la première chose à compléter est le profil entreprise
+  // (étape 1 du onboarding), puis le tour guidé des onglets démarre après
+  // sauvegarde (voir ProfileForm). Le paramètre next=onboarding (flow
+  // PreSignupWizard de la landing) pointe lui aussi vers le profil d'abord.
+  return NextResponse.redirect(`${origin}/profile?onboarding=1`);
 }

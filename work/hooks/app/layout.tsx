@@ -27,6 +27,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       lang="fr"
       className={`${libreBaskerville.variable} ${geist.variable} h-full antialiased`}
     >
+      <head>
+        {/* Applique le thème (dark par défaut / light si choisi) avant la
+            première peinture pour éviter le flash. Le toggle vit dans l'app
+            layout (visible une fois connecté) ; la landing suit le choix. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("hooks-theme");if(t==="light"){document.documentElement.setAttribute("data-theme","light")}}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

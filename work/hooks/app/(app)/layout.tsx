@@ -3,14 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X, Building2, LogOut, Trash2 } from "lucide-react";
+import { Menu, X, Building2, LogOut, Trash2, Sun, Moon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { AppTour } from "@/components/AppTour";
 
 const NAV_LINKS = [
-  { href: "/onboarding", label: "Générer" },
-  { href: "/templates", label: "Templates" },
-  { href: "/favorites", label: "Favoris" },
-  { href: "/dashboard", label: "Historique" },
+  { href: "/onboarding", label: "Générer", tour: "generate" },
+  { href: "/templates", label: "Templates", tour: "templates" },
+  { href: "/favorites", label: "Favoris", tour: "favorites" },
+  { href: "/dashboard", label: "Historique", tour: "history" },
 ];
 
 interface UsageInfo {
@@ -26,7 +27,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [usage, setUsage] = useState<UsageInfo | null>(null);
+  const [isLight, setIsLight] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Thème : initialisé depuis <html data-theme> (déjà appliqué par le script
+  // anti-flash du root layout), togglé + persisté en localStorage.
+  useEffect(() => {
+    setIsLight(document.documentElement.getAttribute("data-theme") === "light");
+  }, []);
+
+  function toggleTheme() {
+    const next = !isLight;
+    setIsLight(next);
+    document.documentElement.setAttribute("data-theme", next ? "light" : "");
+    try {
+      localStorage.setItem("hooks-theme", next ? "light" : "dark");
+    } catch {
+      /* localStorage indisponible (mode privé strict) — thème non persisté */
+    }
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -127,14 +146,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           <nav className="hidden items-center gap-6 text-sm text-ink-secondary sm:flex">
             {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className="transition-colors hover:text-ink">
+              <Link
+                key={l.href}
+                href={l.href}
+                data-tour={l.tour}
+                className="transition-colors hover:text-ink"
+              >
                 {l.label}
               </Link>
             ))}
+            <button
+              onClick={toggleTheme}
+              aria-label={isLight ? "Passer en mode sombre" : "Passer en mode clair"}
+              title={isLight ? "Mode sombre" : "Mode clair"}
+              className="text-ink-muted transition-colors hover:text-ink"
+            >
+              {isLight ? <Moon className="h-4 w-4" strokeWidth={1.75} /> : <Sun className="h-4 w-4" strokeWidth={1.75} />}
+            </button>
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setProfileMenuOpen((v) => !v)}
                 aria-label="Menu profil entreprise"
+                data-tour="profile"
                 className="text-ink-muted transition-colors hover:text-ink"
               >
                 <Building2 className="h-4 w-4" strokeWidth={1.75} />
@@ -208,6 +241,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {l.label}
               </Link>
             ))}
+            <button
+              onClick={() => {
+                toggleTheme();
+                setMenuOpen(false);
+              }}
+              className="flex items-center gap-2 text-left transition-colors hover:text-ink"
+            >
+              {isLight ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              {isLight ? "Mode sombre" : "Mode clair"}
+            </button>
             <Link
               href="/profile"
               onClick={() => setMenuOpen(false)}
@@ -234,6 +277,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">{children}</main>
+
+      {/* Tour guidé post-inscription (une seule fois, après le profil entreprise) */}
+      <AppTour />
 
       {/* Modal de confirmation de suppression */}
       {deleteConfirmOpen && (

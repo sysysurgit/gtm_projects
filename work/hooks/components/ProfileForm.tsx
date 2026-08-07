@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Building2, Check } from "lucide-react";
+import { CREATIVE_STYLE_OPTIONS } from "@/lib/brief-options";
 
 export function ProfileForm({
   initialFirstName,
@@ -9,16 +11,24 @@ export function ProfileForm({
   initialCompanyDescription,
   initialBrandTone,
   initialComplianceNotes,
+  initialDefaultCreativeStyle,
+  onboarding = false,
 }: {
   initialFirstName: string;
   initialBrandName: string;
   initialCompanyDescription: string;
   initialBrandTone: string;
   initialComplianceNotes: string;
+  initialDefaultCreativeStyle: string;
+  // Mode première inscription : bannière d'étape + lance le tour guidé des
+  // onglets après sauvegarde (voir AppTour).
+  onboarding?: boolean;
 }) {
+  const router = useRouter();
   const [companyDescription, setCompanyDescription] = useState(initialCompanyDescription);
   const [brandTone, setBrandTone] = useState(initialBrandTone);
   const [complianceNotes, setComplianceNotes] = useState(initialComplianceNotes);
+  const [defaultCreativeStyle, setDefaultCreativeStyle] = useState(initialDefaultCreativeStyle);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +49,7 @@ export function ProfileForm({
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companyDescription, brandTone, complianceNotes }),
+      body: JSON.stringify({ companyDescription, brandTone, complianceNotes, defaultCreativeStyle }),
     });
     setSaving(false);
 
@@ -48,11 +58,35 @@ export function ProfileForm({
       return;
     }
     setSaved(true);
+
+    if (onboarding) {
+      // Étape 1 terminée → lance le tour guidé des onglets (AppTour),
+      // puis redirige vers Templates (point de départ du tour).
+      try {
+        localStorage.setItem("hooks-tour-pending", "1");
+      } catch {
+        /* localStorage indisponible — pas de tour, pas bloquant */
+      }
+      setTimeout(() => router.push("/templates"), 700);
+      return;
+    }
     setTimeout(() => setSaved(false), 2500);
   }
 
   return (
     <div>
+      {onboarding && (
+        <div className="mb-8 rounded-2xl border border-accent/30 bg-accent-tint/60 p-5">
+          <p className="font-display text-xl font-normal">
+            Bienvenue ! Première étape : ton profil entreprise.
+          </p>
+          <p className="mt-1 text-sm text-ink-secondary">
+            Complète ces infos une fois — elles s&apos;appliqueront à toutes tes générations.
+            Ensuite, on te fait visiter l&apos;app. 🎉
+          </p>
+        </div>
+      )}
+
       <div className="mb-8 flex items-center gap-3">
         <div className="icon-tile h-11 w-11 shrink-0">
           <Building2 size={20} strokeWidth={1.75} className="text-link" />
@@ -124,6 +158,28 @@ export function ProfileForm({
             placeholder={complianceNotesPlaceholder}
             className="w-full rounded-lg border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-accent"
           />
+        </div>
+
+        <div>
+          <label htmlFor="creative-style" className="mb-2 block text-sm font-medium text-ink-secondary">
+            Style créatif par défaut
+          </label>
+          <p className="mb-2 text-xs text-ink-muted">
+            Le style « Des hooks comme... » appliqué automatiquement à toutes tes générations.
+            Si un style est défini ici, il ne sera plus demandé dans le formulaire de génération.
+          </p>
+          <select
+            id="creative-style"
+            value={defaultCreativeStyle}
+            onChange={(e) => setDefaultCreativeStyle(e.target.value)}
+            className="w-full rounded-lg border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-accent"
+          >
+            {CREATIVE_STYLE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {error && <p className="text-sm text-critical">{error}</p>}

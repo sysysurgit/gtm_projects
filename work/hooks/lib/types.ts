@@ -45,6 +45,9 @@ export interface Profile {
   companyDescription: string | null;
   brandTone: string | null;
   complianceNotes: string | null;
+  // Style créatif par défaut de l'entreprise ("Des hooks comme...") — si
+  // défini, s'applique à toutes les générations sans être redemandé.
+  defaultCreativeStyle: string | null;
 }
 
 export interface HookCard {
