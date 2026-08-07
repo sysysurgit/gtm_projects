@@ -1,8 +1,19 @@
 import { getFormatSpec, PLATFORMS } from "@/lib/ad-platforms";
-import { buildSystemPrompt, buildUserPrompt, buildCreativeStyleGuidance, isCompliant, CARDS_PER_GENERATION, type RawCard } from "@/lib/hook-prompts";
+import {
+  buildSystemPrompt,
+  buildUserPrompt,
+  buildCreativeStyleGuidance,
+  buildRsaSystemPrompt,
+  buildRsaUserPrompt,
+  isCompliant,
+  RSA_HEADLINES_COUNT,
+  RSA_DESCRIPTIONS_COUNT,
+  CARDS_PER_GENERATION,
+  type RawCard,
+} from "@/lib/hook-prompts";
 import { deepseekChatCompletion, DeepSeekApiError } from "@/lib/deepseek/client";
 import { describeVisual } from "@/lib/gemini/describe-image";
-import type { Brief, GenerationResult, HookCard } from "@/lib/types";
+import type { Brief, GenerationResult, HookCard, RsaPack } from "@/lib/types";
 
 // DeepSeek v4-flash, thinking désactivé : réponse en ~1-2s côté API (mesuré),
 // contre v4-pro thinking=enabled qui peut dépasser 15-20s voire cramer tout
@@ -32,10 +43,16 @@ function extractCardsArray(content: string): RawCard[] {
   throw new Error("Réponse DeepSeek : impossible de trouver un tableau de cards dans le JSON.");
 }
 
-async function callDeepSeek(
+// Appel générique : renvoie l'objet JSON racine parsé. Le retry absorbe les
+// échecs transitoires (JSON tronqué, parse error) ; 429/401 ne sont pas
+// retryés (échec certain), 408 (timeout) SI — au premier appel après un cold
+// start Vercel, le délai réseau peut dépasser le budget même si l'API répond
+// correctement ; le retry sur fonction chaude passe dans la grande majorité
+// des cas (cause du "première génération échoue, la régénération marche").
+async function callDeepSeekJson(
   systemPrompt: string,
   userPrompt: string
-): Promise<{ rawCards: RawCard[]; promptTokens: number; completionTokens: number }> {
+): Promise<{ json: Record<string, unknown>; promptTokens: number; completionTokens: number }> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
@@ -44,37 +61,41 @@ async function callDeepSeek(
         messages: [
           {
             role: "system",
-            content: `${systemPrompt}\n\nRéponds UNIQUEMENT avec un objet JSON de la forme {"cards": [...]}, où "cards" est un tableau de ${CARDS_PER_GENERATION} objets, chacun avec les clés "angle", "title", "description", "cta". Aucun texte avant ou après le JSON, aucun bloc markdown \`\`\`.`,
+            content: `${systemPrompt}\n\nRéponds UNIQUEMENT avec un objet JSON. Aucun texte avant ou après le JSON, aucun bloc markdown \`\`\`.`,
           },
           { role: "user", content: userPrompt },
         ],
-        maxTokens: 1200,
+        maxTokens: 1500,
         thinking: false,
         jsonMode: true,
         timeoutMs: 20000,
       });
-      const rawCards = extractCardsArray(content);
+      const json = JSON.parse(content) as Record<string, unknown>;
       return {
-        rawCards,
+        json,
         promptTokens: usage.prompt_tokens,
         completionTokens: usage.completion_tokens,
       };
     } catch (err) {
       lastError = err;
-      console.error(`generateHooksDeepSeek: DeepSeek call failed (attempt ${attempt}/${MAX_ATTEMPTS})`, err);
+      console.error(`DeepSeek call failed (attempt ${attempt}/${MAX_ATTEMPTS})`, err);
       // 429/401 échoueront identiquement au retry — ne pas gaspiller un
       // second appel (et du temps) sur une requête qui ne peut pas réussir.
-      // 408 (timeout) est RETENTÉ au contraire : au premier appel après un
-      // cold start Vercel, le délai réseau peut dépasser le budget même si
-      // l'API répond correctement — le retry sur fonction chaude passe dans
-      // la grande majorité des cas (cause du "première génération échoue,
-      // la régénération marche").
       if (err instanceof DeepSeekApiError && (err.status === 429 || err.status === 401)) {
         break;
       }
     }
   }
   throw lastError;
+}
+
+async function callDeepSeekCards(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<{ rawCards: RawCard[]; promptTokens: number; completionTokens: number }> {
+  const { json, promptTokens, completionTokens } = await callDeepSeekJson(systemPrompt, userPrompt);
+  const rawCards = extractCardsArray(JSON.stringify(json));
+  return { rawCards, promptTokens, completionTokens };
 }
 
 export type GenerateHooksResult = GenerationResult & {
@@ -98,12 +119,63 @@ export async function generateHooksDeepSeek(brief: Brief): Promise<GenerateHooks
     visualDescription = await describeVisual(brief.visualBase64, brief.visualMediaType);
   }
 
+  // Tronque un texte à maxChars en coupant à la frontière de mot la plus
+  // proche (jamais au milieu d'un mot), sans ajouter de ponctuation finale —
+  // fallback de robustesse quand le modèle dépasse les limites Google.
+  function truncateAtWordBoundary(text: string, maxChars: number): string {
+    const trimmed = text.trim();
+    if (trimmed.length <= maxChars) return trimmed;
+    const cut = trimmed.slice(0, maxChars);
+    const lastSpace = cut.lastIndexOf(" ");
+    return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:!?]+$/, "");
+  }
+
+  // --- Branche RSA (Responsive Search Ads Google) : sortie en pool de
+  // headlines + descriptions, pas en cards — le format et le prompt sont
+  // radicalement différents (voir buildRsaSystemPrompt).
+  if (brief.platform === "google_ads" && brief.adFormat === "rsa") {
+    const systemPrompt = buildRsaSystemPrompt(
+      platformLabel,
+      formatSpec.label,
+      formatSpec.promptGuidance,
+      styleGuidance
+    );
+    const userPrompt = buildRsaUserPrompt(brief, platformLabel, formatSpec.label, visualDescription);
+
+    const { json, promptTokens, completionTokens } = await callDeepSeekJson(systemPrompt, userPrompt);
+
+    const rawHeadlines = Array.isArray(json.headlines) ? (json.headlines as unknown[]) : [];
+    const rawDescriptions = Array.isArray(json.descriptions) ? (json.descriptions as unknown[]) : [];
+
+    // Conformité stricte d'abord (Google rejette au-delà des limites) ;
+    // fallback : troncature propre à la frontière de mot pour les éléments
+    // qui dépassent de peu. On ne jette jamais un élément utilisable.
+    const headlines = rawHeadlines
+      .filter((h): h is string => typeof h === "string" && h.trim().length > 0)
+      .map((h) => truncateAtWordBoundary(h, 30))
+      .filter((h) => h.length > 0 && h.length <= 30)
+      .slice(0, RSA_HEADLINES_COUNT);
+    const descriptions = rawDescriptions
+      .filter((d): d is string => typeof d === "string" && d.trim().length > 0)
+      .map((d) => truncateAtWordBoundary(d, 90))
+      .filter((d) => d.length > 0 && d.length <= 90)
+      .slice(0, RSA_DESCRIPTIONS_COUNT);
+
+    if (headlines.length === 0 || descriptions.length === 0) {
+      throw new Error("Réponse RSA invalide : aucun headline ou description utilisable.");
+    }
+
+    const pack: RsaPack = { headlines, descriptions };
+    return { ...pack, promptTokens, completionTokens };
+  }
+
+  // --- Branche classique (cards) : LinkedIn, Meta, Reddit, formats Google hors RSA ---
   const constraintsLine = `Contraintes strictes : title ≤ ${formatSpec.titleMaxChars} caractères, description ≤ ${formatSpec.descriptionMaxChars} caractères, cta ≤ ${formatSpec.ctaMaxChars} caractères. Compte les caractères, ne dépasse jamais.`;
 
   const systemPrompt = `${buildSystemPrompt(platformLabel, formatSpec.label, formatSpec.promptGuidance, styleGuidance)}\n\n${constraintsLine}`;
   const userPrompt = buildUserPrompt(brief, platformLabel, formatSpec.label, visualDescription);
 
-  const { rawCards, promptTokens, completionTokens } = await callDeepSeek(systemPrompt, userPrompt);
+  const { rawCards, promptTokens, completionTokens } = await callDeepSeekCards(systemPrompt, userPrompt);
 
   const compliant = rawCards.filter((c) => isCompliant(c, formatSpec.titleMaxChars, formatSpec.descriptionMaxChars));
   const pool = compliant.length >= CARDS_PER_GENERATION ? compliant : rawCards;

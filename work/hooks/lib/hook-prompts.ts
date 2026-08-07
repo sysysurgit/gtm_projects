@@ -98,6 +98,95 @@ export interface RawCard {
   cta?: string;
 }
 
+// --- Génération RSA (Responsive Search Ads Google) ---
+// il affiche 3 titres + 2 descriptions pris au hasard dans les pools fournis,
+// dans n'importe quel ordre. Conséquences directes :
+//  - chaque headline doit être AUTONOME (compréhensible seul, sans contexte) ;
+//  - chaque description doit être AUTONOME et complémentaire ;
+//  - il faut de la VARIÉTÉ d'angles dans le pool (Google teste des
+//    combinaisons : plus les angles diffèrent, plus il peut apprendre) ;
+//  - pas de ponctuation finale : Google la retire de toute façon, et un
+//    point final dans une headline de 30 caractères est de la place perdue.
+export const RSA_HEADLINES_COUNT = 6;
+export const RSA_DESCRIPTIONS_COUNT = 3;
+
+export function buildRsaSystemPrompt(
+  platformLabel: string,
+  formatLabel: string,
+  guidance: string,
+  styleGuidance?: string
+): string {
+  return `Tu es un spécialiste Google Ads Search (RSA — Responsive Search Ads), expert en intentions de recherche B2B. Tu écris des headlines et descriptions destinées à être collées TELLES QUELLES dans Google Ads.
+
+MÉCANIQUE RSA — LA PLUS IMPORTANTE :
+Google affiche 3 headlines et 2 descriptions pris AU HASARD dans les pools que tu fournis, et il les RECOMBINE dans n'importe quel ordre. Chaque élément doit donc être parfaitement autonome : s'il est lu seul, à côté de n'importe quel autre élément, il doit toujours faire sens. Interdiction de référencer un autre élément ("et...", "aussi...", "pour en savoir plus voir ci-dessous").
+
+LIMITES DE CARACTÈRES (strictes, Google rejette au-delà) :
+- Headlines : 30 caractères MAXIMUM. C'est très court : une idée, un bénéfice, un mot-clé. Pas de ponctuation finale (Google la retire) — pas de point, pas de "!", pas de "?".
+- Descriptions : 90 caractères MAXIMUM, autonomes, sans point final superflu.
+
+RÈGLES DES HEADLINES :
+1. Autonomes : chacune doit fonctionner seule dans une annonce.
+2. Angles VARIÉS dans le pool (c'est ce qui donne à Google des combinaisons à tester) — répartis ainsi :
+   - au moins 1 headline avec le bénéfice principal ou le résultat chiffré
+   - au moins 1 headline avec l'intention de recherche / le mot-clé que tape le prospect
+   - au moins 1 headline avec une preuve (chiffre, client, certification)
+   - au moins 1 headline avec la différenciation / ce que les concurrents n'ont pas
+   - au moins 1 headline avec un angle offre / essai / démo / CTA
+   - au moins 1 headline avec un angle urgence ou coût de l'inaction
+3. Pas tout en majuscules, pas de points finaux, pas d'exclamation.
+4. Pas de répétition d'une même idée reformulée : chaque headline = un angle réellement différent.
+5. COMPTE LES CARACTÈRES de chaque headline : 30 caractères ≈ 4-5 mots. Si ça dépasse, coupe. Un headline de 30 caractères ressemble à : "Zéro erreur sur 14 200 bulletins" (29 caractères) ou "Paie sans erreur, en 1 clic" (27 caractères).
+
+RÈGLES DES DESCRIPTIONS :
+1. Autonomes et complémentaires (ne répètent pas un headline).
+2. Variété : une description = bénéfice développé + preuve, une = douleur → solution, une = CTA doux / prochaine étape.
+3. 90 caractères MAXIMUM, français naturel B2B, pas de jargon creux ni superlatif vague.
+4. COMPTE LES CARACTÈRES de chaque description : 90 caractères ≈ UNE phrase courte (jamais deux phrases complètes). Si ta description dépasse, raccourcis-la jusqu'à tenir en 90. Une description de 90 caractères ressemble à : "Paie automatisée, DSN conformes et zéro erreur — testé sur 14 200 bulletins." (86 caractères).
+
+DIRECTION CRÉATIVE${styleGuidance ? ` :\n${styleGuidance}` : " : aucune contrainte particulière, vise l'efficacité search directe."}
+
+Régie : ${platformLabel} — Format : ${formatLabel}
+${guidance}
+
+Méthode : pour chaque headline, rédige un brouillon, critique-le (autonomie, 30 caractères max, angle distinct des autres), retravaille-le. Ne renvoie que le résultat final. GÉNÈRE EXACTEMENT ${RSA_HEADLINES_COUNT} headlines et ${RSA_DESCRIPTIONS_COUNT} descriptions.`;
+}
+
+export function buildRsaUserPrompt(
+  brief: Brief,
+  platformLabel: string,
+  formatLabel: string,
+  visualDescription?: string
+): string {
+  const hasVisual = Boolean(visualDescription);
+  return `Brief annonceur :
+
+RÉGIE : ${platformLabel} (${formatLabel})
+Budget média : ${BUDGET_LABEL[brief.budgetRange]}
+Étape du funnel : ${FUNNEL_LABEL[brief.funnelStage]}
+
+MON PRODUIT
+- Industrie / secteur : ${brief.industry}
+- Produit / offre : ${brief.productOffer}
+- Fonctionnalités clés : ${brief.keyFeatures}
+- Preuves de crédibilité (chiffres, témoignages, certifications...) : ${brief.credibilityProof}
+
+MA CIBLE
+- Persona : ${brief.persona}
+- Rêves / objectifs recherchés : ${brief.targetGoals}
+- Douleurs & objections actuelles : ${brief.targetPainsObjections}
+
+CONCURRENCE
+- Ce que les concurrents apportent : ${brief.competitorStrengths}
+- Ce qu'ils n'ont pas / leurs limites : ${brief.competitorGaps}
+${hasVisual ? `\nUn visuel de la créa est joint, décrit ainsi : "${visualDescription}". Ne le référence que si ça renforce une headline ou description, ne force pas le lien.` : ""}
+
+Réponds UNIQUEMENT avec un objet JSON de la forme {"headlines": [...], "descriptions": [...]} :
+- "headlines" : ${RSA_HEADLINES_COUNT} chaînes de caractères, chacune ≤ 30 caractères, autonomes, angles variés.
+- "descriptions" : ${RSA_DESCRIPTIONS_COUNT} chaînes de caractères, chacune ≤ 90 caractères, autonomes, complémentaires.
+Aucun texte avant ou après le JSON, aucun bloc markdown. Compte les caractères : ne dépasse JAMAIS 30 (headlines) ni 90 (descriptions).`;
+}
+
 // Détecte un title composé de deux phrases collées (ex. "...45 minutes.
 // Passez aux micro-trainings...") — le symptôme exact d'un "titre" plutôt
 // qu'un vrai hook. Un point/!/? suivi d'un espace puis d'une majuscule

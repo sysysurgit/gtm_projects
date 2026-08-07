@@ -56,6 +56,16 @@ export interface HookCard {
   cta?: string;
 }
 
-export interface GenerationResult {
-  cards: HookCard[];
+// Pack RSA (Responsive Search Ads Google) : un POOL de headlines et un POOL
+// de descriptions que Google recombine automatiquement (3 titres + 2
+// descriptions affichés). Chaque headline doit être autonome (compréhensible
+// isolément, Google les combine dans n'importe quel ordre) et chaque
+// description aussi. À coller tel quel dans Google Ads.
+export interface RsaPack {
+  headlines: string[];
+  descriptions: string[];
 }
+
+// Génération classique = 4 cards (angle/title/description/cta).
+// Génération RSA = pool headlines + descriptions (voir RsaPack).
+export type GenerationResult = { cards: HookCard[] } | RsaPack;

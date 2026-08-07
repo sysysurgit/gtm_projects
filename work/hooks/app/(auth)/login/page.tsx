@@ -33,7 +33,11 @@ function LoginForm() {
       setError(error.message);
       return;
     }
-    router.push("/dashboard");
+    // Après connexion, on atterrit sur Templates par défaut (point de départ
+    // naturel : choisir un template ou lancer une génération). Le parcours
+    // d'inscription complet (profil entreprise → tour guidé) passe par le
+    // lien de confirmation email (callback → /profile?onboarding=1).
+    router.push("/templates");
     router.refresh();
   }
 
