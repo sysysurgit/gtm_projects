@@ -61,29 +61,33 @@ export const PLATFORMS: Record<PlatformId, PlatformSpec> = {
       {
         id: "feed_image",
         label: "Feed — Image/Vidéo",
-        titleMaxChars: 70,
+        // Limites réelles Meta (2026) : primary text tronqué à ~125 car.
+        // ("Voir plus"), headline 40 max (FB Feed recommande 27).
+        titleMaxChars: 125,
         descriptionMaxChars: 27,
         ctaMaxChars: 40,
         promptGuidance:
-          "Le title est le \"primary text\" (Meta tronque vers 125 caractères, mais reste sous 70 pour un vrai hook). La description (27 caractères recommandés, 40 max) est une ligne très courte et percutante (headline Meta).",
+          "Le title est le « primary text » : Meta le tronque à ~125 caractères avec un lien « Voir plus » — tout ce qui dépasse est caché derrière un clic. Reste nettement sous 125 : un hook efficace tient en 1-3 lignes. La description est la headline affichée sous le visuel (FB Feed recommande 27 caractères, max 40).",
       },
       {
         id: "carousel",
         label: "Carousel",
-        titleMaxChars: 60,
-        descriptionMaxChars: 45,
+        // Headline par carte : 40 caractères max (limite réelle Meta).
+        titleMaxChars: 125,
+        descriptionMaxChars: 40,
         ctaMaxChars: 40,
         promptGuidance:
-          "Format carousel : le primary text est court car chaque carte a son propre headline (45 car.) qui doit fonctionner comme une mini-accroche indépendante dans une narration qui se déroule carte après carte.",
+          "Format carousel : le primary text (title, ~125 car. avant troncature) est l'accroche générale, et la description est la headline de carte (40 caractères MAXIMUM — Meta tronque au-delà) qui doit fonctionner comme une mini-accroche indépendante dans une narration carte après carte.",
       },
       {
         id: "stories_reels",
         label: "Stories / Reels",
-        titleMaxChars: 70,
-        descriptionMaxChars: 27,
+        // Reels : primary text recommandé 40-72 car., headline 10 car. max.
+        titleMaxChars: 72,
+        descriptionMaxChars: 10,
         ctaMaxChars: 40,
         promptGuidance:
-          "Format plein écran, consommé en moins de 2 secondes : le title doit être compréhensible sans le son et sans lire au-delà de la première ligne.",
+          "Format plein écran consommé en moins de 2 secondes : le title (primary text) doit tenir en 40-72 caractères (recommandation Meta Reels) et être compréhensible sans le son. La description (headline) est limitée à 10 caractères — c'est un mot-clé court, pas une phrase.",
       },
     ],
   },
@@ -107,20 +111,24 @@ export const PLATFORMS: Record<PlatformId, PlatformSpec> = {
       {
         id: "text_post",
         label: "Post texte",
-        titleMaxChars: 70,
+        // Limites réelles Reddit (2026) : headline jusqu'à 300 car., mais
+        // troncature mobile dès ~80-145 car. — la safe zone recommandée est
+        // ≤80. Le body (description) accepte jusqu'à 40 000 car. ; on garde
+        // 250 pour un post efficace, pas un pavé.
+        titleMaxChars: 80,
         descriptionMaxChars: 250,
         ctaMaxChars: 40,
         promptGuidance:
-          "Les redditors détestent le ton publicitaire classique — le title doit sonner comme un titre de post authentique (curiosité, débat, retour d'expérience), pas comme une accroche marketing.",
+          "Les redditors détestent le ton publicitaire classique — le title (headline du post promu) doit sonner comme un titre de post authentique (curiosité, débat, retour d'expérience), pas comme une accroche marketing. Reddit tronque la headline sur mobile : reste sous 80 caractères. La description est le corps du post (jusqu'à 250 caractères ici, Reddit accepte bien plus mais un post efficace est court) : développe l'idée, donne le contexte, jamais un argumentaire de vente.",
       },
       {
         id: "image_video",
         label: "Image / Vidéo",
-        titleMaxChars: 70,
+        titleMaxChars: 80,
         descriptionMaxChars: 250,
         ctaMaxChars: 40,
         promptGuidance:
-          "Même logique que le post texte : titre qui sonne authentique, pas publicitaire. La description peut référencer ce qui est montré dans le visuel s'il est fourni.",
+          "Même logique que le post texte : titre (headline ≤ 80 car. recommandés, troncature mobile au-delà) qui sonne authentique, pas publicitaire. La description peut référencer ce qui est montré dans le visuel s'il est fourni, et développer le contexte en 250 caractères max.",
       },
     ],
   },

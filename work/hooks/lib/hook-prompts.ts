@@ -187,23 +187,6 @@ Réponds UNIQUEMENT avec un objet JSON de la forme {"headlines": [...], "descrip
 Aucun texte avant ou après le JSON, aucun bloc markdown. Compte les caractères : ne dépasse JAMAIS 30 (headlines) ni 90 (descriptions).`;
 }
 
-// Détecte un title composé de deux phrases collées (ex. "...45 minutes.
-// Passez aux micro-trainings...") — le symptôme exact d'un "titre" plutôt
-// qu'un vrai hook. Un point/!/? suivi d'un espace puis d'une majuscule
-// ailleurs qu'en toute fin de chaîne trahit une deuxième phrase.
-function isCompoundSentence(title: string): boolean {
-  const trimmed = title.trim();
-  const withoutTrailingPunctuation = trimmed.replace(/[.!?]+$/, "");
-  return /[.!?]\s+[A-ZÀ-Ý]/.test(withoutTrailingPunctuation);
-}
-
-export function isCompliant(card: RawCard, titleMax: number, descriptionMax: number): boolean {
-  if (card.title.length > titleMax) return false;
-  if (isCompoundSentence(card.title)) return false;
-  if (card.description && card.description.length > descriptionMax) return false;
-  return true;
-}
-
 export function buildCreativeStyleGuidance(creativeStyle: string | null | undefined): string | undefined {
   return getCreativeStyle(creativeStyle)?.guidance;
 }

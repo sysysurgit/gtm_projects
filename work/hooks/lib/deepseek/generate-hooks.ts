@@ -5,7 +5,6 @@ import {
   buildCreativeStyleGuidance,
   buildRsaSystemPrompt,
   buildRsaUserPrompt,
-  isCompliant,
   RSA_HEADLINES_COUNT,
   RSA_DESCRIPTIONS_COUNT,
   CARDS_PER_GENERATION,
@@ -121,7 +120,7 @@ export async function generateHooksDeepSeek(brief: Brief): Promise<GenerateHooks
 
   // Tronque un texte à maxChars en coupant à la frontière de mot la plus
   // proche (jamais au milieu d'un mot), sans ajouter de ponctuation finale —
-  // fallback de robustesse quand le modèle dépasse les limites Google.
+  // fallback de robustesse quand le modèle dépasse les limites de la régie.
   function truncateAtWordBoundary(text: string, maxChars: number): string {
     const trimmed = text.trim();
     if (trimmed.length <= maxChars) return trimmed;
@@ -177,8 +176,26 @@ export async function generateHooksDeepSeek(brief: Brief): Promise<GenerateHooks
 
   const { rawCards, promptTokens, completionTokens } = await callDeepSeekCards(systemPrompt, userPrompt);
 
-  const compliant = rawCards.filter((c) => isCompliant(c, formatSpec.titleMaxChars, formatSpec.descriptionMaxChars));
-  const pool = compliant.length >= CARDS_PER_GENERATION ? compliant : rawCards;
+  // Conformité stricte aux limites de la régie, avec fallback de troncature
+  // propre : on ne renvoie JAMAIS un title ou une description au-delà des
+  // limites de caractères (ce serait rejeté ou tronqué par la plateforme).
+  // Les dépassements mineurs sont tronqués à la frontière de mot plutôt que
+  // jetés (perte de variété) ou renvoyés tels quels (non conformes).
+  const normalized = rawCards
+    .filter((c) => typeof c.title === "string" && c.title.trim().length > 0)
+    .map((c) => ({
+      ...c,
+      title: truncateAtWordBoundary(c.title, formatSpec.titleMaxChars),
+      description: c.description
+        ? truncateAtWordBoundary(c.description, formatSpec.descriptionMaxChars)
+        : c.description,
+    }))
+    .filter(
+      (c) =>
+        c.title.length <= formatSpec.titleMaxChars &&
+        (!c.description || c.description.length <= formatSpec.descriptionMaxChars)
+    );
+  const pool = normalized.length >= CARDS_PER_GENERATION ? normalized : rawCards;
 
   const cards: HookCard[] = pool.slice(0, CARDS_PER_GENERATION).map((c) => ({
     title: c.title,
