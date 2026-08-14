@@ -31,16 +31,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Thème : initialisé depuis <html data-theme> (déjà appliqué par le script
-  // anti-flash du root layout). Clair = défaut (pas d'attribut), sombre =
-  // data-theme="dark". Toggle + persisté en localStorage.
+  // anti-flash du root layout), togglé + persisté en localStorage.
   useEffect(() => {
-    setIsLight(document.documentElement.getAttribute("data-theme") !== "dark");
+    setIsLight(document.documentElement.getAttribute("data-theme") === "light");
   }, []);
 
   function toggleTheme() {
     const next = !isLight;
     setIsLight(next);
-    document.documentElement.setAttribute("data-theme", next ? "" : "dark");
+    document.documentElement.setAttribute("data-theme", next ? "light" : "");
     try {
       localStorage.setItem("hooks-theme", next ? "light" : "dark");
     } catch {
