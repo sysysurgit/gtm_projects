@@ -1,0 +1,9 @@
+{
+  "name": "motion-design",
+  "version": "1.0.0",
+  "description": "VSL et vidéos promo en motion design avec Claude Code + HyperFrames : script en 8 blocs, voix HeyGen, animations calées sur les mots, sound design synthétisé, export web + LinkedIn (méthode Agence OOO).",
+  "author": { "name": "sysysurgit", "url": "https://github.com/sysysurgit" },
+  "homepage": "https://github.com/sysysurgit/gtm_projects/tree/main/skills/motion-design",
+  "repository": "https://github.com/sysysurgit/gtm_projects",
+  "keywords": ["motion-design", "video", "vsl", "hyperframes", "gsap", "heygen", "tts"]
+}

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <!-- Tout (style, markup, script) DOIT être dans <template> : le reste est ignoré au montage. -->
+      <style>
+        /* Une @font-face locale par graisse utilisée (lint : font_family_without_font_face) */
+        @font-face { font-family: Display; font-weight: 700; src: url(assets/fonts/DISPLAY-700.woff2) format("woff2"); }
+        @font-face { font-family: Body; font-weight: 400; src: url(assets/fonts/BODY-400.woff2) format("woff2"); }
+        /* Racine stylée par #ID (= data-composition-id), jamais par classe. Sélecteurs toujours préfixés par #ID. */
+        #SCENE_ID { position: absolute; inset: 0; overflow: hidden; font-family: Display, sans-serif; color: var(--fg, #fff); }
+        #SCENE_ID .bg { position: absolute; inset: 0; background: #000c3f; }
+        #SCENE_ID .stage { position: absolute; inset: 0; }
+        /* Pas de transform CSS sur un élément que GSAP anime (lint : gsap_css_transform_conflict). */
+        #SCENE_ID .title { position: absolute; left: 0; right: 0; top: 420px; text-align: center; font-weight: 700; font-size: 120px; opacity: 0; }
+      </style>
+
+      <div id="SCENE_ID" data-composition-id="SCENE_ID" data-width="1920" data-height="1080">
+        <div class="bg"></div>
+        <div class="stage">
+          <div class="title">Mot-clé</div>
+        </div>
+      </div>
+
+      <script>
+        (function () {
+          // Injecté par build_timeline.py : temps (s, relatifs à la scène) de chaque mot déclencheur + "_dur".
+          const C = /*CUES*/{}/*END*/;
+          const R = document.getElementById("SCENE_ID");
+          const $ = (s) => R.querySelector(s);          // attention : premier élément seulement
+          const $$ = (s) => R.querySelectorAll(s);      // tous les éléments
+          const tl = gsap.timeline({ paused: true });
+
+          // Entrée : par la droite, ~12 % de la largeur, power4 (même direction pour tout le film)
+          tl.fromTo($(".stage"), { x: 230, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power4.out" }, 0);
+
+          // Une animation = un mot. Animer x/y/scale/opacity, jamais left/top (lint : gsap_non_transform_motion).
+          tl.fromTo($(".title"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "back.out(1.6)" }, C.motcle - 0.1);
+
+          // Sortie : vers la gauche (supprimer pour la dernière scène, qui tient jusqu'à la fin)
+          tl.to($(".stage"), { x: -230, opacity: 0, duration: 0.4, ease: "power4.in" }, C._dur - 0.4);
+          window.__timelines["SCENE_ID"] = tl;   // clé = data-composition-id, enregistrée après construction
+        })();
+      </script>
+    </template>
+  </body>
+</html>

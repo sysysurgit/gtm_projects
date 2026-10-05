@@ -1,0 +1,628 @@
+{
+  "project": "VSL OpenClimat — fournisseurs",
+  "voice": {
+    "provider": "heygen",
+    "voice_id": "7459d7aa599b4f97908600896a0e7ef4",
+    "name": "Audrey",
+    "locale": "fr-FR"
+  },
+  "timing": {
+    "lead_in": 0.5,
+    "scene_gap": 0.35,
+    "scene_lead": 0.3,
+    "tail": 2.4
+  },
+  "scenes": [
+    {
+      "id": "s1-accroche",
+      "first": [
+        "lundi"
+      ],
+      "cues": [
+        {
+          "name": "carrefour",
+          "words": [
+            "carrefour"
+          ]
+        },
+        {
+          "name": "leclerc",
+          "words": [
+            "mardi"
+          ]
+        },
+        {
+          "name": "auchan",
+          "words": [
+            "mercredi"
+          ]
+        },
+        {
+          "name": "trois1",
+          "words": [
+            "trois"
+          ]
+        },
+        {
+          "name": "trois2",
+          "words": [
+            "trois"
+          ],
+          "nth": 2
+        },
+        {
+          "name": "formats",
+          "words": [
+            "formats"
+          ]
+        },
+        {
+          "name": "plan",
+          "words": [
+            "et"
+          ]
+        },
+        {
+          "name": "quand",
+          "words": [
+            "quand"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s2-probleme",
+      "first": [
+        "chaque"
+      ],
+      "cues": [
+        {
+          "name": "methode",
+          "words": [
+            "methode"
+          ]
+        },
+        {
+          "name": "indicateurs",
+          "words": [
+            "indicateurs"
+          ]
+        },
+        {
+          "name": "calendrier",
+          "words": [
+            "calendrier"
+          ]
+        },
+        {
+          "name": "rse",
+          "words": [
+            "equipe"
+          ]
+        },
+        {
+          "name": "tableaux",
+          "words": [
+            "tableaux"
+          ]
+        },
+        {
+          "name": "agir",
+          "words": [
+            "dagir",
+            "agir"
+          ]
+        },
+        {
+          "name": "commerciaux",
+          "words": [
+            "commerciaux"
+          ]
+        },
+        {
+          "name": "attend",
+          "words": [
+            "attend"
+          ]
+        }
+      ],
+      "extra_gap": 0.7
+    },
+    {
+      "id": "s3-croyance",
+      "first": [
+        "on"
+      ],
+      "cues": [
+        {
+          "name": "contrainte",
+          "words": [
+            "contrainte"
+          ]
+        },
+        {
+          "name": "etsi",
+          "words": [
+            "et"
+          ]
+        },
+        {
+          "name": "argument",
+          "words": [
+            "argument"
+          ]
+        }
+      ],
+      "extra_gap": 0.7
+    },
+    {
+      "id": "s4-resultats",
+      "first": [
+        "plus"
+      ],
+      "cues": [
+        {
+          "name": "deux",
+          "words": [
+            "200",
+            "deux"
+          ]
+        },
+        {
+          "name": "n1",
+          "words": [
+            "seb",
+            "suv",
+            "bell",
+            "bel"
+          ]
+        },
+        {
+          "name": "n2",
+          "words": [
+            "pepsico"
+          ]
+        },
+        {
+          "name": "n3",
+          "words": [
+            "unilever"
+          ]
+        },
+        {
+          "name": "partagent",
+          "words": [
+            "partagent"
+          ]
+        },
+        {
+          "name": "fois",
+          "words": [
+            "seule"
+          ]
+        },
+        {
+          "name": "toutes",
+          "words": [
+            "toutes"
+          ]
+        }
+      ],
+      "extra_gap": 0.3
+    },
+    {
+      "id": "s5-methode",
+      "first": [
+        "cest"
+      ],
+      "cues": [
+        {
+          "name": "openclimat",
+          "words": [
+            "permet"
+          ]
+        },
+        {
+          "name": "un",
+          "words": [
+            "un"
+          ]
+        },
+        {
+          "name": "qui",
+          "words": [
+            "qui"
+          ]
+        },
+        {
+          "name": "deux",
+          "words": [
+            "deux"
+          ]
+        },
+        {
+          "name": "verifient",
+          "words": [
+            "verifient"
+          ]
+        },
+        {
+          "name": "credibilite",
+          "words": [
+            "credibilite"
+          ]
+        },
+        {
+          "name": "trois",
+          "words": [
+            "trois"
+          ]
+        },
+        {
+          "name": "fiches",
+          "words": [
+            "fiches"
+          ]
+        },
+        {
+          "name": "benchmark",
+          "words": [
+            "benchmark"
+          ]
+        },
+        {
+          "name": "quatre",
+          "words": [
+            "quatre"
+          ]
+        },
+        {
+          "name": "evalue",
+          "words": [
+            "evalue"
+          ]
+        },
+        {
+          "name": "progres",
+          "words": [
+            "progres"
+          ]
+        }
+      ],
+      "extra_gap": 0.6
+    },
+    {
+      "id": "s6-preuve",
+      "first": [
+        "chez"
+      ],
+      "cues": [
+        {
+          "name": "nous",
+          "words": [
+            "nous"
+          ]
+        },
+        {
+          "name": "differents",
+          "words": [
+            "differents"
+          ]
+        },
+        {
+          "name": "maintenant",
+          "words": [
+            "maintenant"
+          ]
+        },
+        {
+          "name": "meme",
+          "words": [
+            "meme"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s7-offre",
+      "first": [
+        "plus"
+      ],
+      "cues": [
+        {
+          "name": "quinze",
+          "words": [
+            "15",
+            "quinze"
+          ]
+        },
+        {
+          "name": "pas",
+          "words": [
+            "pas"
+          ]
+        },
+        {
+          "name": "gratuit",
+          "words": [
+            "gratuitement"
+          ]
+        },
+        {
+          "name": "tarif",
+          "words": [
+            "tarif",
+            "tarifs"
+          ]
+        }
+      ],
+      "extra_gap": 0.8
+    },
+    {
+      "id": "s8-cta",
+      "first": [
+        "une"
+      ],
+      "cues": [
+        {
+          "name": "donnee",
+          "words": [
+            "donnee"
+          ]
+        },
+        {
+          "name": "format",
+          "words": [
+            "format",
+            "envoi"
+          ]
+        },
+        {
+          "name": "rejoignez",
+          "words": [
+            "rejoignez"
+          ]
+        }
+      ]
+    }
+  ],
+  "pauses": [
+    {
+      "scene": "s3-croyance",
+      "cue": "etsi",
+      "sec": 0.75
+    },
+    {
+      "scene": "s8-cta",
+      "cue": "rejoignez",
+      "sec": 0.5
+    }
+  ],
+  "audio": {
+    "sfx_gain": 0.3,
+    "sfx_gain_by_type": {
+      "chime": 0.45,
+      "hit": 0.7,
+      "riser": 0.8,
+      "stamp": 0.8
+    },
+    "click_on_scene_change": true,
+    "music_volume": 0.32,
+    "bpm": 90,
+    "target_lufs": -14,
+    "events": [
+      {
+        "scene": "s1-accroche",
+        "cue": "carrefour",
+        "sound": "pop"
+      },
+      {
+        "scene": "s1-accroche",
+        "cue": "leclerc",
+        "sound": "pop",
+        "offset": 0.3
+      },
+      {
+        "scene": "s1-accroche",
+        "cue": "auchan",
+        "sound": "pop",
+        "offset": 0.3
+      },
+      {
+        "scene": "s1-accroche",
+        "cue": "quand",
+        "sound": "riser",
+        "offset": -1.6,
+        "gain": 0.9
+      },
+      {
+        "scene": "s1-accroche",
+        "cue": "quand",
+        "sound": "hit",
+        "gain": 0.9
+      },
+      {
+        "scene": "s2-probleme",
+        "cue": "tableaux",
+        "sound": "whoosh",
+        "offset": -0.2,
+        "gain": 0.8
+      },
+      {
+        "scene": "s2-probleme",
+        "cue": "attend",
+        "sound": "pop"
+      },
+      {
+        "scene": "s3-croyance",
+        "cue": "contrainte",
+        "sound": "hit",
+        "offset": 0.12,
+        "gain": 0.7
+      },
+      {
+        "scene": "s3-croyance",
+        "cue": "argument",
+        "sound": "chime"
+      },
+      {
+        "scene": "s4-resultats",
+        "cue": "fois",
+        "sound": "chime",
+        "offset": 0.1,
+        "gain": 0.8
+      },
+      {
+        "scene": "s4-resultats",
+        "cue": "toutes",
+        "sound": "pop",
+        "offset": 0.25,
+        "gain": 0.6
+      },
+      {
+        "scene": "s5-methode",
+        "cue": "openclimat",
+        "sound": "chime",
+        "offset": -0.1,
+        "gain": 0.6
+      },
+      {
+        "scene": "s5-methode",
+        "cue": "qui",
+        "sound": "pop",
+        "gain": 0.6
+      },
+      {
+        "scene": "s5-methode",
+        "cue": "verifient",
+        "sound": "stamp",
+        "offset": 0.15
+      },
+      {
+        "scene": "s5-methode",
+        "cue": "benchmark",
+        "sound": "pop",
+        "gain": 0.6
+      },
+      {
+        "scene": "s5-methode",
+        "cue": "evalue",
+        "sound": "pop",
+        "offset": -0.1,
+        "gain": 0.5
+      },
+      {
+        "scene": "s6-preuve",
+        "cue": "meme",
+        "sound": "chime",
+        "offset": 0.2,
+        "gain": 0.5
+      },
+      {
+        "scene": "s7-offre",
+        "cue": "quinze",
+        "sound": "pop",
+        "offset": -0.2,
+        "gain": 0.6
+      },
+      {
+        "scene": "s7-offre",
+        "cue": "gratuit",
+        "sound": "pop",
+        "offset": -0.15
+      },
+      {
+        "scene": "s7-offre",
+        "cue": "tarif",
+        "sound": "pop",
+        "offset": -0.25
+      },
+      {
+        "scene": "s8-cta",
+        "cue": "donnee",
+        "sound": "pop",
+        "offset": -0.25
+      },
+      {
+        "scene": "s8-cta",
+        "cue": "format",
+        "sound": "chime",
+        "gain": 0.7
+      },
+      {
+        "scene": "s8-cta",
+        "cue": "rejoignez",
+        "sound": "hit",
+        "gain": 0.6
+      },
+      {
+        "scene": "s8-cta",
+        "cue": "rejoignez",
+        "sound": "chime"
+      },
+      {
+        "scene": "s2-probleme",
+        "cue": "methode",
+        "sound": "pop",
+        "offset": -0.1,
+        "gain": 0.7
+      },
+      {
+        "scene": "s2-probleme",
+        "cue": "indicateurs",
+        "sound": "pop",
+        "offset": -0.1,
+        "gain": 0.7
+      },
+      {
+        "scene": "s2-probleme",
+        "cue": "calendrier",
+        "sound": "pop",
+        "offset": -0.1,
+        "gain": 0.7
+      },
+      {
+        "scene": "s4-resultats",
+        "cue": "n1",
+        "sound": "pop",
+        "offset": -0.05,
+        "gain": 0.6
+      },
+      {
+        "scene": "s4-resultats",
+        "cue": "n2",
+        "sound": "pop",
+        "offset": -0.05,
+        "gain": 0.6
+      },
+      {
+        "scene": "s4-resultats",
+        "cue": "n3",
+        "sound": "pop",
+        "offset": -0.05,
+        "gain": 0.6
+      },
+      {
+        "scene": "s5-methode",
+        "cue": "deux",
+        "sound": "whoosh",
+        "offset": -0.6,
+        "gain": 0.7
+      },
+      {
+        "scene": "s5-methode",
+        "cue": "trois",
+        "sound": "whoosh",
+        "offset": -0.6,
+        "gain": 0.7
+      },
+      {
+        "scene": "s5-methode",
+        "cue": "quatre",
+        "sound": "whoosh",
+        "offset": -0.6,
+        "gain": 0.7
+      }
+    ]
+  }
+}

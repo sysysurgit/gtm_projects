@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr" data-composition-variables='[{"id":"linkedin","type":"boolean","label":"Bandeau CTA LinkedIn","default":false}]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000c3f; }
+      #root { width: 100%; height: 100%; position: relative; background: #000c3f; }
+      @font-face { font-family: Display; font-weight: 600; src: url(assets/fonts/DISPLAY-600.woff2) format("woff2"); }
+      @font-face { font-family: Body; font-weight: 500; src: url(assets/fonts/BODY-500.woff2) format("woff2"); }
+      /* Bandeau LinkedIn : verre dépoli, masqué si linkedin=false. Vérifier qu'il ne masque aucun texte (bas ~100 px). */
+      #li-banner { position: absolute; left: 0; right: 0; bottom: 0; height: 104px; }
+      #li-banner .li-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 56px;
+        background: rgba(0, 12, 63, 0.55); backdrop-filter: blur(16px); border-top: 1px solid rgba(152, 238, 226, 0.35); }
+      #li-banner img { height: 34px; width: auto; display: block; }
+      #li-banner .li-cta { display: flex; align-items: center; gap: 22px; font: 500 28px Body, sans-serif; color: #fff; }
+      #li-banner .li-pill { font: 600 28px Display, sans-serif; color: #000c3f; background: #98eee2; padding: 12px 30px; border-radius: 999px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="60" data-width="1920" data-height="1080">
+      <!-- Un hôte par scène : id="h-<scene>", data-composition-id = id de la scène. Temps recalés par build_timeline.py. -->
+      <div id="h-s1-accroche" class="clip" data-composition-id="s1-accroche" data-composition-src="compositions/s1-accroche.html"
+           data-start="0" data-duration="10" data-track-index="1" data-width="1920" data-height="1080"></div>
+      <!-- … s2 … s8 -->
+
+      <div id="li-banner" class="clip" data-start="0" data-duration="50" data-track-index="5">
+        <div class="li-inner">
+          <img src="assets/logos/LOGO-WHITE.svg" alt="LOGO" />
+          <div class="li-cta"><span>site.com</span><span class="li-pill">CTA</span></div>
+        </div>
+      </div>
+      <!-- Mix final unique (voix + musique + bruitages), produit par build_audio.py -->
+      <audio id="mix" src="audio/mix.wav" data-start="0" data-duration="60" data-track-index="10" data-volume="1"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const vars = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+      const inner = document.querySelector("#li-banner .li-inner");
+      tl.set(inner, { opacity: vars.linkedin ? 1 : 0 }, 0);
+      if (vars.linkedin) tl.fromTo(inner, { y: 104 }, { y: 0, duration: 0.6, ease: "power3.out" }, 1.0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
