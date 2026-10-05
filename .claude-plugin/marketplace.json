@@ -1,0 +1,13 @@
+{
+  "name": "sysysurgit",
+  "owner": { "name": "sysysurgit", "url": "https://github.com/sysysurgit" },
+  "metadata": { "description": "Skills Claude Code de sysysurgit (GTM, vidéo, motion design)." },
+  "plugins": [
+    {
+      "name": "motion-design",
+      "source": "./skills/motion-design",
+      "description": "VSL et vidéos promo en motion design avec Claude Code + HyperFrames (script 8 blocs, voix HeyGen, animations calées sur les mots, sound design, export web + LinkedIn).",
+      "version": "1.0.0"
+    }
+  ]
+}
