@@ -2,20 +2,6 @@
 
 Le skill fait produire à Claude Code une **VSL** (vidéo de vente) ou une vidéo promo en motion design, du script au MP4. Les scènes sont écrites en HTML/GSAP, puis rendues avec [HyperFrames](https://hyperframes.heygen.com). La voix est générée par HeyGen, et chaque animation se déclenche sur un mot précis de la voix off.
 
-## Exemple de rendu final
-
-**[▶ Voir la vidéo : VSL OpenClimat, cible fournisseurs, version LinkedIn (1 min 31)](00-EXEMPLE-RENDU-FINAL-MOTION-DESIGN/OpenClimat-VSL-fournisseurs-linkedin.mp4)**
-
-[![Aperçu de l'accroche de la VSL OpenClimat](00-EXEMPLE-RENDU-FINAL-MOTION-DESIGN/apercu-accroche.gif)](00-EXEMPLE-RENDU-FINAL-MOTION-DESIGN/OpenClimat-VSL-fournisseurs-linkedin.mp4)
-
-Cette vidéo d'exemple a été produite avec ce skill pour [openclimat.com](https://www.openclimat.com), à partir des seules informations publiques du site :
-- 8 scènes, chacune calée au mot près sur la voix ;
-- voix de synthèse HeyGen ;
-- 40 bruitages et une musique synthétisés avec ffmpeg, mix à -14 LUFS ;
-- un bandeau CTA LinkedIn fixe en verre dépoli.
-
-Les fichiers sont dans [`00-EXEMPLE-RENDU-FINAL-MOTION-DESIGN/`](00-EXEMPLE-RENDU-FINAL-MOTION-DESIGN).
-
 ## Installer
 
 Dans Claude Code :
