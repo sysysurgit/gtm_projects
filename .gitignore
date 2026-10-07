@@ -53,3 +53,6 @@ out/
 # ── Logs ─────────────────────────────────────────────────
 *.log
 logs/
+
+# ── Rendus clients (gardés en local, jamais publics) ─────
+skills/motion-design/00-EXEMPLE-RENDU-FINAL-MOTION-DESIGN/

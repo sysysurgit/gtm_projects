@@ -8,8 +8,7 @@ in one repo.
 - [`work/`](work) — active projects: shipped tools ([`hooks`](work/hooks),
   [`verificateur-score-geo`](work/verificateur-score-geo)) and an [idea backlog](work/ideas)
 - [`skills/`](skills) — Claude Code skills, installable as plugins:
-  [`motion-design`](skills/motion-design) — VSL / promo videos in motion design (HyperFrames + HeyGen),
-  with a [final render example](skills/motion-design/00-EXEMPLE-RENDU-FINAL-MOTION-DESIGN)
+  [`motion-design`](skills/motion-design) — VSL / promo videos in motion design (HyperFrames + HeyGen)
 - `temporary/` — local scratch space, git-ignored (never pushed)
 - `private/` — personal/paid projects excluded from this public repo, git-ignored
 - `.env.example` — template for local environment variables
