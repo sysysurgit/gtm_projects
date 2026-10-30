@@ -1,9 +1,9 @@
 # Playbook : une VSL en motion design avec Claude Code
 
-Ce qu'a appris la production de la VSL OpenClimat (fournisseurs), réalisée le 4 octobre 2026 en une session d'environ 3 h 30, du guide d'origine jusqu'aux deux MP4 livrés. Le document sert de squelette pour les prochaines vidéos. Le skill `motion-design` l'applique.
+Ce qu'a appris la production d'une première VSL client (cible fournisseurs), réalisée le 4 octobre 2026 en une session d'environ 3 h 30, du guide d'origine jusqu'aux deux MP4 livrés. Le document sert de squelette pour les prochaines vidéos. Le skill `motion-design` l'applique.
 
-- **Skill** : ce dossier (`scripts/` pour les outils génériques, `templates/` pour les gabarits ; `templates/motion.config.example.json` contient la configuration complète du projet OpenClimat)
-- **Livrables** : `OpenClimat-VSL-fournisseurs-web.mp4` et `…-linkedin.mp4` (1 min 31, 1080p, 30 i/s)
+- **Skill** : ce dossier (`scripts/` pour les outils génériques, `templates/` pour les gabarits ; `templates/motion.config.example.json` contient la configuration complète du projet de référence)
+- **Livrables** : `<Client>-VSL-web.mp4` et `<Client>-VSL-linkedin.mp4` (1 min 31, 1080p, 30 i/s)
 
 ---
 
@@ -69,15 +69,15 @@ npx hyperframes render -o renders/master-linkedin.mp4 -q delivery --variables '{
 ## 4. Pré-production : ce qui a compté
 
 - **Une seule cible par vidéo.** Notre v1 mélangeait des arguments côté fournisseur et côté enseigne. L'utilisateur l'a repéré tout de suite. Écrire du point de vue d'un seul lecteur (« vos enseignes », pas « vos fournisseurs »).
-- **Seulement des faits publics et sourcés**, surtout pour une démo. Les chiffres viennent du site (200+ industriels, 15+ enseignes). La citation SEB est reprise mot pour mot, avec son auteur.
+- **Seulement des faits publics et sourcés**, surtout pour une démo. Les chiffres viennent du site du client. Une citation client est reprise mot pour mot, avec son auteur.
 - **Accroche courte** : trois exemples suffisent. Cinq, c'était trop long, selon le retour de l'utilisateur.
 - **CTA promotionnel et court** : « Une donnée, un format. Rejoignez le réseau ! ».
-- **Le fil rouge** : un objet récurrent (la « fiche climat ») qui revient aux scènes 1, 4, 5 et 8. C'est ce qui donne de la cohérence au film.
+- **Le fil rouge** : un objet récurrent (une « fiche » propre au produit) qui revient aux scènes 1, 4, 5 et 8. C'est ce qui donne de la cohérence au film.
 
 ## 5. Charte et assets : les pièges
 
-- **Couleurs** : les extraire du CSS du site (`curl` des chunks `_next/static/*.css`, puis compter les `#hex`). OpenClimat : marine `#000C3F`, surface `#031356`, accent menthe `#98EEE2`, bleu `#3D6DBA`.
-- **Polices** : la police de titre du site (MoskauGrotesk) est commerciale. On utilise Poppins et Inter (licence OFL), téléchargées en woff2 depuis `@fontsource` et servies localement.
+- **Couleurs** : les extraire du CSS du site (`curl` des chunks `_next/static/*.css`, puis compter les `#hex`). Typiquement : un fond, une surface, un accent et une couleur secondaire.
+- **Polices** : la police de titre du site était commerciale. On utilise Poppins et Inter (licence OFL), téléchargées en woff2 depuis `@fontsource` et servies localement.
 - **Logos d'enseignes** : les PNG du site sont des carrés de 384 px avec un anneau gris incrusté. On les nettoie avec ImageMagick (masque circulaire puis `-trim`). Certains SVG ne sont qu'un PNG encapsulé dans un `<pattern>` : on extrait le base64, on l'aplatit sur blanc, puis on rogne.
 - **storyboard.html** : il doit être autonome (polices et logos encodés en base64) et peser **moins de 512 Ko**, sinon le panneau d'aperçu de l'app ne l'affiche pas. Réduire les logos (JPEG 200 px sur fond blanc).
 
@@ -90,8 +90,8 @@ npx hyperframes render -o renders/master-linkedin.mp4 -q delivery --variables '{
 | HeyGen | Outil à installer, puis `heygen auth login --oauth` (fait par l'utilisateur) | L'OAuth donne le crédit gratuit, une clé API est payante |
 | Crédit HeyGen | Environ **2 min de voix gratuites par mois** : 82 s demandées, 39 s restantes | Régénérer **une seule phrase** et la recoller avec `splice_block.py` |
 | « RSE » | L'écriture phonétique « air aisse eu » est entendue « Rest sûre ». « R.S.E. » passe isolé mais devient « RCS, eux » dans le paragraphe | **SSML** `<say-as interpret-as="characters">RSE</say-as>`, généré seul puis recollé |
-| « SEB » | Il se prononce « Seb » (comme Sébastien), pas « S.E.B. » | Écrire « Seb » dans le texte envoyé à la synthèse |
-| « OpenClimat » | Lu à l'anglaise (« Openclimate ») | Écrire « Open Climat » |
+| Sigle lu comme un mot | Un nom de marque en trois lettres se prononçait comme un prénom, pas lettre à lettre | Écrire le texte tel qu'il doit être entendu |
+| Nom de marque composé | Lu à l'anglaise | Séparer les mots dans le texte envoyé à la synthèse |
 | Blanc avant « quand ? » | C'est mon outil qui ajoutait 0,5 s de silence au milieu d'une phrase | **Jamais de pause à l'intérieur d'une phrase.** Mettre la tenue *après* la punchline (`extra_gap` de la scène suivante). |
 | Transcription | whisper `small.en` est anglais uniquement | `-m medium -l fr` |
 
@@ -149,12 +149,12 @@ Voix HeyGen françaises : **Audrey** `7459d7aa599b4f97908600896a0e7ef4` (dynamiq
 - Encodage OOO : `ffmpeg -c:v libx264 -preset slow -crf 24 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 128k` (12 Mo → 4 Mo).
 - **Web** : site, e-mail, présentation. **LinkedIn** : lecture auto sans le son, le CTA reste visible tout le temps.
 
-## 12. Résultats OpenClimat
+## 12. Résultats du projet de référence
 
 - Film de 1 min 31 en 8 scènes, voix Audrey (HeyGen), 40 bruitages synthétisés, -13,8 LUFS.
-- `OpenClimat-VSL-fournisseurs-web.mp4` (4,1 Mo) et `…-linkedin.mp4` (4,3 Mo), copiés sur le bureau.
+- Master web (4,1 Mo) et master LinkedIn (4,3 Mo), copiés sur le bureau.
 - Itérations : 2 versions du script (la v1 mélangeait les cibles), 2 fournisseurs de voix, 4 prises (dont des jointures de phrases), 1 passe de niveaux audio, 2 rendus finaux.
-- Reste possible : miniature centrée qui supporte le recadrage mobile ; un geste sur « déposez » (tenue de 3,7 s à 46 s) ; une v2 pour les distributeurs.
+- Reste possible : miniature centrée qui supporte le recadrage mobile ; un geste pendant la tenue de 3,7 s à 46 s ; une v2 pour une autre cible.
 
 ## 13. Checklist de démarrage (nouvelle vidéo)
 

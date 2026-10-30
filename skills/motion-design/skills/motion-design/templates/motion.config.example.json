@@ -1,5 +1,5 @@
 {
-  "project": "VSL OpenClimat — fournisseurs",
+  "project": "VSL exemple — fournisseurs",
   "voice": {
     "provider": "heygen",
     "voice_id": "7459d7aa599b4f97908600896a0e7ef4",
@@ -217,7 +217,7 @@
       ],
       "cues": [
         {
-          "name": "openclimat",
+          "name": "marque",
           "words": [
             "permet"
           ]
@@ -481,7 +481,7 @@
       },
       {
         "scene": "s5-methode",
-        "cue": "openclimat",
+        "cue": "marque",
         "sound": "chime",
         "offset": -0.1,
         "gain": 0.6

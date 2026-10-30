@@ -29,7 +29,7 @@ Ensuite, il suffit de demander « fais une VSL en motion design pour <site> », 
 | `skills/motion-design/SKILL.md` | Le déroulé en 11 étapes, avec une validation de l'utilisateur aux étapes clés |
 | `skills/motion-design/references/playbook.md` | Le playbook complet : méthode, toutes les difficultés rencontrées (voix, prononciation, lint, sound design…) et leurs solutions |
 | `skills/motion-design/scripts/` | `heygen_tts.py`, `build_timeline.py` (recalage voix → scènes), `build_audio.py` (sound design et mix), `splice_block.py` (corriger un mot) |
-| `skills/motion-design/templates/` | Gabarit de scène, `index.html` avec bandeau LinkedIn, configuration complète d'OpenClimat comme exemple |
+| `skills/motion-design/templates/` | Gabarit de scène, `index.html` avec bandeau LinkedIn, configuration complète d'un projet réel comme exemple |
 
 ## Crédits
 
