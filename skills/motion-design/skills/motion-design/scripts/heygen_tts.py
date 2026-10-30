@@ -9,7 +9,7 @@ Usage :
   python3 heygen_tts.py <texte.txt | "texte"> <voice_id> <sortie_sans_extension> [--ssml] [--locale fr-FR]
 Écrit <sortie>.json (réponse brute), <sortie>.wav (audio) et <sortie>.words.json ([{text,start,end}]).
 
-Voix françaises testées : Audrey 7459d7aa599b4f97908600896a0e7ef4 (dynamique, choisie pour OpenClimat),
+Voix françaises testées : Audrey 7459d7aa599b4f97908600896a0e7ef4 (dynamique, retenue),
 Chloé 4b1de1582d2c477485ad2e0c2717f0ff (plus posée). Lister : heygen voice list --engine starfish --language French
 """
 import json, os, subprocess, sys
